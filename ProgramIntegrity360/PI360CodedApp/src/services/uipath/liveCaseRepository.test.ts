@@ -384,6 +384,24 @@ describe('LiveCaseRepository', () => {
     expect(workspace.folderTasks.map((item) => item.id)).toEqual([456, 457]);
   });
 
+  it('preserves case-task stage metadata when refreshing task collections', async () => {
+    sdkMocks.getStages.mockResolvedValue([
+      {
+        id: 'stage-investigation',
+        name: 'Investigation and case management',
+        status: 'Running',
+        tasks: [[{ id: '123', name: 'Supervisor approval' }]],
+      },
+    ]);
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    const refreshed = await repository.refreshTasks('active-instance');
+
+    expect(sdkMocks.getStages).toHaveBeenCalledWith('active-instance', 'folder-key');
+    expect(refreshed.caseTasks[0].stageLabel).toBe('Investigation and case management');
+    expect(refreshed.folderTasks[0].stageLabel).toBe('Folder inbox');
+  });
+
   it('stops repeated pagination cursors with a truncation warning', async () => {
     sdkMocks.instancesGetAll
       .mockResolvedValueOnce({

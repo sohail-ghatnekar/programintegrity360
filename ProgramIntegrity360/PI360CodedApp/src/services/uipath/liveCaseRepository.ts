@@ -626,14 +626,21 @@ export class LiveCaseRepository implements CaseRepository {
       throw new Error(`UiPath case instance not found: ${caseId}`);
     }
 
-    const [caseTasks, folderTasks] = await Promise.all([
+    const [rawStages, caseTasks, folderTasks] = await Promise.all([
+      this.settleValue<PartialCaseStage[]>(
+        'case stages for task refresh',
+        this.caseInstances.getStages(caseId, this.requiredFolderKey()),
+        [],
+        warnings,
+      ),
       this.collectCaseTasks(caseId, warnings),
       this.collectFolderTasks(warnings),
     ]);
+    const taskLookup = taskStageLookup(rawStages);
 
     return operationResult(deepFreeze({
       caseTasks: caseTasks.map((task, index) => (
-        normalizeTask(task, this.config, 'Unmapped UiPath stage', index, warnings)
+        normalizeTask(task, this.config, stageForTask(task, taskLookup), index, warnings)
       )),
       folderTasks: folderTasks.map((task, index) => (
         normalizeTask(task, this.config, 'Folder inbox', index, warnings)

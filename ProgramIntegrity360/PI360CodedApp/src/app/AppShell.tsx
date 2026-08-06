@@ -23,6 +23,7 @@ import {
 } from '@uipath/apollo-wind';
 import {
   BriefcaseBusiness,
+  ClipboardCheck,
   CircleUserRound,
   Database,
   FolderOpen,
@@ -41,7 +42,7 @@ import { CommandCenter } from '../features/cases/CommandCenter';
 import type { CaseSummary, CaseWorkspaceSnapshot, DemoRole } from '../features/cases/types';
 import type { CaseWorkspaceStatus } from '../features/cases/useCaseWorkspace';
 
-type ShellView = 'command' | 'workspace';
+type ShellView = 'command' | 'workspace' | 'tasks';
 type RecoveryOperation = 'refresh' | 'demo';
 
 export type AppShellIdentity = {
@@ -66,11 +67,13 @@ export type AppShellProps = {
   authLoading?: boolean;
   authError?: string | null;
   assistant?: ReactNode;
+  taskCenter?: ReactNode;
 };
 
 const navigation = [
   { id: 'command' as const, label: 'Command center', icon: LayoutDashboard },
   { id: 'workspace' as const, label: 'Case workspace', icon: BriefcaseBusiness },
+  { id: 'tasks' as const, label: 'Task Center', icon: ClipboardCheck },
 ];
 
 export function AppShell({
@@ -89,6 +92,7 @@ export function AppShell({
   authLoading = false,
   authError,
   assistant,
+  taskCenter,
 }: AppShellProps) {
   const [activeView, setActiveView] = useState<ShellView>('command');
   const [selectionIntent, setSelectionIntent] = useState<string | null>(null);
@@ -200,7 +204,7 @@ export function AppShell({
                   </div>
                 </div>
                 <div className="p-3">
-                  <MobileNavigation activeView={activeView} onNavigate={setActiveView} />
+                  <MobileNavigation activeView={activeView} onNavigate={setActiveView} showTaskCenter={Boolean(taskCenter)} />
                   <Button
                     type="button"
                     variant="ghost"
@@ -280,7 +284,7 @@ export function AppShell({
 
         <div className={assistant ? 'lg:grid lg:grid-cols-[208px_minmax(0,1fr)] xl:grid-cols-[208px_minmax(0,1fr)_320px]' : 'lg:grid lg:grid-cols-[208px_minmax(0,1fr)]'}>
           <aside className="hidden min-h-[calc(100vh-56px)] w-52 border-r border-slate-200 bg-white lg:flex lg:flex-col">
-            <DesktopNavigation activeView={activeView} onNavigate={setActiveView} />
+            <DesktopNavigation activeView={activeView} onNavigate={setActiveView} showTaskCenter={Boolean(taskCenter)} />
             <div className="mt-auto border-t border-slate-200 p-3">
               <RoleControl role={role} onRoleChange={onRoleChange} />
               <AuthorityNotice />
@@ -322,6 +326,7 @@ export function AppShell({
               onSelectCase={openCase}
               onRefresh={refreshCaseData}
               onUseDemoData={useDemoCaseData}
+              taskCenter={taskCenter}
             />
           </main>
 
@@ -336,7 +341,7 @@ export function AppShell({
   );
 }
 
-type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'onRefresh' | 'onUseDemoData'> & {
+type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'onRefresh' | 'onUseDemoData' | 'taskCenter'> & {
   activeView: ShellView;
   selectionIntent: string | null;
   pendingSelection: string | null;
@@ -359,6 +364,7 @@ function ShellContent({
   onSelectCase,
   onRefresh,
   onUseDemoData,
+  taskCenter,
 }: ShellContentProps) {
   if (selectionError) {
     return (
@@ -398,6 +404,10 @@ function ShellContent({
     return activeView === 'command'
       ? <CommandCenterSkeleton />
       : <WorkspaceSkeleton label="Loading case workspace" />;
+  }
+
+  if (activeView === 'tasks' && taskCenter) {
+    return taskCenter;
   }
 
   if (activeView === 'command') {
@@ -465,10 +475,10 @@ function CommandCenterSkeleton() {
   );
 }
 
-function DesktopNavigation({ activeView, onNavigate }: { activeView: ShellView; onNavigate: (view: ShellView) => void }) {
+function DesktopNavigation({ activeView, onNavigate, showTaskCenter }: { activeView: ShellView; onNavigate: (view: ShellView) => void; showTaskCenter: boolean }) {
   return (
     <nav aria-label="Primary navigation" className="space-y-1 p-3">
-      {navigation.map((item) => {
+      {navigation.filter((item) => item.id !== 'tasks' || showTaskCenter).map((item) => {
         const Icon = item.icon;
         const active = activeView === item.id;
         return (
@@ -489,10 +499,10 @@ function DesktopNavigation({ activeView, onNavigate }: { activeView: ShellView; 
   );
 }
 
-function MobileNavigation({ activeView, onNavigate }: { activeView: ShellView; onNavigate: (view: ShellView) => void }) {
+function MobileNavigation({ activeView, onNavigate, showTaskCenter }: { activeView: ShellView; onNavigate: (view: ShellView) => void; showTaskCenter: boolean }) {
   return (
     <nav aria-label="Mobile navigation" className="space-y-1">
-      {navigation.map((item) => {
+      {navigation.filter((item) => item.id !== 'tasks' || showTaskCenter).map((item) => {
         const Icon = item.icon;
         return (
           <SheetClose asChild key={item.id}>
