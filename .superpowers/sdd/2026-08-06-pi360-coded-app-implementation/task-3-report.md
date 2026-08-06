@@ -161,3 +161,78 @@ Exit 0. TypeScript, Vite, and coded-app index preparation completed. Vite retain
 ### Residual Limitation
 
 The installed SDK has no supported current-user identity API, so the app cannot expose a verified email or display name without manually handling tokens. The provider intentionally exposes only the generic authenticated identity until a supported platform identity endpoint is introduced.
+
+## Fix Round 2
+
+### Findings Addressed
+
+- Moved the `isCurrent()` generation-and-mounted-state check ahead of every false/rejected callback cleanup action. A stale completion after logout or provider unmount now returns before changing React state, removing callback parameters, clearing SDK OAuth storage, or dismissing shared callback state.
+- Replaced the provider-local callback ref with a module-level, in-memory completion registry. It is keyed by a deterministic hash of the client ID and callback URL, so the raw callback URL and no token value are retained. The same pending callback is shared across a genuine provider remount.
+- The registry is dismissed immediately once the active provider has consumed either a successful or invalid callback. A 60-second timeout bounds entries abandoned by an unmounted provider, so an in-flight callback cannot remain retained indefinitely.
+- Added false and rejected stale-callback tests for both logout and unmount, plus a real unmount/remount test that verifies the remounted provider does not invoke `completeOAuth()` a second time.
+
+### RED / GREEN Evidence
+
+Focused RED command:
+
+```bash
+npm test -- --run src/hooks/useAuth.test.tsx
+```
+
+Exact result: exit 1; `Test Files 1 failed (1)` and `Tests 5 failed | 8 passed (13)`.
+
+The failing tests were:
+
+- `does not clear a newer session when a stale callback resolves false after logout`: expected no `removeItem` calls, received the three SDK OAuth storage removals.
+- `does not clear a newer session when a stale callback rejects after logout`: expected no `removeItem` calls, received the three SDK OAuth storage removals.
+- `does not clear a current session when a stale callback resolves false after unmount`: expected no `removeItem` calls, received the three SDK OAuth storage removals.
+- `does not clear a current session when a stale callback rejects after unmount`: expected no `removeItem` calls, received the three SDK OAuth storage removals.
+- `does not complete the same in-flight callback again after provider remount`: expected the remounted SDK `completeOAuth` mock not to be called, but it was called once.
+
+Focused GREEN command:
+
+```bash
+npm test -- --run src/hooks/useAuth.test.tsx
+```
+
+Exact output summary: exit 0; `Test Files 1 passed (1)` and `Tests 13 passed (13)`.
+
+### Final Verification
+
+```bash
+npm test
+```
+
+Exact output summary: exit 0; `Test Files 5 passed (5)` and `Tests 21 passed (21)`.
+
+```bash
+npm run lint
+```
+
+Exact output summary: exit 0; `61 problems (0 errors, 61 warnings)`, with `0 errors and 4 warnings potentially fixable with the --fix option.` The warnings are pre-existing and outside this scoped fix.
+
+```bash
+npm run build
+```
+
+Exact output summary: exit 0; `447 modules transformed`; output includes `dist/assets/index-D28h0AMJ.js 770.10 kB | gzip: 223.01 kB`; `built in 1.54s`. Vite emitted its existing advisory for chunks larger than 500 kB.
+
+```bash
+git diff --check
+```
+
+Exit 0 with no output.
+
+### Fix Round 2 Files Changed
+
+- `ProgramIntegrity360/PI360CodedApp/src/hooks/useAuth.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/hooks/useAuth.test.tsx`
+- `.superpowers/sdd/2026-08-06-pi360-coded-app-implementation/task-3-report.md`
+
+### Self-Review And Concerns
+
+- Confirmed no code path reads, parses, decodes, logs, or persists token storage. Invalid-callback and logout paths only remove known SDK-owned storage keys.
+- Confirmed active false/rejected callbacks preserve the existing recoverable `Authentication failed` state and clear storage, while stale false/rejected callbacks do neither.
+- Confirmed valid callbacks preserve unrelated URL parameters and active callbacks dismiss their shared entry only after callback URL cleanup.
+- The callback-registry hash is a non-secret correlation key and has a bounded 60-second lifetime. It prevents duplicate completion without retaining token values; a hash collision is theoretically possible but exceptionally unlikely for this demo's single callback flow.
+- No UiPath cloud operations or pushes were run.

@@ -25,13 +25,15 @@ type AuthProviderProps = {
 };
 
 type CallbackCompletion = {
-  sdk: UiPath;
   result: Promise<boolean>;
+  timeoutId: ReturnType<typeof setTimeout>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const defaultSdkFactory: SdkFactory = (config) => new UiPath(config);
+const CALLBACK_COMPLETION_TTL_MS = 60_000;
+const callbackCompletions = new Map<string, CallbackCompletion>();
 
 function clearOAuthSession(clientId?: string) {
   if (clientId) {
@@ -48,6 +50,46 @@ function removeOAuthCallbackParameters() {
   window.history.replaceState(window.history.state, '', `${callbackUrl.pathname}${callbackUrl.search}${callbackUrl.hash}`);
 }
 
+function getCallbackCompletionKey(clientId?: string) {
+  const callbackIdentity = `${clientId || ''}\u0000${window.location.href}`;
+  let hash = 2_166_136_261;
+
+  for (let index = 0; index < callbackIdentity.length; index += 1) {
+    hash ^= callbackIdentity.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
+  }
+
+  return (hash >>> 0).toString(36);
+}
+
+function getCallbackCompletion(key: string, callbackSdk: UiPath): Promise<boolean> {
+  const existing = callbackCompletions.get(key);
+  if (existing) {
+    return existing.result;
+  }
+
+  const result = Promise.resolve().then(() => callbackSdk.completeOAuth());
+  const timeoutId = setTimeout(() => {
+    const completion = callbackCompletions.get(key);
+    if (completion?.result === result) {
+      callbackCompletions.delete(key);
+    }
+  }, CALLBACK_COMPLETION_TTL_MS);
+
+  callbackCompletions.set(key, { result, timeoutId });
+  return result;
+}
+
+function dismissCallbackCompletion(key: string) {
+  const completion = callbackCompletions.get(key);
+  if (!completion) {
+    return;
+  }
+
+  clearTimeout(completion.timeoutId);
+  callbackCompletions.delete(key);
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({
   children,
   config,
@@ -60,17 +102,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const authGenerationRef = useRef(0);
-  const callbackCompletionRef = useRef<CallbackCompletion | null>(null);
-
-  const getCallbackCompletion = (callbackSdk: UiPath): Promise<boolean> => {
-    if (callbackCompletionRef.current?.sdk === callbackSdk) {
-      return callbackCompletionRef.current.result;
-    }
-
-    const result = Promise.resolve().then(() => callbackSdk.completeOAuth());
-    callbackCompletionRef.current = { sdk: callbackSdk, result };
-    return result;
-  };
 
   useEffect(() => {
     let active = true;
@@ -97,24 +128,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       setError(null);
 
       if (sdk.isInOAuthCallback()) {
+        const callbackKey = getCallbackCompletionKey(config.clientId);
         let completed: boolean;
         try {
-          completed = await getCallbackCompletion(sdk);
+          completed = await getCallbackCompletion(callbackKey, sdk);
         } catch {
-          clearOAuthSession(config.clientId);
-          failAuthentication();
-          if (isCurrent()) {
-            setIsLoading(false);
+          if (!isCurrent()) {
+            return;
           }
+
+          clearOAuthSession(config.clientId);
+          dismissCallbackCompletion(callbackKey);
+          failAuthentication();
+          setIsLoading(false);
           return;
         }
 
         if (!completed) {
-          clearOAuthSession(config.clientId);
-          failAuthentication();
-          if (isCurrent()) {
-            setIsLoading(false);
+          if (!isCurrent()) {
+            return;
           }
+
+          clearOAuthSession(config.clientId);
+          dismissCallbackCompletion(callbackKey);
+          failAuthentication();
+          setIsLoading(false);
           return;
         }
 
@@ -123,6 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         }
 
         removeOAuthCallbackParameters();
+        dismissCallbackCompletion(callbackKey);
       }
 
       if (!isCurrent()) {
@@ -180,7 +219,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
 
   const logout = () => {
     authGenerationRef.current += 1;
-    callbackCompletionRef.current = null;
     clearOAuthSession(config.clientId);
 
     setIsAuthenticated(false);
