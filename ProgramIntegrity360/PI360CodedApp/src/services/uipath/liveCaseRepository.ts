@@ -525,14 +525,16 @@ export class LiveCaseRepository implements CaseRepository {
   private readonly cases: Cases;
   private readonly caseInstances: CaseInstances;
   private readonly tasks: Tasks;
+  private readonly config: LiveCaseRepositoryConfig;
 
   constructor(
     sdk: UiPath,
-    private readonly config: LiveCaseRepositoryConfig,
+    config: LiveCaseRepositoryConfig,
   ) {
     this.cases = new Cases(sdk);
     this.caseInstances = new CaseInstances(sdk);
     this.tasks = new Tasks(sdk);
+    this.config = config;
   }
 
   async listCases(): Promise<readonly DeepReadonly<CaseSummary>[]> {
