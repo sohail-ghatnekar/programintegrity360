@@ -1,6 +1,6 @@
 {
-  "scope": "PIMS DataFabric.Schema.Read DataFabric.Data.Read DataFabric.Data.Write OR.Tasks OR.Tasks.Read OR.Tasks.Write OR.Buckets.Read OR.Execution OR.Execution.Read OR.Folders OR.Jobs OR.Jobs.Read ConversationalAgents Traces.Api OR.Users.Read",
-  "clientId": "",
+  "scope": "PIMS OR.Execution OR.Execution.Read OR.Tasks OR.Buckets OR.Folders OR.Jobs ConversationalAgents Traces.Api DataFabric.Schema.Read DataFabric.Data.Read DataFabric.Data.Write",
+  "clientId": "273853c1-c3bc-4767-98a6-61ca821bd530",
   "orgName": "uipathlabs",
   "tenantName": "Playground",
   "baseUrl": "https://staging.api.uipath.com",
