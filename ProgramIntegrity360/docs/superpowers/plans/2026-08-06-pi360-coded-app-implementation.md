@@ -11,6 +11,7 @@
 ## Global Constraints
 
 - Modify only `ProgramIntegrity360/PI360CodedApp` plus repository documentation and Git metadata.
+- Optimize for a reliable, visually complete demo. Do not add production hardening unless it prevents the demo from breaking or misrepresenting UiPath state; expect live case/task contracts to need adjustment after those artifacts are fully published.
 - Use the Apollo Wind package and Apollo Vertex design principles from `https://github.com/UiPath/apollo-ui`.
 - The two demo-switchable roles are `investigator` and `supervisor`; switching roles never bypasses UiPath permissions.
 - Mirror exactly six case stages: Alert intake and triage, Evidence acquisition and validation, Investigation and case management, Provider response, Supervisor review and approval, Closure and monitoring.
