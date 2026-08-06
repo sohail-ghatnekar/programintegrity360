@@ -58,6 +58,10 @@ type CursorResponse<T> = readonly T[] | {
   readonly hasNextPage?: boolean;
   readonly nextCursor?: PaginationCursor;
 };
+type CursorCollection<T> = {
+  readonly items: T[];
+  readonly complete: boolean;
+};
 
 function deepFreeze<T>(value: T): DeepReadonly<T> {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -104,7 +108,7 @@ async function collectCursorPages<T>(
   loadPage: (cursor?: PaginationCursor) => Promise<CursorResponse<T>>,
   warnings: string[],
   options: { throwOnFirstPageFailure?: boolean } = {},
-): Promise<T[]> {
+): Promise<CursorCollection<T>> {
   const items: T[] = [];
   const seenCursors = new Set<string>();
   let cursor: PaginationCursor | undefined;
@@ -122,25 +126,25 @@ async function collectCursorPages<T>(
           warnings,
           `Stopped ${label} pagination after ${page} pages because ${errorMessage(reason)}; partial data was preserved.`,
         );
-        return items;
+        return { items, complete: false };
       }
       addWarning(warnings, `Unable to load ${label}: ${errorMessage(reason)}.`);
-      return items;
+      return { items, complete: false };
     }
 
     items.push(...itemsOf(response));
     if (!('hasNextPage' in response) || !response.hasNextPage) {
-      return items;
+      return { items, complete: true };
     }
 
     const nextCursor = response.nextCursor;
     if (!nextCursor?.value) {
       addWarning(warnings, `Stopped ${label} pagination because the SDK response omitted the next cursor.`);
-      return items;
+      return { items, complete: false };
     }
     if (seenCursors.has(nextCursor.value)) {
       addWarning(warnings, `Stopped ${label} pagination after a repeated cursor; partial data was preserved.`);
-      return items;
+      return { items, complete: false };
     }
 
     seenCursors.add(nextCursor.value);
@@ -148,7 +152,7 @@ async function collectCursorPages<T>(
   }
 
   addWarning(warnings, `Stopped ${label} pagination after ${MAX_CURSOR_PAGES} pages; partial data was preserved.`);
-  return items;
+  return { items, complete: false };
 }
 
 function isCompletedInstance(instance: PartialCaseInstance): boolean {
@@ -507,6 +511,16 @@ function emptyWorkspace(summary: CaseSummary): CaseWorkspaceModel {
   };
 }
 
+export class RepositoryOperationError extends Error {
+  readonly warnings: readonly string[];
+
+  constructor(message: string, warnings: readonly string[]) {
+    super(message);
+    this.name = 'RepositoryOperationError';
+    this.warnings = Object.freeze([...warnings]);
+  }
+}
+
 export class LiveCaseRepository implements CaseRepository {
   private readonly cases: Cases;
   private readonly caseInstances: CaseInstances;
@@ -540,9 +554,21 @@ export class LiveCaseRepository implements CaseRepository {
     caseId: string,
   ): Promise<RepositoryOperationResult<CaseWorkspaceSnapshot>> {
     const warnings: string[] = [];
-    const { process, instances } = await this.discoverInstances(warnings);
+    const { process, instances, complete } = await this.discoverInstances(warnings);
     const instance = instances.find((candidate) => text(candidate.instanceId, '') === caseId);
     if (!instance) {
+      if (!complete) {
+        throw new RepositoryOperationError(
+          `Unable to verify UiPath case instance ${caseId} because case instance discovery was truncated before the instance could be confirmed`,
+          warnings,
+        );
+      }
+      if (warnings.length > 0) {
+        throw new RepositoryOperationError(
+          `Unable to verify UiPath case instance ${caseId} from the folder-scoped discovery response`,
+          warnings,
+        );
+      }
       throw new Error(`UiPath case instance not found: ${caseId}`);
     }
 
@@ -586,9 +612,15 @@ export class LiveCaseRepository implements CaseRepository {
     caseId: string,
   ): Promise<RepositoryOperationResult<TaskRefreshSnapshot>> {
     const warnings: string[] = [];
-    const { instances } = await this.discoverInstances(warnings);
+    const { instances, complete } = await this.discoverInstances(warnings);
     const instance = instances.find((candidate) => text(candidate.instanceId, '') === caseId);
     if (!instance) {
+      if (!complete || warnings.length > 0) {
+        throw new RepositoryOperationError(
+          `Unable to verify UiPath case instance ${caseId} from the folder-scoped discovery response`,
+          warnings,
+        );
+      }
       throw new Error(`UiPath case instance not found: ${caseId}`);
     }
 
@@ -610,6 +642,7 @@ export class LiveCaseRepository implements CaseRepository {
   private async discoverInstances(warnings: string[]): Promise<{
     process: PartialCaseProcess;
     instances: PartialCaseInstance[];
+    complete: boolean;
   }> {
     const configuredFolderKey = this.requiredFolderKey();
     const processes = itemsOf<PartialCaseProcess>(await this.cases.getAll());
@@ -642,7 +675,7 @@ export class LiveCaseRepository implements CaseRepository {
       warnings,
       { throwOnFirstPageFailure: true },
     );
-    const instances = discoveredInstances.filter((instance) => {
+    const instances = discoveredInstances.items.filter((instance) => {
       const instanceFolderKey = text(instance.folderKey, '');
       const instanceId = text(instance.instanceId, 'unknown instance');
       if (!instanceFolderKey) {
@@ -662,7 +695,7 @@ export class LiveCaseRepository implements CaseRepository {
       return true;
     });
 
-    return { process, instances };
+    return { process, instances, complete: discoveredInstances.complete };
   }
 
   private requiredFolderKey(): string {
@@ -673,30 +706,32 @@ export class LiveCaseRepository implements CaseRepository {
     return folderKey;
   }
 
-  private collectCaseTasks(caseId: string, warnings: string[]): Promise<PartialTask[]> {
-    return collectCursorPages<PartialTask>(
+  private async collectCaseTasks(caseId: string, warnings: string[]): Promise<PartialTask[]> {
+    const result = await collectCursorPages<PartialTask>(
       'case tasks',
       (cursor) => this.caseInstances.getActionTasks(caseId, cursor
         ? { pageSize: SDK_PAGE_SIZE, cursor }
         : { pageSize: SDK_PAGE_SIZE }),
       warnings,
     );
+    return result.items;
   }
 
-  private collectFolderTasks(warnings: string[]): Promise<PartialTask[]> {
+  private async collectFolderTasks(warnings: string[]): Promise<PartialTask[]> {
     if (this.config.folderId === null) {
       addWarning(warnings, 'Unable to load folder tasks: configured folder ID is unavailable.');
-      return Promise.resolve([]);
+      return [];
     }
 
     const folderId = this.config.folderId;
-    return collectCursorPages<PartialTask>(
+    const result = await collectCursorPages<PartialTask>(
       'folder tasks',
       (cursor) => this.tasks.getAll(cursor
         ? { folderId, pageSize: SDK_PAGE_SIZE, cursor }
         : { folderId, pageSize: SDK_PAGE_SIZE }),
       warnings,
     );
+    return result.items;
   }
 
   private async settleValue<T>(

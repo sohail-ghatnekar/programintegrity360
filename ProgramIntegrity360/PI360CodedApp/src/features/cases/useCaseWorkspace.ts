@@ -3,7 +3,10 @@ import type { UiPath } from '@uipath/uipath-typescript/core';
 import { getUiPathRuntimeConfig } from '../../config/uipath';
 import type { UiPathRuntimeConfig } from '../../config/uipath';
 import { useOptionalAuth } from '../../hooks/useAuth';
-import { LiveCaseRepository } from '../../services/uipath/liveCaseRepository';
+import {
+  LiveCaseRepository,
+  RepositoryOperationError,
+} from '../../services/uipath/liveCaseRepository';
 import type {
   LiveCaseRepositoryConfig,
   RepositoryOperationResult,
@@ -38,6 +41,10 @@ const defaultLiveRepositoryFactory: LiveRepositoryFactory = (sdk, config) => (
 
 function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : 'Unknown UiPath service error';
+}
+
+function errorWarnings(reason: unknown): readonly string[] {
+  return reason instanceof RepositoryOperationError ? reason.warnings : [];
 }
 
 function portalOriginFromPlatformBase(platformBaseUrl: string): string {
@@ -164,10 +171,11 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
     } catch (reason) {
       if (currentRequest !== requestId.current) return;
       setWorkspace(null);
-      setWarnings([
+      setWarnings([...new Set([
         ...caseWarnings,
+        ...errorWarnings(reason),
         `Unable to load live UiPath case data: ${errorMessage(reason)}.`,
-      ]);
+      ])]);
       setStatus('error');
     }
   }, [liveConfig.caseProcessName, liveRepository]);

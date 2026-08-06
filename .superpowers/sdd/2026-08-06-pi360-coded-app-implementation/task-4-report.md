@@ -270,3 +270,68 @@ All 61 lint warnings remain outside Task 4 files. The existing 770.19 kB bundle-
 ### Remaining Concerns
 
 No new Task 4 concerns were introduced. The Action Center route and unsupported PI360 domain-record limitations documented above remain follow-up items for their owning tasks.
+
+## Fix Round 3
+
+### Finding Addressed
+
+- Cursor collection now returns both collected items and an explicit completeness flag. A partial page set can still support rendering/listing verified items, but it cannot support a definitive selected-instance absence decision.
+- `loadWorkspaceWithWarnings()` now throws `RepositoryOperationError` when truncated or warning-bearing discovery cannot verify the requested case. The error carries an immutable copy of current-operation warnings and uses an accurate verification failure message instead of `instance not found`.
+- `refreshTasksWithWarnings()` applies the same warning-preserving verification contract.
+- The hook extracts structured repository warnings from rejected operations, merges them with prior list warnings without duplicates, and retains the operation error message in its error state.
+- Added a combined hook/repository regression test where initial listing finds the case, workspace re-discovery loads a different first page, page two fails, and the UI receives both the PIMS outage/truncation warning and a non-definitive verification error.
+
+### RED Evidence
+
+```text
+npm test -- liveCaseRepository.test.ts
+Test Files 1 failed (1)
+Tests 1 failed | 29 passed (30)
+```
+
+The new combined test received only `UiPath case instance not found: active-instance`; the current page-two outage warning was absent.
+
+### GREEN Evidence
+
+```text
+npm test -- liveCaseRepository.test.ts
+Test Files 1 passed (1)
+Tests 30 passed (30)
+
+npx tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler \
+  --lib ES2022,DOM,DOM.Iterable --types vite/client --jsx react-jsx --strict \
+  --skipLibCheck --allowImportingTsExtensions --verbatimModuleSyntax \
+  src/services/uipath/collection.ts \
+  src/services/uipath/actionCenterUrl.ts \
+  src/services/uipath/liveCaseRepository.ts \
+  src/features/cases/useCaseWorkspace.ts
+Exit 0
+```
+
+### Final Verification
+
+```text
+npm test
+Test Files 7 passed (7)
+Tests 55 passed (55)
+
+npm run lint
+0 errors, 61 warnings
+
+npm run build
+TypeScript and Vite build passed; 447 modules transformed.
+```
+
+All 61 lint warnings remain outside Task 4 files. The existing 770.19 kB bundle-size advisory remains unchanged. No cloud, publish, deploy, push, or other remote operation was run.
+
+### Self-Review
+
+- Confirmed complete CaseInstances discovery still returns a definitive not-found error when the requested ID is genuinely absent.
+- Confirmed first-page failures still propagate their original error directly.
+- Confirmed later-page failure, missing cursor, repeated cursor, and page-cap exits all mark discovery incomplete.
+- Confirmed structured warnings are copied and frozen, remain operation-local, and survive the hook rejection path.
+- Confirmed the hook deduplicates prior list warnings, rejected-operation warnings, and its user-facing error message.
+
+### Remaining Concerns
+
+No new Task 4 concerns were introduced. The previously documented Action Center route and unsupported PI360 domain-record limitations remain follow-up items for their owning tasks.

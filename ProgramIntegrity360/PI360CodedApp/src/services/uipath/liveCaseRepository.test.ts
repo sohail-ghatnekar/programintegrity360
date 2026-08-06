@@ -731,6 +731,36 @@ describe('useCaseWorkspace', () => {
     expect(result.current.warnings.join(' ')).not.toContain('No instances found');
   });
 
+  it('preserves workspace rediscovery truncation when the selected case is on the failed page', async () => {
+    authState.current = { isAuthenticated: true, isLoading: false, sdk: {} as UiPath };
+    sdkMocks.instancesGetAll
+      .mockResolvedValueOnce({ items: [activeInstance], hasNextPage: false })
+      .mockResolvedValueOnce({
+        items: [{ ...activeInstance, instanceId: 'other-instance' }],
+        hasNextPage: true,
+        nextCursor: { value: 'workspace-instances-page-2' },
+      })
+      .mockRejectedValueOnce(new Error('PIMS workspace page two unavailable'));
+    const configuredOptions = hookOptions({
+      listCases: vi.fn(),
+      loadWorkspace: vi.fn(),
+      refreshTasks: vi.fn(),
+    });
+    const options = {
+      demoRepository: configuredOptions.demoRepository,
+      runtimeConfig: configuredOptions.runtimeConfig,
+    };
+
+    const { result } = renderHook(() => useCaseWorkspace(options));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.warnings).toEqual([
+      'Stopped case instances pagination after 1 pages because PIMS workspace page two unavailable; partial data was preserved.',
+      'Unable to load live UiPath case data: Unable to verify UiPath case instance active-instance because case instance discovery was truncated before the instance could be confirmed.',
+    ]);
+    expect(result.current.warnings.join(' ')).not.toContain('instance not found');
+  });
+
   it('shows an authenticated failure until retry succeeds', async () => {
     authState.current = { isAuthenticated: true, isLoading: false, sdk: {} as UiPath };
     const workspace = liveWorkspace();
