@@ -125,10 +125,16 @@ const DEMO_CASE_WORKSPACE = deepFreeze<CaseWorkspaceModel>({
   caseTasks: withDemoSource<Omit<CaseTaskModel, keyof SourceMetadata>>([
     { id: 1002, folderId: 987654, type: 'App', title: 'Investigator review - reconciliation and narrative', priority: 'High', status: 'Pending', assignee: 'inv.taylor', sla: 'Due soon', gated: false, stageLabel: 'Investigation and case management', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1002', createdAt: '2026-07-24T11:10:00Z' },
     { id: 1003, folderId: 987654, type: 'App', title: 'Supervisor approval - refer for audit and recovery', priority: 'High', status: 'Unassigned', assignee: '-', sla: 'Due soon', gated: true, stageLabel: 'Supervisor review and approval', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1003', createdAt: '2026-07-28T14:30:00Z' },
-  ], 'action-center-task'),
+  ], 'action-center-task').map((task, index) => ({
+    ...task,
+    sourceUpdatedAt: ['2026-07-29T13:45:00Z', '2026-07-29T13:50:00Z'][index],
+  })),
   folderTasks: withDemoSource<Omit<CaseTaskModel, keyof SourceMetadata>>([
     { id: 1001, folderId: 987654, type: 'Form', title: 'Validate low-confidence extraction - DOC-SN-0414', priority: 'Medium', status: 'Pending', assignee: 'inv.taylor', sla: 'On time', gated: false, stageLabel: 'Evidence acquisition and validation', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1001', createdAt: '2026-07-23T08:20:00Z' },
-  ], 'action-center-task'),
+  ], 'action-center-task').map((task) => ({
+    ...task,
+    sourceUpdatedAt: '2026-07-29T13:40:00Z',
+  })),
   executionTimeline: [
     { id: 'ACT-0001', timestamp: '2026-07-22 09:12', source: 'maestro', severity: 'info', status: 'Case created', summary: 'Opened from alert ALERT-CA-2026-7781.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0001' },
     { id: 'ACT-0002', timestamp: '2026-07-22 10:41', source: 'maestro', severity: 'info', status: 'Signal computed', summary: 'Computed RS-01 through RS-05.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0002' },

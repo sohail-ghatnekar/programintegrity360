@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -130,6 +130,52 @@ test('keeps the demo assistant next task as a non-completable preview', async ()
   expect(screen.queryByTitle(`Action Center task ${workspace.caseTasks[0].id}`)).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /complete task/i })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: `Open task ${workspace.caseTasks[0].id} in Action Center` })).not.toBeInTheDocument();
+});
+
+test('retains task status observations across refreshes and resets them for a different case', async () => {
+  const firstWorkspace = createDemoCaseWorkspace();
+  let workspace = firstWorkspace;
+  vi.mocked(useCaseWorkspace).mockImplementation(() => ({
+    cases: [workspace.case],
+    workspace,
+    status: 'demo',
+    warnings: [],
+    refresh: vi.fn(),
+    useDemoData: vi.fn(),
+    selectCase: vi.fn(),
+  }));
+
+  const user = userEvent.setup();
+  const view = render(<App />);
+  await user.click(screen.getByRole('button', { name: 'Case workspace' }));
+  await user.click(screen.getByRole('tab', { name: 'Activity' }));
+  expect(await screen.findByText(/Task 1002.+is Pending/)).toBeInTheDocument();
+
+  workspace = {
+    ...firstWorkspace,
+    caseTasks: firstWorkspace.caseTasks.map((task) => (
+      task.id === 1002
+        ? { ...task, status: 'Completed' as const, sourceUpdatedAt: '2026-08-06T16:00:00Z' }
+        : task
+    )),
+  };
+  view.rerender(<App />);
+
+  expect(await screen.findByText(/Task 1002.+is Pending/)).toBeInTheDocument();
+  expect(await screen.findByText(/Task 1002.+is Completed/)).toBeInTheDocument();
+
+  workspace = {
+    ...firstWorkspace,
+    sourceId: 'demo-case-workspace:CASE-2',
+    case: { ...firstWorkspace.case, id: 'CASE-2', sourceId: 'case:CASE-2' },
+    caseTasks: [{ ...firstWorkspace.caseTasks[0], id: 2001, sourceId: 'task:2001' }],
+  };
+  view.rerender(<App />);
+
+  await waitFor(() => {
+    expect(screen.queryByText(/Task 1002/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Task 2001.+is Pending/)).toBeInTheDocument();
+  });
 });
 
 test('refreshes case tasks, stages, and timeline once after Tasks API confirms completion', async () => {

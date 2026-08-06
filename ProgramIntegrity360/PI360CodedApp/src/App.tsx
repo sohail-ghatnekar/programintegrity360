@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from './app/AppShell';
 import { getUiPathAuthSetup, getUiPathConfigurationError } from './config/uipath';
-import { ActivityLog, buildTaskActivityEvents } from './features/activity/activityLog';
+import { ActivityLog, updateTaskActivityHistory } from './features/activity/activityLog';
+import type { TaskActivityHistory } from './features/activity/activityLog';
 import { RecordAssistantPanel } from './features/assistant/RecordAssistantPanel';
 import { useRecordAssistant } from './features/assistant/useRecordAssistant';
 import type { CaseTaskModel, DeepReadonly, DemoRole } from './features/cases/types';
@@ -29,6 +30,10 @@ function ProgramIntegrityWorkbench() {
   const refreshWorkspace = caseWorkspace.refresh;
   const [role, setRole] = useState<DemoRole>('investigator');
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [taskActivityHistory, setTaskActivityHistory] = useState<TaskActivityHistory>({
+    caseId: null,
+    events: [],
+  });
   const [taskSelection, setTaskSelection] = useState<{
     task: DeepReadonly<CaseTaskModel>;
     scope: TaskScope;
@@ -49,19 +54,42 @@ function ProgramIntegrityWorkbench() {
       : undefined
   ), [auth.isAuthenticated, auth.sdk, caseWorkspace.status]);
   const assistant = useRecordAssistant(caseWorkspace.workspace, assistantOpen);
+  const currentTaskActivityHistory = useMemo(() => (
+    caseWorkspace.workspace
+      ? updateTaskActivityHistory(
+        taskActivityHistory,
+        caseWorkspace.workspace.caseTasks,
+        caseWorkspace.workspace.case.id,
+      )
+      : { caseId: null, events: [] }
+  ), [caseWorkspace.workspace, taskActivityHistory]);
+
+  useEffect(() => {
+    if (!caseWorkspace.workspace) {
+      setTaskActivityHistory((current) => (
+        current.caseId === null && current.events.length === 0
+          ? current
+          : { caseId: null, events: [] }
+      ));
+      return;
+    }
+
+    setTaskActivityHistory((current) => updateTaskActivityHistory(
+      current,
+      caseWorkspace.workspace?.caseTasks ?? [],
+      caseWorkspace.workspace?.case.id ?? '',
+    ));
+  }, [caseWorkspace.workspace]);
+
   const activityEvents = useMemo(() => {
     if (!caseWorkspace.workspace) return [];
 
     return new ActivityLog([
       caseWorkspace.workspace.executionTimeline,
-      buildTaskActivityEvents(
-        caseWorkspace.workspace.caseTasks,
-        caseWorkspace.workspace.case.id,
-        caseWorkspace.workspace.sourceUpdatedAt,
-      ),
+      currentTaskActivityHistory.events,
       assistant.activityEvents,
     ]).events;
-  }, [assistant.activityEvents, caseWorkspace.workspace]);
+  }, [assistant.activityEvents, caseWorkspace.workspace, currentTaskActivityHistory.events]);
   const refreshCaseWorkspace = useCallback(async () => {
     const result = await refreshWorkspace();
     if (!result.ok) throw result.error;

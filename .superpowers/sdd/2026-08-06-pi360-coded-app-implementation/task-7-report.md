@@ -80,3 +80,18 @@ Review-fix TDD evidence:
 - Full `npm test -- --reporter=dot`: 13 files, 129 tests passed.
 - `npm run lint`: passed with 0 errors and the same 53 legacy warnings.
 - `npm run build`: passed with only the existing Vite large-chunk advisory.
+
+## Final Rereview Fixes
+
+Addressed both findings from `task-7-rereview.md`:
+
+1. Serialized raw-payload text no longer relies on matching JSON structure. Once a `rawPayload`, `raw_payload`, or `raw-payload` marker is found, the sanitizer conservatively replaces the entire remainder of the message. Focused cases cover nested braces, nested arrays, multiline objects, string payloads, and trailing text.
+2. Task observations now use each task's existing `sourceUpdatedAt`, which the live adapter derives from task last-modified, completed, or created timestamps. Demo tasks now also carry task-specific source timestamps. A per-case accumulator retains distinct observed statuses across workspace refreshes and resets when the selected case changes; it does not create historical transition claims.
+
+Final rereview verification:
+
+- RED: 7 focused failures established the payload leakage and missing observation-history behavior.
+- GREEN: `npm test -- activityLog.test.ts App.test.tsx --reporter=dot` passed 17/17 tests.
+- Full `npm test -- --reporter=dot`: 13 files, 135 tests passed.
+- `npm run lint`: passed with 0 errors and the same 53 legacy warnings.
+- `npm run build`: passed with only the existing Vite large-chunk advisory.

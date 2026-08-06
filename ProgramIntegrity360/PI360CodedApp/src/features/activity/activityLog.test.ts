@@ -4,6 +4,7 @@ import {
   buildTaskActivityEvents,
   createActivityEvent,
   redactActivityData,
+  updateTaskActivityHistory,
 } from './activityLog';
 import type { ActivityEvent } from '../cases/types';
 import { createDemoCaseWorkspace } from '../cases/demoCase';
@@ -89,12 +90,16 @@ describe('activity data safety', () => {
     expect(safeEvent.summary).not.toContain('secret-');
   });
 
-  it('scrubs serialized raw payloads embedded in text', () => {
-    const safe = redactActivityData('Request failed rawPayload={"memberId":"MBR-1","secret":"private"}');
+  it.each([
+    'Request failed rawPayload={"member":{"id":"MBR-1"},"secret":"nested-secret"} trailing-secret',
+    'Request failed raw_payload=[{"memberId":"MBR-2"},["array-secret"]] trailing-array-secret',
+    'Request failed raw-payload:\n{\n  "member": { "id": "MBR-3" },\n  "secret": "multiline-secret"\n}\ntrailing-multiline-secret',
+    'Request failed rawPayload="string-secret" trailing-string-secret',
+  ])('conservatively redacts a serialized raw payload and everything after its marker', (unsafe) => {
+    const safe = redactActivityData(unsafe);
 
-    expect(safe).toContain('rawPayload=[REDACTED]');
-    expect(safe).not.toContain('MBR-1');
-    expect(safe).not.toContain('private');
+    expect(safe).toMatch(/^Request failed raw[_-]?payload[:=]\[REDACTED\]$/i);
+    expect(safe).not.toMatch(/MBR-|nested-secret|array-secret|multiline-secret|string-secret|trailing/i);
   });
 });
 
@@ -126,21 +131,61 @@ describe('ActivityLog', () => {
       .toEqual(['task-completed']);
   });
 
-  it('records current task states as observations at observation time instead of backdated transitions', () => {
+  it('records each current task state at its task-specific source update time', () => {
     const workspace = createDemoCaseWorkspace();
-    const observedAt = '2026-08-06T15:30:00.000Z';
-    const events = buildTaskActivityEvents(workspace.caseTasks, workspace.case.id, observedAt);
+    const events = buildTaskActivityEvents(workspace.caseTasks, workspace.case.id);
 
     expect(events).toHaveLength(workspace.caseTasks.length);
     expect(events.find((item) => item.taskId === 1002)).toMatchObject({
       source: 'task',
       status: 'observed:Pending',
-      timestamp: observedAt,
+      timestamp: workspace.caseTasks[0].sourceUpdatedAt,
       summary: expect.stringContaining('Observed current task state'),
       caseId: workspace.case.id,
     });
     expect(events.find((item) => item.taskId === 1003)).toMatchObject({ status: 'observed:Unassigned' });
     expect(events.every((item) => item.timestamp !== workspace.caseTasks[0].createdAt)).toBe(true);
     expect(events.some((item) => item.status === 'Completed')).toBe(false);
+  });
+
+  it('preserves distinct status observations for the selected case without inventing transitions', () => {
+    const workspace = createDemoCaseWorkspace();
+    const initial = updateTaskActivityHistory(
+      { caseId: null, events: [] },
+      workspace.caseTasks,
+      workspace.case.id,
+    );
+    const completedAt = '2026-08-06T16:00:00.000Z';
+    const refreshedTasks = workspace.caseTasks.map((task) => (
+      task.id === 1002
+        ? { ...task, status: 'Completed' as const, sourceUpdatedAt: completedAt }
+        : task
+    ));
+
+    const refreshed = updateTaskActivityHistory(initial, refreshedTasks, workspace.case.id);
+
+    expect(refreshed.events.filter((item) => item.taskId === 1002)).toEqual([
+      expect.objectContaining({ status: 'observed:Pending', timestamp: workspace.caseTasks[0].sourceUpdatedAt }),
+      expect.objectContaining({ status: 'observed:Completed', timestamp: completedAt }),
+    ]);
+    expect(refreshed.events.every((item) => !item.status.startsWith('transition:'))).toBe(true);
+  });
+
+  it('resets retained task observations when the selected case changes', () => {
+    const workspace = createDemoCaseWorkspace();
+    const firstCase = updateTaskActivityHistory(
+      { caseId: null, events: [] },
+      workspace.caseTasks,
+      workspace.case.id,
+    );
+    const secondCase = updateTaskActivityHistory(
+      firstCase,
+      [{ ...workspace.caseTasks[0], id: 2001, sourceId: 'task:2001' }],
+      'CASE-2',
+    );
+
+    expect(secondCase.caseId).toBe('CASE-2');
+    expect(secondCase.events.map((item) => item.taskId)).toEqual([2001]);
+    expect(secondCase.events.every((item) => item.caseId === 'CASE-2')).toBe(true);
   });
 });

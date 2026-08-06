@@ -134,8 +134,8 @@ export function buildCaseGrounding(workspace: CaseWorkspaceSnapshot): CaseGround
     assignee: task.assignee,
     gated: task.gated,
     correlationId: createActivityEvent({
-      id: `task:${task.id}:${task.status}`,
-      timestamp: task.createdAt,
+      id: `task-observation:${task.id}:${task.status}`,
+      timestamp: task.sourceUpdatedAt,
       source: 'task',
       severity: task.status === 'Unassigned' ? 'warning' : 'info',
       status: task.status,

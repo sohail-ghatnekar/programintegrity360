@@ -28,11 +28,15 @@ function isSensitiveKey(key: string): boolean {
 }
 
 function redactSensitiveText(value: string): string {
-  return value
+  const safeText = value
     .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [REDACTED]')
     .replace(/([?&](?:code|state|access[_-]?token|refresh[_-]?token|id[_-]?token)=)[^&\s]+/gi, '$1[REDACTED]')
-    .replace(/\b((?:access|refresh|id)[_-]?token=)[^&\s]+/gi, '$1[REDACTED]')
-    .replace(/\b(raw[_-]?payload)\s*[:=]\s*(?:\{[^}\r\n]*\}|\[[^\]\r\n]*\]|"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;]+)/gi, '$1=[REDACTED]');
+    .replace(/\b((?:access|refresh|id)[_-]?token=)[^&\s]+/gi, '$1[REDACTED]');
+  const payloadMarker = /\b(raw[\s_-]*payload)\b\s*([:=])\s*/i.exec(safeText);
+
+  if (!payloadMarker || payloadMarker.index === undefined) return safeText;
+
+  return `${safeText.slice(0, payloadMarker.index)}${payloadMarker[1]}${payloadMarker[2]}${REDACTED}`;
 }
 
 export function redactActivityData<T>(value: T): T {
@@ -134,16 +138,35 @@ export class ActivityLog {
 export function buildTaskActivityEvents(
   tasks: readonly DeepReadonly<CaseTaskModel>[],
   caseId: string,
-  observedAt = new Date().toISOString(),
 ): ActivityEvent[] {
-  return tasks.map((task) => createActivityEvent({
-    id: `task-observation:${task.id}:${task.status}`,
-    timestamp: observedAt,
-    source: 'task',
-    severity: task.status === 'Unassigned' ? 'warning' : 'info',
-    status: `observed:${task.status}`,
-    summary: `Observed current task state: Task ${task.id}, ${task.title}, is ${task.status}.`,
+  return tasks.map((task) => {
+    const observedAt = task.sourceUpdatedAt || task.createdAt;
+    return createActivityEvent({
+      id: `task-observation:${task.id}:${task.status}:${observedAt}`,
+      timestamp: observedAt,
+      source: 'task',
+      severity: task.status === 'Unassigned' ? 'warning' : 'info',
+      status: `observed:${task.status}`,
+      summary: `Observed current task state: Task ${task.id}, ${task.title}, is ${task.status}.`,
+      caseId,
+      taskId: task.id,
+    });
+  });
+}
+
+export type TaskActivityHistory = {
+  caseId: string | null;
+  events: readonly ActivityEvent[];
+};
+
+export function updateTaskActivityHistory(
+  history: TaskActivityHistory,
+  tasks: readonly DeepReadonly<CaseTaskModel>[],
+  caseId: string,
+): TaskActivityHistory {
+  const retained = history.caseId === caseId ? history.events : [];
+  return {
     caseId,
-    taskId: task.id,
-  }));
+    events: new ActivityLog([retained, buildTaskActivityEvents(tasks, caseId)]).events,
+  };
 }
