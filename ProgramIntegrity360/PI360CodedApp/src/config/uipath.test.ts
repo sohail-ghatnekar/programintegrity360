@@ -25,6 +25,7 @@ afterEach(() => {
 });
 
 it('reports missing local client ID without exposing credentials', () => {
+  vi.stubEnv('VITE_UIPATH_CLIENT_ID', '');
   const setup = getUiPathAuthSetup({ clientId: '', orgName: 'uipathlabs', tenantName: 'Playground' });
 
   expect(setup.missingFields).toContain('VITE_UIPATH_CLIENT_ID');
