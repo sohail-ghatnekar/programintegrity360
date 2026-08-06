@@ -5,6 +5,7 @@ import { DecisionWorkspace } from './DecisionWorkspace';
 import { EvidenceWorkspace } from './EvidenceWorkspace';
 import { RoleWorkQueue } from './RoleWorkQueue';
 import { StageJourney } from './StageJourney';
+import { isOpenSupervisorApprovalTask } from './caseTaskScope';
 import type { CaseWorkspaceSnapshot, DemoRole } from './types';
 
 type CaseWorkspaceProps = {
@@ -13,10 +14,9 @@ type CaseWorkspaceProps = {
 };
 
 export function CaseWorkspace({ workspace, role }: CaseWorkspaceProps) {
-  const allTasks = [...workspace.caseTasks, ...workspace.folderTasks];
   const pendingEvidence = workspace.evidenceDocuments.filter((document) => document.status === 'Needs review').length;
   const flaggedClaims = workspace.claims.filter((claim) => claim.status === 'Flagged').length;
-  const supervisorTasks = allTasks.filter((task) => task.gated && task.status !== 'Completed').length;
+  const supervisorTasks = workspace.caseTasks.filter(isOpenSupervisorApprovalTask).length;
   const activeStageIndex = workspace.stages.findIndex((stage) => stage.status === 'active');
 
   return (
@@ -38,7 +38,7 @@ export function CaseWorkspace({ workspace, role }: CaseWorkspaceProps) {
         </div>
       </div>
 
-      <StageJourney stages={workspace.stages} tasks={allTasks} />
+      <StageJourney stages={workspace.stages} tasks={workspace.caseTasks} />
 
       <section aria-labelledby="role-workbench-heading" className="mt-5 border-y border-slate-200 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,7 +68,7 @@ export function CaseWorkspace({ workspace, role }: CaseWorkspaceProps) {
             )}
           </div>
         </div>
-        <RoleWorkQueue role={role} tasks={allTasks} />
+        <RoleWorkQueue role={role} caseTasks={workspace.caseTasks} />
       </section>
 
       <Tabs defaultValue="overview" className="mt-5 min-w-0">

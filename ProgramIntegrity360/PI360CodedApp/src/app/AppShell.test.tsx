@@ -52,6 +52,28 @@ const replacementWorkspace = {
   },
 } as CaseWorkspaceSnapshot;
 
+const newestWorkspace = {
+  ...workspace,
+  sourceId: 'demo-case-workspace:PI-PCS-2026-0100',
+  case: {
+    ...workspace.case,
+    id: 'PI-PCS-2026-0100',
+    title: 'Northstar Personal Care - newest review',
+    sourceId: 'case:PI-PCS-2026-0100',
+  },
+} as CaseWorkspaceSnapshot;
+
+const demoRecoveryWorkspace = {
+  ...workspace,
+  sourceId: 'demo-case-workspace:PI-DEMO-2026-0001',
+  case: {
+    ...workspace.case,
+    id: 'PI-DEMO-2026-0001',
+    title: 'Demo recovery workspace',
+    sourceId: 'case:PI-DEMO-2026-0001',
+  },
+} as CaseWorkspaceSnapshot;
+
 const emptyWorkspace = {
   ...workspace,
   claims: [],
@@ -59,6 +81,28 @@ const emptyWorkspace = {
   executionTimeline: [],
   caseTasks: [],
   folderTasks: [],
+} as CaseWorkspaceSnapshot;
+
+const misleadingInvestigatorApp = {
+  ...workspace.caseTasks[0],
+  id: 1901,
+  title: 'Investigator App task with stale gate metadata',
+  gated: true,
+  stageLabel: 'Investigation and case management',
+  sourceId: 'action-center-task:1901',
+};
+
+const unrelatedFolderGate = {
+  ...workspace.caseTasks[1],
+  id: 2901,
+  title: 'Folder-wide supervisor approval for another case',
+  sourceId: 'action-center-task:2901',
+};
+
+const taskSafetyWorkspace = {
+  ...workspace,
+  caseTasks: [misleadingInvestigatorApp, ...workspace.caseTasks],
+  folderTasks: [...workspace.folderTasks, unrelatedFolderGate],
 } as CaseWorkspaceSnapshot;
 
 function DelayedSelectionHarness({ selection }: { selection: Promise<void> }) {
@@ -74,6 +118,75 @@ function DelayedSelectionHarness({ selection }: { selection: Promise<void> }) {
   return (
     <AppShell
       cases={[workspace.case, replacementWorkspace.case]}
+      workspace={selectedWorkspace}
+      status="demo"
+      warnings={[]}
+      identity={{ isAuthenticated: true, name: 'Authenticated UiPath user', email: null }}
+      role="investigator"
+      onRoleChange={vi.fn()}
+      onSelectCase={selectCase}
+      onRefresh={vi.fn()}
+      onUseDemoData={vi.fn()}
+    />
+  );
+}
+
+function SelectionRecoveryHarness({
+  retry,
+  demoReplacement,
+}: {
+  retry: Promise<void>;
+  demoReplacement: Promise<void>;
+}) {
+  const [selectedWorkspace, setSelectedWorkspace] = useState<CaseWorkspaceSnapshot>(workspace);
+  const [status, setStatus] = useState<'loading' | 'live' | 'demo'>('live');
+
+  return (
+    <AppShell
+      cases={[workspace.case, replacementWorkspace.case]}
+      workspace={selectedWorkspace}
+      status={status}
+      warnings={['Live case source returned a partial warning.']}
+      identity={{ isAuthenticated: true, name: 'Authenticated UiPath user', email: null }}
+      role="investigator"
+      onRoleChange={vi.fn()}
+      onSelectCase={async () => {
+        throw new Error('Selection failed');
+      }}
+      onRefresh={async () => {
+        setStatus('loading');
+        await retry;
+        setSelectedWorkspace(workspace);
+        setStatus('live');
+      }}
+      onUseDemoData={async () => {
+        setStatus('loading');
+        await demoReplacement;
+        setSelectedWorkspace(demoRecoveryWorkspace);
+        setStatus('demo');
+      }}
+    />
+  );
+}
+
+function OverlappingSelectionHarness({
+  olderSelection,
+  newerSelection,
+}: {
+  olderSelection: Promise<void>;
+  newerSelection: Promise<void>;
+}) {
+  const [selectedWorkspace, setSelectedWorkspace] = useState<CaseWorkspaceSnapshot>(workspace);
+
+  const selectCase = async (caseId: string) => {
+    const selection = caseId === replacementWorkspace.case.id ? olderSelection : newerSelection;
+    await selection;
+    setSelectedWorkspace(caseId === replacementWorkspace.case.id ? replacementWorkspace : newestWorkspace);
+  };
+
+  return (
+    <AppShell
+      cases={[workspace.case, replacementWorkspace.case, newestWorkspace.case]}
       workspace={selectedWorkspace}
       status="demo"
       warnings={[]}
@@ -132,6 +245,76 @@ describe('AppShell', () => {
 
     expect(await screen.findByText(replacementWorkspace.case.title)).toBeInTheDocument();
     expect(screen.queryByRole('status', { name: `Loading case ${replacementWorkspace.case.id}` })).not.toBeInTheDocument();
+  });
+
+  test('keeps a selection error exclusive and recovers through terminal retry', async () => {
+    const user = userEvent.setup();
+    let resolveRetry!: () => void;
+    const retry = new Promise<void>((resolve) => {
+      resolveRetry = resolve;
+    });
+    render(<SelectionRecoveryHarness retry={retry} demoReplacement={Promise.resolve()} />);
+
+    await user.click(screen.getByRole('button', { name: `Open case ${replacementWorkspace.case.id}` }));
+
+    expect(await screen.findByRole('heading', { name: 'Case data unavailable' })).toBeInTheDocument();
+    expect(screen.getByText(`Unable to open case ${replacementWorkspace.case.id}.`)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Data source notice' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(screen.getByRole('status', { name: 'Refreshing case data' })).toBeInTheDocument();
+    expect(screen.queryByText(workspace.case.title)).not.toBeInTheDocument();
+
+    await act(async () => resolveRetry());
+
+    expect(await screen.findByText(workspace.case.title)).toBeInTheDocument();
+    expect(screen.queryByText('Selected case unavailable')).not.toBeInTheDocument();
+  });
+
+  test('clears failed live selection intent when demo data replaces the workspace', async () => {
+    const user = userEvent.setup();
+    let resolveDemo!: () => void;
+    const demoReplacement = new Promise<void>((resolve) => {
+      resolveDemo = resolve;
+    });
+    render(<SelectionRecoveryHarness retry={Promise.resolve()} demoReplacement={demoReplacement} />);
+
+    await user.click(screen.getByRole('button', { name: `Open case ${replacementWorkspace.case.id}` }));
+    expect(await screen.findByRole('heading', { name: 'Case data unavailable' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Use demo data' }));
+    expect(screen.getByRole('status', { name: 'Loading demo case data' })).toBeInTheDocument();
+
+    await act(async () => resolveDemo());
+
+    expect(await screen.findByText(demoRecoveryWorkspace.case.title)).toBeInTheDocument();
+    expect(screen.queryByText('Selected case unavailable')).not.toBeInTheDocument();
+  });
+
+  test('keeps the newest case when overlapping selections resolve in reverse order', async () => {
+    const user = userEvent.setup();
+    let resolveOlder!: () => void;
+    let resolveNewer!: () => void;
+    const olderSelection = new Promise<void>((resolve) => {
+      resolveOlder = resolve;
+    });
+    const newerSelection = new Promise<void>((resolve) => {
+      resolveNewer = resolve;
+    });
+    render(<OverlappingSelectionHarness olderSelection={olderSelection} newerSelection={newerSelection} />);
+
+    await user.click(screen.getByRole('button', { name: `Open case ${replacementWorkspace.case.id}` }));
+    await user.click(screen.getByRole('button', { name: 'Command center' }));
+    await user.click(screen.getByRole('button', { name: `Open case ${newestWorkspace.case.id}` }));
+
+    expect(screen.getByRole('status', { name: `Loading case ${newestWorkspace.case.id}` })).toBeInTheDocument();
+    await act(async () => resolveNewer());
+    expect(await screen.findByText(newestWorkspace.case.title)).toBeInTheDocument();
+
+    await act(async () => resolveOlder());
+    expect(screen.getByText(newestWorkspace.case.title)).toBeInTheDocument();
+    expect(screen.queryByText(replacementWorkspace.case.title)).not.toBeInTheDocument();
+    expect(screen.queryByText('Selected case unavailable')).not.toBeInTheDocument();
   });
 
   test('renders loading, terminal error, and stable empty command states exclusively', () => {
@@ -347,8 +530,8 @@ describe('AppShell', () => {
     const investigatorQueue = screen.getByRole('region', { name: 'Investigator work queue' });
 
     expect(within(investigatorQueue).getByText('Investigator review - reconciliation and narrative')).toBeInTheDocument();
-    expect(within(investigatorQueue).getByText('Validate low-confidence extraction - DOC-SN-0414')).toBeInTheDocument();
-    expect(within(investigatorQueue).getAllByText('Pending')).toHaveLength(2);
+    expect(within(investigatorQueue).queryByText('Validate low-confidence extraction - DOC-SN-0414')).not.toBeInTheDocument();
+    expect(within(investigatorQueue).getAllByText('Pending')).toHaveLength(1);
     expect(within(investigatorQueue).queryByText('Supervisor approval - refer for audit and recovery')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: 'Supervisor' }));
@@ -363,6 +546,31 @@ describe('AppShell', () => {
     expect(within(dispositions).getByText('Supervisor task 1003')).toBeInTheDocument();
     expect(within(dispositions).getByText('Supervisor approval - refer for audit and recovery')).toBeInTheDocument();
     expect(within(dispositions).getByText('Refer for audit')).toBeInTheDocument();
+  });
+
+  test('uses only qualifying case tasks for current-case queues, progress, and supervisor disposition', async () => {
+    const user = userEvent.setup();
+    render(<CaseWorkspace workspace={taskSafetyWorkspace} role="supervisor" />);
+
+    const workbench = screen.getByRole('region', { name: 'Supervisor workbench' });
+    expect(within(workbench).getByText('Approvals').nextElementSibling).toHaveTextContent('1');
+
+    const supervisorQueue = screen.getByRole('region', { name: 'Supervisor work queue' });
+    expect(within(supervisorQueue).getByText('Supervisor approval - refer for audit and recovery')).toBeInTheDocument();
+    expect(within(supervisorQueue).queryByText(misleadingInvestigatorApp.title)).not.toBeInTheDocument();
+    expect(within(supervisorQueue).queryByText(unrelatedFolderGate.title)).not.toBeInTheDocument();
+
+    const supervisorStage = within(screen.getByRole('list', { name: 'Case stages' }))
+      .getAllByTestId('case-stage')
+      .find((stage) => within(stage).queryByRole('heading', { name: 'Supervisor review and approval' }));
+    expect(supervisorStage).toBeDefined();
+    expect(within(supervisorStage!).getByText('0/1 tasks complete')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Decisions' }));
+    const dispositions = screen.getByRole('region', { name: 'Supervisor dispositions' });
+    expect(within(dispositions).getByText('Supervisor task 1003')).toBeInTheDocument();
+    expect(within(dispositions).queryByText(misleadingInvestigatorApp.title)).not.toBeInTheDocument();
+    expect(within(dispositions).queryByText(unrelatedFolderGate.title)).not.toBeInTheDocument();
   });
 
   test('does not present supervisor dispositions without a gated task record', async () => {

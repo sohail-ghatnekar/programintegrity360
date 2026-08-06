@@ -296,3 +296,118 @@ The 61 lint warnings remain pre-existing and outside Task 5 files. Vite retains 
 1. No browser backend was available for screenshot inspection in this session. Component semantics, responsive utility presence, production output, and local HTTP serving were verified; Task 8 still owns full Playwright visual coverage.
 2. The production JavaScript chunk is now 559.39 kB and retains Vite's existing advisory. Task Center and assistant boundaries remain the natural future code-splitting points.
 3. The existing 61 lint warnings remain outside Task 5 scope.
+
+## Fix Round 2
+
+### Findings Addressed
+
+- Selection failures now suppress data-source warning alerts and remain recoverable through the terminal Retry and Use demo data controls.
+- Header, mobile-sheet, terminal retry, and terminal demo actions all run through the same shell operation sequence. Recovery invalidates older selection operations, clears failed intent/pending/error state, and masks the prior workspace while replacement data loads.
+- The shell retains the newest accepted workspace for the active intent, so an older parent callback resolving last cannot replace the latest rendered case.
+- Command Center remains usable while a prior selection is pending, allowing a newer case intent to supersede it.
+- Current-case stage progress, role metrics, investigator/supervisor queues, and disposition context consume only the model's root `workspace.caseTasks` collection. `workspace.folderTasks` remains available for Task 6 but is not rendered as current-case work.
+- A supervisor approval record must be open, gated, case-associated, and use the canonical `Supervisor review and approval` stage. Completed, investigator-stage, non-gated, and folder-wide records cannot drive supervisor approvals or dispositions.
+- `liveCaseRepository.ts` was not modified; the existing case/folder task separation was sufficient.
+
+### RED And GREEN
+
+Recovery and concurrency RED:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 failed (1)
+Tests 3 failed | 14 passed (17)
+Failures: selection warning coexisted with terminal error; demo recovery had no shell loading/replacement state; pending selection blocked a newer case choice.
+```
+
+Recovery and concurrency GREEN:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 17 passed (17)
+```
+
+Case-task safety RED:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 failed (1)
+Tests 2 failed | 16 passed (18)
+Failures: folder investigator task appeared in the current-case queue; unrelated gated records inflated supervisor approvals.
+```
+
+Case-task safety GREEN:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 18 passed (18)
+```
+
+### Component Structure
+
+- `app/AppShell.tsx`: one sequence counter now governs selection, refresh, and demo replacement; recovery pending state and accepted-workspace retention keep shell content exclusive and ordered.
+- `features/cases/caseTaskScope.ts`: shared open-task and canonical supervisor-approval predicates.
+- `features/cases/CaseWorkspace.tsx`: passes only `caseTasks` to stage and role work and derives supervisor approvals from the shared predicate.
+- `features/cases/RoleWorkQueue.tsx`: explicit `caseTasks` API and role/open-state filtering.
+- `features/cases/DecisionWorkspace.tsx`: selects only a qualifying open supervisor approval from `caseTasks`.
+
+### Files
+
+Created:
+
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/caseTaskScope.ts`
+
+Modified:
+
+- `ProgramIntegrity360/PI360CodedApp/src/app/AppShell.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/app/AppShell.test.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/CaseWorkspace.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/DecisionWorkspace.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/RoleWorkQueue.tsx`
+- `.superpowers/sdd/2026-08-06-pi360-coded-app-implementation/task-5-report.md`
+
+### Final Verification
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 18 passed (18)
+
+npm test
+Test Files 8 passed (8)
+Tests 73 passed (73)
+
+npm run lint
+0 errors, 61 warnings
+
+npm run build
+TypeScript and Vite build passed; 5322 modules transformed.
+dist/assets/index-CINOupNE.css 168.00 kB, gzip 26.72 kB
+dist/assets/index-CWB4McEA.js 560.22 kB, gzip 169.67 kB
+
+git diff --check
+Exit 0
+
+curl -I http://127.0.0.1:5174/
+HTTP/1.1 200 OK
+```
+
+The 61 lint warnings remain pre-existing and outside Task 5 files. Vite retains its existing chunk-size advisory above 500 kB.
+
+### Self-Review
+
+- Confirmed selection, retry, and demo replacement increment the same operation sequence; stale completion handlers cannot clear current shell pending/error state.
+- Confirmed selection errors render without the data-source warning alert and both terminal recovery commands receive wrapped actions.
+- Confirmed recovery clears the failed selection intent before replacement begins, so a successful demo workspace with a different case ID renders normally.
+- Confirmed reverse resolution preserves the newest accepted case and never renders the older workspace or Selected case unavailable.
+- Confirmed no Task 5 operational component reads `folderTasks`; the test fixture includes unrelated investigator and gated supervisor folder records to enforce this boundary.
+- Confirmed supervisor eligibility requires `gated`, non-completed status, and exact canonical supervisor stage metadata on a case task.
+- Confirmed no iframe, task completion action, Task Center implementation, repository edit, cloud operation, or push was introduced.
+
+### Concerns
+
+1. The shell's accepted-workspace guard complements the existing repository request sequencing. Future Task 6 task refreshes should preserve that request ordering rather than depending only on presentation-layer retention.
+2. The production JavaScript chunk is 560.22 kB and retains Vite's existing advisory. Task Center and assistant boundaries remain future code-splitting points.
+3. The existing 61 lint warnings remain outside Task 5 scope.

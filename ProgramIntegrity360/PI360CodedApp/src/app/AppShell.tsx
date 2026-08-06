@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Alert,
@@ -42,6 +42,7 @@ import type { CaseSummary, CaseWorkspaceSnapshot, DemoRole } from '../features/c
 import type { CaseWorkspaceStatus } from '../features/cases/useCaseWorkspace';
 
 type ShellView = 'command' | 'workspace';
+type RecoveryOperation = 'refresh' | 'demo';
 
 export type AppShellIdentity = {
   isAuthenticated: boolean;
@@ -93,13 +94,22 @@ export function AppShell({
   const [selectionIntent, setSelectionIntent] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [recoveryPending, setRecoveryPending] = useState<RecoveryOperation | null>(null);
   const selectionRequest = useRef(0);
+  const acceptedWorkspace = useRef<CaseWorkspaceSnapshot | null>(workspace);
+
+  useEffect(() => {
+    if (!selectionIntent || workspace?.case.id === selectionIntent) {
+      acceptedWorkspace.current = workspace;
+    }
+  }, [selectionIntent, workspace]);
 
   const openCase = async (caseId: string) => {
     const request = ++selectionRequest.current;
     setSelectionIntent(caseId);
     setPendingSelection(caseId);
     setSelectionError(null);
+    setRecoveryPending(null);
     setActiveView('workspace');
     try {
       await onSelectCase(caseId);
@@ -113,6 +123,36 @@ export function AppShell({
       }
     }
   };
+
+  const runRecovery = async (operation: RecoveryOperation, action: () => void | Promise<void>) => {
+    const request = ++selectionRequest.current;
+    setSelectionIntent(null);
+    setPendingSelection(null);
+    setSelectionError(null);
+    setRecoveryPending(operation);
+
+    try {
+      await action();
+    } catch {
+      if (request === selectionRequest.current) {
+        setSelectionError(operation === 'refresh'
+          ? 'Unable to refresh case data.'
+          : 'Unable to load demo case data.');
+      }
+    } finally {
+      if (request === selectionRequest.current) {
+        setRecoveryPending(null);
+      }
+    }
+  };
+
+  const refreshCaseData = () => runRecovery('refresh', onRefresh);
+  const useDemoCaseData = () => runRecovery('demo', onUseDemoData);
+  const visibleWorkspace = selectionIntent
+    && workspace?.case.id !== selectionIntent
+    && acceptedWorkspace.current?.case.id === selectionIntent
+    ? acceptedWorkspace.current
+    : workspace;
 
   const sourceLabel = status === 'live'
     ? 'Live UiPath'
@@ -166,7 +206,7 @@ export function AppShell({
                     variant="ghost"
                     className="mt-1 w-full justify-start gap-2"
                     aria-label="Refresh case data"
-                    onClick={() => void onRefresh()}
+                    onClick={() => void refreshCaseData()}
                   >
                     <RefreshCw aria-hidden="true" className="h-4 w-4" />
                     Refresh case data
@@ -198,7 +238,7 @@ export function AppShell({
                   size="icon"
                   aria-label="Refresh case data"
                   className="hidden shrink-0 min-[400px]:inline-flex"
-                  onClick={() => void onRefresh()}
+                  onClick={() => void refreshCaseData()}
                 >
                   <RefreshCw aria-hidden="true" className="h-4 w-4" />
                 </Button>
@@ -248,7 +288,7 @@ export function AppShell({
           </aside>
 
           <main className="min-w-0 px-3 py-4 sm:px-5 lg:px-6">
-            {warnings.length > 0 && status !== 'error' && (
+            {warnings.length > 0 && status !== 'error' && !selectionError && !recoveryPending && (
               <Alert className="mb-4">
                 <TriangleAlert aria-hidden="true" className="h-4 w-4" />
                 <AlertTitle>Data source notice</AlertTitle>
@@ -271,16 +311,17 @@ export function AppShell({
             <ShellContent
               activeView={activeView}
               cases={cases}
-              workspace={workspace}
+              workspace={visibleWorkspace}
               status={status}
               warnings={warnings}
               role={role}
               selectionIntent={selectionIntent}
               pendingSelection={pendingSelection}
               selectionError={selectionError}
+              recoveryPending={recoveryPending}
               onSelectCase={openCase}
-              onRefresh={onRefresh}
-              onUseDemoData={onUseDemoData}
+              onRefresh={refreshCaseData}
+              onUseDemoData={useDemoCaseData}
             />
           </main>
 
@@ -300,6 +341,7 @@ type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 
   selectionIntent: string | null;
   pendingSelection: string | null;
   selectionError: string | null;
+  recoveryPending: RecoveryOperation | null;
   onSelectCase: (caseId: string) => void | Promise<void>;
 };
 
@@ -313,18 +355,39 @@ function ShellContent({
   selectionIntent,
   pendingSelection,
   selectionError,
+  recoveryPending,
   onSelectCase,
   onRefresh,
   onUseDemoData,
 }: ShellContentProps) {
-  if (status === 'error' || selectionError) {
+  if (selectionError) {
     return (
       <TerminalDataError
-        messages={selectionError ? [selectionError] : warnings}
+        messages={[selectionError]}
         onRefresh={onRefresh}
         onUseDemoData={onUseDemoData}
       />
     );
+  }
+
+  if (recoveryPending) {
+    return <WorkspaceSkeleton label={recoveryPending === 'refresh' ? 'Refreshing case data' : 'Loading demo case data'} />;
+  }
+
+  if (status === 'error') {
+    return (
+      <TerminalDataError
+        messages={warnings}
+        onRefresh={onRefresh}
+        onUseDemoData={onUseDemoData}
+      />
+    );
+  }
+
+  if (activeView === 'command' && pendingSelection) {
+    return cases.length === 0
+      ? <EmptyState label="No cases available" detail="No case records were returned by the current data source." icon={Inbox} />
+      : <CommandCenter cases={cases} selectedCaseId={workspace?.case.id} onSelectCase={onSelectCase} />;
   }
 
   if (pendingSelection) {

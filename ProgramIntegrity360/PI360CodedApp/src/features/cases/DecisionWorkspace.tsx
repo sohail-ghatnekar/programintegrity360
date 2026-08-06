@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle, Badge } from '@uipath/apollo-wind';
 import { AlertTriangle, CheckCircle2, Scale, ShieldCheck } from 'lucide-react';
+import { isOpenSupervisorApprovalTask } from './caseTaskScope';
 import type { CaseWorkspaceSnapshot, DemoRole } from './types';
 
 type DecisionWorkspaceProps = {
@@ -18,9 +19,7 @@ export function DecisionWorkspace({ workspace, role }: DecisionWorkspaceProps) {
   const decisionEvents = workspace.executionTimeline.filter((event) => (
     event.type === 'Decision' || event.type === 'Approval'
   ));
-  const supervisorTask = [...workspace.caseTasks, ...workspace.folderTasks]
-    .find((task) => task.gated && task.status !== 'Completed')
-    ?? [...workspace.caseTasks, ...workspace.folderTasks].find((task) => task.gated);
+  const supervisorTask = workspace.caseTasks.find(isOpenSupervisorApprovalTask);
 
   if (role === 'supervisor') {
     return (

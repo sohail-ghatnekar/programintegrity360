@@ -1,10 +1,11 @@
 import { Badge } from '@uipath/apollo-wind';
 import { ClipboardList } from 'lucide-react';
+import { isOpenSupervisorApprovalTask, isOpenTask } from './caseTaskScope';
 import type { CaseTaskModel, DeepReadonly, DemoRole } from './types';
 
 type RoleWorkQueueProps = {
   role: DemoRole;
-  tasks: readonly DeepReadonly<CaseTaskModel>[];
+  caseTasks: readonly DeepReadonly<CaseTaskModel>[];
 };
 
 const statusVariant = {
@@ -13,9 +14,11 @@ const statusVariant = {
   Unassigned: 'warning',
 } as const;
 
-export function RoleWorkQueue({ role, tasks }: RoleWorkQueueProps) {
+export function RoleWorkQueue({ role, caseTasks }: RoleWorkQueueProps) {
   const roleLabel = role === 'supervisor' ? 'Supervisor' : 'Investigator';
-  const workRecords = tasks.filter((task) => task.gated === (role === 'supervisor'));
+  const workRecords = caseTasks.filter((task) => role === 'supervisor'
+    ? isOpenSupervisorApprovalTask(task)
+    : !task.gated && isOpenTask(task));
 
   return (
     <section aria-labelledby="role-work-queue-heading" className="mt-3 border-t border-slate-200 pt-3">
