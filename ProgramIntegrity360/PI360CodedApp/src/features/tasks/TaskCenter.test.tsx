@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDemoCaseWorkspace } from '../cases/demoCase';
@@ -17,7 +17,10 @@ function task(overrides: Partial<CaseTaskModel>): CaseTaskModel {
   } as CaseTaskModel;
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe('TaskCenter', () => {
   it('keeps This Case and Folder Inbox records in separate tabs', async () => {
@@ -180,5 +183,37 @@ describe('TaskDrawer', () => {
     const fallback = screen.getByRole('button', { name: 'Open in Action Center' });
     expect(fallback).toBeDisabled();
     expect(within(screen.getByRole('status', { name: 'Action Center link unavailable' })).getByText(/not published/i)).toBeInTheDocument();
+  });
+
+  it('keeps completion confirmed and retries only the workspace refresh after callback failure', async () => {
+    vi.useFakeTimers();
+    const onCompleted = vi.fn().mockRejectedValue(new Error('case workspace unavailable'));
+    const onRefreshWorkspace = vi.fn().mockResolvedValue(undefined);
+    const readTaskStatus = vi.fn().mockResolvedValue({ status: 'Completed' });
+    render(
+      <TaskDrawer
+        task={caseTask}
+        taskScope="case"
+        open
+        onClose={vi.fn()}
+        onCompleted={onCompleted}
+        onRefreshWorkspace={onRefreshWorkspace}
+        readTaskStatus={readTaskStatus}
+      />,
+    );
+
+    await act(() => vi.advanceTimersByTimeAsync(3000));
+
+    expect(screen.getByRole('status', { name: 'Task completed' })).toBeInTheDocument();
+    expect(screen.queryByTitle(`Action Center task ${caseTask.id}`)).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/workspace refresh failed/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry workspace refresh' }));
+    await act(async () => Promise.resolve());
+
+    expect(onCompleted).toHaveBeenCalledTimes(1);
+    expect(onRefreshWorkspace).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status', { name: 'Task completed' })).toBeInTheDocument();
+    expect(screen.queryByTitle(`Action Center task ${caseTask.id}`)).not.toBeInTheDocument();
+    expect(screen.getByText('Workspace refreshed.')).toBeInTheDocument();
   });
 });

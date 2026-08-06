@@ -90,6 +90,7 @@ function ProgramIntegrityWorkbench() {
           onCompleted={async () => {
             await caseWorkspace.refresh();
           }}
+          onRefreshWorkspace={caseWorkspace.refresh}
           readTaskStatus={taskStatusReader}
         />
       )}

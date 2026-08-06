@@ -164,3 +164,81 @@ All 61 lint warnings are pre-existing and outside Task 6 files. Vite retains its
 2. The in-app browser runtime reported no available browser backend. Automated component behavior, production compilation, generated CSS, and local HTTP serving were verified, but screenshot-level desktop/mobile visual QA was not available in this session.
 3. The production JavaScript chunk is now 571.75 kB and retains Vite's existing size advisory. Task 8 should evaluate splitting after Task 7 establishes the assistant boundary.
 4. Dormant legacy components contain other iframe source code, but they are not imported into the active shell composition. A future cleanup can remove those legacy surfaces once the replacement app is complete.
+
+## Fix Round 1
+
+### Findings Addressed
+
+- Tasks API `Completed` is now a terminal session state before workspace refresh starts. A rejected `onCompleted` callback cannot resume polling, recreate the iframe, or revoke the visible confirmation.
+- Task completion and workspace refresh have separate state. Automatic `onCompleted(taskId)` is invoked once; a failed refresh shows its actual error and exposes a separate `onRefreshWorkspace()` retry command that does not re-invoke `onCompleted`.
+- Each open task owns a generation-scoped session with a fixed 3-second interval, an independent 120-second deadline timer, and a single in-flight read guard.
+- Every awaited read rechecks generation, terminal state, and deadline. A late `Completed` response after timeout or close is ignored.
+- Read failures are classified from `status`, `statusCode`, `response.status`, or a small message fallback. Network, 408, 429, and 5xx failures retry; 400, 401, 403, 404, authentication, forbidden, validation, invalid, and not-found failures stop polling.
+- An initially absent reader leaves the original session alive. If a reader arrives later, it starts on the next existing 3-second interval without resetting the deadline. Reader replacement does not reset completed, timed-out, or terminal state.
+- React StrictMode coverage confirms one polling read and one completion callback.
+
+### RED / GREEN
+
+Focused RED before the polling rewrite:
+
+```text
+npm test -- useTaskPolling.test.ts TaskCenter.test.tsx
+Test Files 2 failed (2)
+Tests 5 failed | 21 passed (26)
+Failures: callback rejection changed completed to retrying; terminal 401 retried;
+late reader never started; in-flight read remained polling after 120000ms;
+drawer had no confirmed-completion workspace retry path.
+```
+
+Focused GREEN including stage and shell regressions:
+
+```text
+npm test -- useTaskPolling.test.ts TaskCenter.test.tsx App.test.tsx liveCaseRepository.test.ts
+Test Files 4 passed (4)
+Tests 65 passed (65)
+
+npx eslint src/features/tasks/useTaskPolling.ts src/features/tasks/useTaskPolling.test.ts \
+  src/features/tasks/TaskDrawer.tsx src/features/tasks/TaskCenter.test.tsx src/App.tsx
+Exit 0
+```
+
+### Final Verification
+
+```text
+npm test
+Test Files 10 passed (10)
+Tests 107 passed (107)
+
+npm run lint
+0 errors, 61 warnings
+
+npm run build
+TypeScript and Vite build passed; 5325 modules transformed.
+dist/assets/index-DdFDszxB.css 169.18 kB, gzip 26.96 kB
+dist/assets/index-DCcRb2jd.js 575.44 kB, gzip 174.07 kB
+```
+
+The 61 lint warnings remain pre-existing and outside Task 6 files. Vite retains its chunk-size advisory above 500 kB.
+
+### Files
+
+Modified:
+
+- `ProgramIntegrity360/PI360CodedApp/src/features/tasks/useTaskPolling.ts`
+- `ProgramIntegrity360/PI360CodedApp/src/features/tasks/useTaskPolling.test.ts`
+- `ProgramIntegrity360/PI360CodedApp/src/features/tasks/TaskDrawer.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/tasks/TaskCenter.test.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/App.tsx`
+- `.superpowers/sdd/2026-08-06-pi360-coded-app-implementation/task-6-report.md`
+
+### Self-Review
+
+- Confirmed callback failures update only workspace-refresh state; task state remains terminal `completed`.
+- Confirmed manual workspace retry uses a distinct callback and never increments `onCompleted` beyond one invocation.
+- Confirmed deadline timer registration is independent of polling and remains active while a read hangs.
+- Confirmed fixed interval ticks skip while a read is in flight, preventing overlap without shifting the session cadence.
+- Confirmed explicit post-await guards reject late success, failure, and completion state mutations.
+- Confirmed terminal and transient classification tests cover all three common status locations plus message fallback.
+- Confirmed direct-link fallback, one conditional iframe, completed-task no-iframe behavior, folder scope labeling, and stage metadata refresh tests remain green.
+- Confirmed the pre-existing implementation-plan modification remains unrelated and unstaged.
+- Confirmed no cloud, push, publish, deploy, or task-completion operation was performed.

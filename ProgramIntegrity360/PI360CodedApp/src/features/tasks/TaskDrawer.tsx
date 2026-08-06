@@ -20,6 +20,7 @@ type TaskDrawerProps = {
   open: boolean;
   onClose: () => void;
   onCompleted: (taskId: number) => void | Promise<void>;
+  onRefreshWorkspace?: () => void | Promise<void>;
   readTaskStatus?: TaskStatusReader;
 };
 
@@ -29,6 +30,7 @@ export function TaskDrawer({
   open,
   onClose,
   onCompleted,
+  onRefreshWorkspace,
   readTaskStatus,
 }: TaskDrawerProps) {
   const [frameRevision, setFrameRevision] = useState(0);
@@ -38,6 +40,7 @@ export function TaskDrawer({
     open: open && task.status !== 'Completed',
     readTaskStatus,
     onCompleted,
+    onRefreshWorkspace,
   });
   const completed = task.status === 'Completed' || poll.state === 'completed';
   const hasTaskUrl = task.actionCenterUrl.trim().length > 0;
@@ -96,9 +99,28 @@ export function TaskDrawer({
 
         <div className="min-h-0 flex-1 overflow-auto bg-slate-50">
           {completed ? (
-            <div role="status" aria-label="Task completed" aria-live="polite" className="border-b border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
-              Tasks API confirmed this task is Completed. The refreshed status remains visible until this drawer closes.
-            </div>
+            <>
+              <div role="status" aria-label="Task completed" aria-live="polite" className="border-b border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
+                Tasks API confirmed this task is Completed. Completion remains confirmed until this drawer closes.
+              </div>
+              {poll.completionRefreshState === 'failed' && (
+                <div role="alert" className="border-b border-red-200 bg-red-50 px-5 py-4 text-sm text-red-950">
+                  <p>Task completion is confirmed, but the workspace refresh failed: {poll.completionRefreshError ?? 'Unknown workspace refresh error.'}</p>
+                  {poll.canRetryWorkspaceRefresh && (
+                    <Button type="button" size="sm" variant="outline" className="mt-3" onClick={() => void poll.retryWorkspaceRefresh()}>
+                      <RefreshCw aria-hidden="true" className="h-4 w-4" />
+                      Retry workspace refresh
+                    </Button>
+                  )}
+                </div>
+              )}
+              {poll.completionRefreshState === 'refreshing' && (
+                <div role="status" className="border-b border-slate-200 bg-white px-5 py-3 text-sm text-slate-700">Refreshing workspace...</div>
+              )}
+              {poll.completionRefreshState === 'succeeded' && (
+                <div className="border-b border-slate-200 bg-white px-5 py-3 text-sm text-slate-700">Workspace refreshed.</div>
+              )}
+            </>
           ) : poll.state === 'unavailable' ? (
             <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-950">
               Live task polling is unavailable for this demo or unpublished task. Use Action Center to confirm completion.
@@ -110,6 +132,10 @@ export function TaskDrawer({
           ) : poll.state === 'timed-out' ? (
             <div className="border-b border-slate-200 bg-white px-5 py-3 text-sm text-slate-700">
               Live polling stopped after two minutes. Open Action Center or close and reopen this task to check again.
+            </div>
+          ) : poll.state === 'terminal-unavailable' ? (
+            <div role="alert" className="border-b border-red-200 bg-red-50 px-5 py-3 text-sm text-red-950">
+              Live task status cannot be checked: {poll.error ?? 'Tasks API request is unavailable.'} Polling stopped.
             </div>
           ) : null}
 
