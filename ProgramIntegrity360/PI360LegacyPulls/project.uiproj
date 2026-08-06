@@ -1,0 +1,6 @@
+{
+  "Name": "PI360LegacyPulls",
+  "ProjectType": "Process",
+  "Description": "Program Integrity 360 legacy portal evidence pulls for care-management and EVV mock systems.",
+  "MainFile": "Main.xaml"
+}

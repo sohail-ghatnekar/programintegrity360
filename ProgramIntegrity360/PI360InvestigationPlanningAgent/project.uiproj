@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Agent",
+  "Name": "PI360InvestigationPlanningAgent",
+  "Description": "Recommends next investigative steps and human gates without executing decisions.",
+  "MainFile": null
+}

@@ -1,0 +1,52 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EvidenceSnapshotAutomation",
+    "kind": "process",
+    "type": "process",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "package",
+        "name": "PI360EvidenceSnapshotAutomation"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Process",
+      "name": "PI360EvidenceSnapshotAutomation",
+      "description": "Builds a deterministic evidence-completeness snapshot for case routing.",
+      "package": {
+        "key": "86dcc831-9532-40a1-9a96-309010314afc"
+      },
+      "packageName": "PI360EvidenceSnapshotAutomation",
+      "entryPointName": "Main.xaml",
+      "inputArguments": "{}",
+      "jobPriority": "Medium",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
+      "jobRecording": "Disabled",
+      "targetFrameworkValue": "Portable",
+      "duration": 40,
+      "frequency": 500,
+      "quality": 100,
+      "remoteControlAccess": "None",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180,
+      "tags": []
+    },
+    "locks": [],
+    "key": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+    "files": []
+  }
+}

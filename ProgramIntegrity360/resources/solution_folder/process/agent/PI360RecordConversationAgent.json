@@ -1,0 +1,39 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360RecordConversationAgent",
+    "kind": "process",
+    "type": "agent",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "2c65953d-0ff3-4ea7-adba-d6c56817ad72",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "package",
+        "name": "PI360RecordConversationAgent"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Agent",
+      "name": "PI360RecordConversationAgent",
+      "package": {
+        "key": "5ebc2453-4dca-4159-93f5-deaf778da54f"
+      },
+      "inputArguments": "{}",
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180
+    },
+    "locks": [],
+    "key": "78a50d04-e2a1-4a50-a51c-7cbb3f16ef4d",
+    "files": []
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360QuickRulesCodedAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "47fa13a5-3cc9-40ee-a687-b9a8fd53b216",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360QuickRulesCodedAgent"
+    },
+    "locks": [],
+    "key": "f94a79e7-44cd-42a6-ab3f-8164a63408cd",
+    "files": []
+  }
+}

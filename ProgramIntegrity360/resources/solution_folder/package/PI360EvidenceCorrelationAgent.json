@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EvidenceCorrelationAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "49768f19-d2bb-4abb-aad5-2701160b0392",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360EvidenceCorrelationAgent"
+    },
+    "locks": [],
+    "key": "0f60dc9b-ee5c-4380-b92d-a06689f8b19f",
+    "files": []
+  }
+}

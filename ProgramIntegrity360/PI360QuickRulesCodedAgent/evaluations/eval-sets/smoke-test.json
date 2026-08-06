@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "id": "smoke-test",
+  "name": "Quick Rules Smoke Test",
+  "description": "Basic deterministic checks for Program Integrity quick-rule routing.",
+  "evaluatorRefs": [
+    "JsonSimilarityEvaluator"
+  ],
+  "evaluations": [
+    {
+      "id": "test-1-provider-wait",
+      "name": "Provider response still pending",
+      "inputs": {
+        "case_id": "PI-PCS-2026-0041",
+        "current_stage": "Investigation",
+        "risk_score": 72,
+        "unsupported_units": 12,
+        "missing_evidence_count": 0,
+        "provider_response_needed": true,
+        "provider_response_received": false,
+        "supervisor_approved": false,
+        "proposed_action": "wait for provider response"
+      },
+      "evaluationCriterias": {
+        "JsonSimilarityEvaluator": {
+          "expectedOutput": {
+            "case_id": "PI-PCS-2026-0041",
+            "status": "blocked",
+            "recommended_stage": "ProviderResponse",
+            "blockers": [
+              "await_provider_response"
+            ],
+            "provider_wait_required": true,
+            "evidence_gap": false
+          }
+        }
+      }
+    },
+    {
+      "id": "test-2-clear-investigation",
+      "name": "Clear for case manager review",
+      "inputs": {
+        "case_id": "PI-PCS-2026-0042",
+        "current_stage": "Evidence",
+        "risk_score": 60,
+        "unsupported_units": 8,
+        "missing_evidence_count": 0,
+        "provider_response_needed": false,
+        "provider_response_received": true,
+        "supervisor_approved": false,
+        "proposed_action": "continue investigation"
+      },
+      "evaluationCriterias": {
+        "JsonSimilarityEvaluator": {
+          "expectedOutput": {
+            "case_id": "PI-PCS-2026-0042",
+            "status": "clear_for_case_manager",
+            "recommended_stage": "Investigation",
+            "blockers": [],
+            "provider_wait_required": false,
+            "evidence_gap": false
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360RecordConversationAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "2c65953d-0ff3-4ea7-adba-d6c56817ad72",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360RecordConversationAgent"
+    },
+    "locks": [],
+    "key": "5ebc2453-4dca-4159-93f5-deaf778da54f",
+    "files": []
+  }
+}

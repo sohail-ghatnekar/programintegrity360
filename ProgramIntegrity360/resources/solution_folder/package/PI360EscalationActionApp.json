@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EscalationActionApp",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "e0eab46c-4d80-4aac-8ef9-47644098ceaf",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360EscalationActionApp"
+    },
+    "locks": [],
+    "key": "90bf0179-33d4-484e-80f1-661a5bf2abe2",
+    "files": []
+  }
+}

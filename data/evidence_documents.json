@@ -1,0 +1,74 @@
+[
+  {
+    "doc_id": "DOC-TS-0416",
+    "case_id": "PI-PCS-2026-0041",
+    "doc_type": "Timesheet",
+    "source_system": "Provider portal upload",
+    "storage_uri": "buckets/pi-evidence/PI-PCS-2026-0041/timesheet_0416.pdf",
+    "extracted_fields": { "attendant": "Jordan Ellis", "member": "MBR-33915", "date": "2026-04-16", "time_in": "08:00", "time_out": "12:00", "supported_units": 16 },
+    "extraction_confidence": 0.71,
+    "validation_status": "Human-validated",
+    "validated_by": "inv.taylor",
+    "note": "Handwritten time_out low-confidence; investigator confirmed 12:00. Contradicts CLM-0503 (24 units)."
+  },
+  {
+    "doc_id": "DOC-TS-0519",
+    "case_id": "PI-PCS-2026-0041",
+    "doc_type": "Timesheet",
+    "source_system": "Provider portal upload",
+    "storage_uri": "buckets/pi-evidence/PI-PCS-2026-0041/timesheet_0519.pdf",
+    "extracted_fields": { "attendant": "Jordan Ellis", "member": "MBR-33915", "date": "2026-05-19", "time_in": "08:00", "time_out": "13:00", "supported_units": 20 },
+    "extraction_confidence": 0.88,
+    "validation_status": "Auto-confirmed",
+    "validated_by": null,
+    "note": "Contradicts CLM-0540 (24 units)."
+  },
+  {
+    "doc_id": "DOC-POC-33915",
+    "case_id": "PI-PCS-2026-0041",
+    "doc_type": "Plan of Care",
+    "source_system": "Legacy care-management system (RPA pull)",
+    "storage_uri": "buckets/pi-evidence/PI-PCS-2026-0041/poc_MBR-33915.pdf",
+    "extracted_fields": { "member": "MBR-33915", "authorized_units_per_day": 20, "authorized_units_per_week": 80, "service": "Personal Care", "effective": "2026-01-01", "expires": "2026-12-31" },
+    "extraction_confidence": 0.94,
+    "validation_status": "Auto-confirmed",
+    "validated_by": null,
+    "note": "Establishes the 20-unit/day authorization used by RS-03."
+  },
+  {
+    "doc_id": "DOC-SN-0414",
+    "case_id": "PI-PCS-2026-0041",
+    "doc_type": "Service Note",
+    "source_system": "Provider portal upload",
+    "storage_uri": "buckets/pi-evidence/PI-PCS-2026-0041/servicenote_0414.pdf",
+    "extracted_fields": { "member": "MBR-33915", "date": "2026-04-14", "narrative": "Assisted with morning bathing and breakfast; left at noon.", "documented_end": "12:00" },
+    "extraction_confidence": 0.83,
+    "validation_status": "Needs review",
+    "validated_by": null,
+    "note": "Service note narrative supports AM-only visit; relevant to overlap (RS-01) and CLM-0491."
+  },
+  {
+    "doc_id": "DOC-PP-2087",
+    "case_id": "PI-PCS-2026-0041",
+    "doc_type": "Personnel Packet",
+    "source_system": "Provider records request",
+    "storage_uri": "buckets/pi-evidence/PI-PCS-2026-0041/personnel_ATT-2087.pdf",
+    "extracted_fields": { "attendant": "Jordan Ellis", "credential_id": "PCA-556210", "credential_expiry": "2026-03-31", "training_ack_present": false, "background_check_attestation_present": false },
+    "extraction_confidence": 0.90,
+    "validation_status": "Human-validated",
+    "validated_by": "inv.taylor",
+    "note": "Feeds RS-05. Two required docs missing; certification lapsed."
+  },
+  {
+    "doc_id": "DOC-CORR-01",
+    "case_id": "PI-PCS-2026-0041",
+    "doc_type": "Correspondence",
+    "source_system": "Records-request inbox",
+    "storage_uri": "buckets/pi-evidence/PI-PCS-2026-0041/provider_response.pdf",
+    "extracted_fields": { "from": "Harbor Home Support Services", "received": "2026-07-28", "summary": "Provider states 04-16 visit extended to 14:00 due to member need; acknowledges cert renewal in progress.", "attachments": 1 },
+    "extraction_confidence": 0.86,
+    "validation_status": "Human-validated",
+    "validated_by": "inv.taylor",
+    "note": "Arrives during Stage 6 wait state; triggers reprocessing. Does not resolve EVV/timesheet mismatch for 04-16."
+  }
+]

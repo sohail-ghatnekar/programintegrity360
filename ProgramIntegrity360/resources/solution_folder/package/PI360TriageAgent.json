@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360TriageAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "d38cd7b3-689b-42c7-90b2-677dc8bd97e5",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360TriageAgent"
+    },
+    "locks": [],
+    "key": "a9e226dd-1ea4-4352-b71e-9c482d328736",
+    "files": []
+  }
+}

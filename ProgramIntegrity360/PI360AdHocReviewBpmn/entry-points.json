@@ -1,0 +1,59 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "/content/PI360AdHocReviewBpmn.bpmn#Event_Start",
+      "uniqueId": "653364ff-7770-494b-b2e3-9d0217d16635",
+      "type": "processorchestration",
+      "input": {
+        "type": "object",
+        "properties": {
+          "CaseId": {
+            "type": "string",
+            "default": "PI-PCS-2026-0041",
+            "description": "Program Integrity case identifier."
+          },
+          "ClaimsAvailable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Claims evidence is available for the review."
+          },
+          "EvvAvailable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Electronic visit verification evidence is available."
+          },
+          "PlanOfCareAvailable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Plan-of-care evidence is available."
+          },
+          "EnrollmentAvailable": {
+            "type": "boolean",
+            "default": true,
+            "description": "Provider enrollment evidence is available."
+          },
+          "ProviderPacketAvailable": {
+            "type": "boolean",
+            "default": true,
+            "description": "The provider response packet is available."
+          }
+        },
+        "required": [
+          "CaseId",
+          "ClaimsAvailable",
+          "EvvAvailable",
+          "PlanOfCareAvailable",
+          "EnrollmentAvailable",
+          "ProviderPacketAvailable"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {}
+      },
+      "displayName": "Manual trigger"
+    }
+  ]
+}

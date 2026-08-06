@@ -1,0 +1,62 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360CaseManagerAgent",
+    "kind": "process",
+    "type": "agent",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "72209049-a669-4dee-af0f-f67a87df1253",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "package",
+        "name": "PI360CaseManagerAgent"
+      }
+    ],
+    "runtimeDependencies": [
+      {
+        "bindingType": "app",
+        "bindingKey": "pi360-escalation-action-app",
+        "bindingValues": {
+          "name": {
+            "defaultValue": "pi360-escalation-action-app",
+            "isExpression": false
+          },
+          "folderPath": {
+            "defaultValue": "AMER Presales/Public Sector/ProgramIntegrity360",
+            "isExpression": false
+          }
+        },
+        "bindingMetadata": {
+          "bindingsVersion": "2.2",
+          "solutionsSupport": "true"
+        },
+        "resourceKind": "App",
+        "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+        "resourceName": "pi360-escalation-action-app",
+        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
+      }
+    ],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Agent",
+      "name": "PI360CaseManagerAgent",
+      "package": {
+        "key": "7767e490-7d90-4a12-80af-b567e63d4235"
+      },
+      "inputArguments": "{}",
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180
+    },
+    "locks": [],
+    "key": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+    "files": []
+  }
+}

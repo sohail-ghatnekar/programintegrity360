@@ -1,0 +1,82 @@
+{
+    "DocVersion": "1.0.0",
+    "StudioMinVersion": "2025.10.0",
+    "SolutionId": "6823638e-548b-4f95-3d6e-08deecbe0238",
+    "Projects": [
+        {
+            "Type": "CaseManagement",
+            "ProjectRelativePath": "PI360CaseManagement/project.uiproj",
+            "Id": "465532d2-519c-4823-b2f7-9e4ef9a76be7"
+        },
+        {
+            "Type": "Api",
+            "ProjectRelativePath": "PI360ApiWorkflows/project.uiproj",
+            "Id": "9dd25760-de4f-4b0b-bfc8-ecdbcd48f863"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360TriageAgent/project.uiproj",
+            "Id": "d38cd7b3-689b-42c7-90b2-677dc8bd97e5"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360EvidenceCorrelationAgent/project.uiproj",
+            "Id": "49768f19-d2bb-4abb-aad5-2701160b0392"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360InvestigationPlanningAgent/project.uiproj",
+            "Id": "f27c930e-42d5-4db7-8597-5c606122a15d"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360SummaryAgent/project.uiproj",
+            "Id": "734cac0b-a987-4ec4-8cd4-dc5d3b1e6d4c"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360RecordConversationAgent/project.uiproj",
+            "Id": "2c65953d-0ff3-4ea7-adba-d6c56817ad72"
+        },
+        {
+            "Type": "Flow",
+            "ProjectRelativePath": "PI360CaseManagerFlow/project.uiproj",
+            "Id": "d150de15-dafd-45ed-8573-a311d655a055"
+        },
+        {
+            "Type": "ProcessOrchestration",
+            "ProjectRelativePath": "PI360AdHocReviewBpmn/project.uiproj",
+            "Id": "442a257b-bb42-4053-93c2-dd511080885f"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360CaseManagerAgent/project.uiproj",
+            "Id": "72209049-a669-4dee-af0f-f67a87df1253"
+        },
+        {
+            "Type": "Agent",
+            "ProjectRelativePath": "PI360QuickRulesCodedAgent/project.uiproj",
+            "Id": "47fa13a5-3cc9-40ee-a687-b9a8fd53b216"
+        },
+        {
+            "Type": "Process",
+            "ProjectRelativePath": "PI360EvidenceSnapshotAutomation/project.uiproj",
+            "Id": "58e4aa89-7358-47ee-a0d4-6711e9792208"
+        },
+        {
+            "Type": "AppV2",
+            "ProjectRelativePath": "PI360RecoveryAuthorizationActionApp/project.uiproj",
+            "Id": "ec7a30ac-2270-421a-b5f7-0d9676d3bbe4"
+        },
+        {
+            "Type": "AppV2",
+            "ProjectRelativePath": "PI360EscalationActionApp/project.uiproj",
+            "Id": "e0eab46c-4d80-4aac-8ef9-47644098ceaf"
+        },
+        {
+            "Type": "Process",
+            "ProjectRelativePath": "PI360DecisionPacketAutomation/project.uiproj",
+            "Id": "6f19e849-d1e4-4509-a32f-e4a2335996ac"
+        }
+    ]
+}

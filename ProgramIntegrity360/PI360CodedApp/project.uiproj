@@ -1,0 +1,10 @@
+{
+  "ProjectType": "AppV2",
+  "WebAppSettings": {
+    "AppId": null,
+    "IsCoreProject": false
+  },
+  "Name": "PI360CodedApp",
+  "Description": "Program Integrity 360 coded web app.",
+  "MainFile": null
+}

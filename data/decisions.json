@@ -1,0 +1,26 @@
+[
+  {
+    "decision_id": "DEC-0001",
+    "case_id": "PI-PCS-2026-0041",
+    "decision_type": "Proceed to records request",
+    "recommended_by": "Investigation Planning Agent",
+    "decided_by": "inv.taylor",
+    "decision_role": "Investigator",
+    "rationale": "Risk signals RS-01, RS-03, RS-04 warrant provider records to test whether billed units are supported. No adverse action taken; provider given opportunity to respond.",
+    "adverse_or_financial": false,
+    "approved": true,
+    "decided_at": "2026-07-24T11:20:00Z"
+  },
+  {
+    "decision_id": "DEC-0002",
+    "case_id": "PI-PCS-2026-0041",
+    "decision_type": "Refer for audit + open overpayment recovery",
+    "recommended_by": "Investigation Planning Agent",
+    "decided_by": "sup.morgan",
+    "decision_role": "Supervisor",
+    "rationale": "After provider response, 24 unsupported units remain across CLM-0491, CLM-0503, CLM-0540, CLM-0549. Provider explanation for 04-16 does not reconcile with EVV/timesheet. Approve referral for full audit and open overpayment recovery for the confirmed unsupported units only. This is a program-integrity referral and recovery action, NOT a fraud determination.",
+    "adverse_or_financial": true,
+    "approved": true,
+    "decided_at": "2026-07-29T13:50:00Z"
+  }
+]

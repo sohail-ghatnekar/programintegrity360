@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360ApiWorkflows",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "9dd25760-de4f-4b0b-bfc8-ecdbcd48f863",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360ApiWorkflows"
+    },
+    "locks": [],
+    "key": "f3c10615-185f-4eea-bcb8-c6c549eaab80",
+    "files": []
+  }
+}

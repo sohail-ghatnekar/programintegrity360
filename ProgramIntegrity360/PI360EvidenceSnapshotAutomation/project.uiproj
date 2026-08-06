@@ -1,0 +1,6 @@
+{
+  "Name": "PI360EvidenceSnapshotAutomation",
+  "ProjectType": "Process",
+  "Description": "Builds a deterministic Program Integrity evidence-completeness snapshot for case routing.",
+  "MainFile": "Main.xaml"
+}

@@ -1,0 +1,101 @@
+{
+  "name": "PI360EvidenceSnapshotAutomation",
+  "projectId": "86dcc831-9532-40a1-9a96-309010314afc",
+  "description": "Builds a deterministic Program Integrity evidence-completeness snapshot for case routing.",
+  "main": "Main.xaml",
+  "dependencies": {
+    "UiPath.System.Activities": "[26.6.2]"
+  },
+  "webServices": [],
+  "entitiesStores": [],
+  "schemaVersion": "4.0",
+  "studioVersion": "26.0.198.0",
+  "projectVersion": "1.0.0",
+  "runtimeOptions": {
+    "autoDispose": false,
+    "netFrameworkLazyLoading": false,
+    "isPausable": false,
+    "isAttended": false,
+    "requiresUserInteraction": false,
+    "supportsPersistence": false,
+    "workflowSerialization": "NewtonsoftJson",
+    "excludedLoggedData": [
+      "Private:*",
+      "*password*"
+    ],
+    "executionType": "Workflow",
+    "readyForPiP": false,
+    "startsInPiP": false,
+    "mustRestoreAllDependencies": true,
+    "pipType": "ChildSession"
+  },
+  "designOptions": {
+    "projectProfile": "Developement",
+    "outputType": "Process",
+    "libraryOptions": {
+      "privateWorkflows": []
+    },
+    "processOptions": {
+      "ignoredFiles": []
+    },
+    "fileInfoCollection": [],
+    "saveToCloud": false
+  },
+  "expressionLanguage": "VisualBasic",
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "61a0e33e-baba-464a-ac87-8788b4c755d9",
+      "input": [
+        {
+          "name": "in_CaseId",
+          "type": "System.String",
+          "required": true
+        },
+        {
+          "name": "in_ClaimsAvailable",
+          "type": "System.Boolean",
+          "required": true
+        },
+        {
+          "name": "in_EvvAvailable",
+          "type": "System.Boolean",
+          "required": true
+        },
+        {
+          "name": "in_PlanOfCareAvailable",
+          "type": "System.Boolean",
+          "required": true
+        },
+        {
+          "name": "in_EnrollmentAvailable",
+          "type": "System.Boolean",
+          "required": true
+        },
+        {
+          "name": "in_ProviderPacketAvailable",
+          "type": "System.Boolean",
+          "required": true
+        }
+      ],
+      "output": [
+        {
+          "name": "out_EvidenceReady",
+          "type": "System.Boolean"
+        },
+        {
+          "name": "out_MissingEvidenceCsv",
+          "type": "System.String"
+        },
+        {
+          "name": "out_AutomationSummary",
+          "type": "System.String"
+        }
+      ]
+    }
+  ],
+  "isTemplate": false,
+  "templateProjectData": {},
+  "publishData": {},
+  "targetFramework": "Portable"
+}

@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Agent",
+  "Name": "PI360EvidenceCorrelationAgent",
+  "Description": "Clusters risk signals, claims, EVV visits, and evidence documents into investigator-ready findings.",
+  "MainFile": null
+}

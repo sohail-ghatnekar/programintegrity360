@@ -1,0 +1,10 @@
+{
+  "ProjectType": "AppV2",
+  "WebAppSettings": {
+    "AppId": null,
+    "IsCoreProject": false
+  },
+  "Name": "PI360EscalationActionApp",
+  "Description": "Program Integrity 360 supervisor escalation coded action app.",
+  "MainFile": null
+}

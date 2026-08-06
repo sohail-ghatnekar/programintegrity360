@@ -1,0 +1,70 @@
+{
+  "version": "2.0",
+  "resources": [
+    {
+      "resource": "process",
+      "key": "solution_folder.PI360EvidenceSnapshotAutomation",
+      "value": {
+        "name": { "defaultValue": "PI360EvidenceSnapshotAutomation" },
+        "folderPath": { "defaultValue": "solution_folder" }
+      }
+    },
+    {
+      "resource": "process",
+      "key": "solution_folder.PI360CaseManagerAgent",
+      "value": {
+        "name": { "defaultValue": "PI360CaseManagerAgent" },
+        "folderPath": { "defaultValue": "solution_folder" }
+      },
+      "metadata": { "subType": "Agent" }
+    },
+    {
+      "resource": "process",
+      "key": "solution_folder.PI360DecisionPacketAutomation",
+      "value": {
+        "name": { "defaultValue": "PI360DecisionPacketAutomation" },
+        "folderPath": { "defaultValue": "solution_folder" }
+      }
+    },
+    {
+      "resource": "app",
+      "key": "solution_folder.pi360-escalation-action-app",
+      "value": {
+        "name": {
+          "defaultValue": "pi360-escalation-action-app",
+          "isExpression": false,
+          "displayName": "App name"
+        },
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        }
+      },
+      "metadata": {
+        "bindingsVersion": "2.2",
+        "solutionsSupport": "true"
+      }
+    },
+    {
+      "resource": "app",
+      "key": "solution_folder.pi360-recovery-approval",
+      "value": {
+        "name": {
+          "defaultValue": "pi360-recovery-approval",
+          "isExpression": false,
+          "displayName": "App name"
+        },
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        }
+      },
+      "metadata": {
+        "bindingsVersion": "2.2",
+        "solutionsSupport": "true"
+      }
+    }
+  ]
+}

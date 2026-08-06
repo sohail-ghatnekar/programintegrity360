@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360CaseManagerAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "72209049-a669-4dee-af0f-f67a87df1253",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360CaseManagerAgent"
+    },
+    "locks": [],
+    "key": "7767e490-7d90-4a12-80af-b567e63d4235",
+    "files": []
+  }
+}

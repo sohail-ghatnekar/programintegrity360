@@ -1,0 +1,8 @@
+{
+  "scope": "DataFabric.Schema.Read DataFabric.Data.Read DataFabric.Data.Write OR.Tasks OR.Tasks.Read OR.Tasks.Write OR.Buckets.Read OR.Execution OR.Execution.Read OR.Folders OR.Jobs OR.Jobs.Read ConversationalAgents Traces.Api OR.Users.Read",
+  "clientId": "",
+  "orgName": "uipathlabs",
+  "tenantName": "Playground",
+  "baseUrl": "https://staging.api.uipath.com",
+  "redirectUri": "http://localhost:5173"
+}

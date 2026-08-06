@@ -1,0 +1,68 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "entryPoints": [
+    {
+      "filePath": "Main.json",
+      "uniqueId": "d525fb99-f53c-4fd9-bf44-99988c748d77",
+      "displayName": "Program Integrity 360 API Workflows",
+      "type": "api",
+      "input": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string",
+            "description": "Stage automation contract name, such as IntakeAlertCreateCase, PullClaims, PullEvvVisits, ComputeRiskSignals, SendProviderRecordsRequest, OpenOverpaymentRecovery, or CloseCaseAndEmitMetrics."
+          },
+          "caseId": {
+            "type": "string",
+            "description": "Program Integrity case id. Defaults to PI-PCS-2026-0041."
+          },
+          "providerId": {
+            "type": "string",
+            "description": "Provider id. Defaults to PRV-100482."
+          },
+          "attendantId": {
+            "type": "string",
+            "description": "Attendant id. Defaults to ATT-2087."
+          },
+          "investigatorProceed": {
+            "type": "boolean",
+            "description": "Human investigator gate for provider records request."
+          },
+          "supervisorApproved": {
+            "type": "boolean",
+            "description": "Human supervisor gate for adverse or financial action."
+          }
+        },
+        "required": []
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "gated": {
+            "type": "boolean"
+          },
+          "recordsAffected": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

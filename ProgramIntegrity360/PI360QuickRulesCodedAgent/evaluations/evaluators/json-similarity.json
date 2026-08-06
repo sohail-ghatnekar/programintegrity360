@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "id": "JsonSimilarityEvaluator",
+  "evaluatorTypeId": "uipath-json-similarity",
+  "description": "Compare deterministic quick-rules structured output.",
+  "evaluatorConfig": {
+    "name": "JsonSimilarityEvaluator",
+    "defaultEvaluationCriteria": {
+      "expectedOutput": {}
+    }
+  }
+}

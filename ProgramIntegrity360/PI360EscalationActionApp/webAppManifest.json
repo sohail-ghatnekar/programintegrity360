@@ -1,0 +1,10 @@
+{
+  "type": "Coded",
+  "solutionResourceSubType": "CodedAction",
+  "config": {
+    "isCompiled": true,
+    "isActionApp": true,
+    "bundlePath": "dist"
+  },
+  "projectId": "f88975a2-253c-4264-9514-f391ac32efd8"
+}

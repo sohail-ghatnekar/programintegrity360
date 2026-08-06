@@ -1,0 +1,205 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main" mva:VisualBasic.Settings="{x:Null}"
+xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:mva="clr-namespace:Microsoft.VisualBasic.Activities;assembly=System.Activities"
+xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=mscorlib"
+xmlns:ui="http://schemas.uipath.com/workflow/activities"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:Members>
+        <x:Property Name="in_CaseId" Type="InArgument(x:String)" />
+        <x:Property Name="in_ClaimsAvailable" Type="InArgument(x:Boolean)" />
+        <x:Property Name="in_EvvAvailable" Type="InArgument(x:Boolean)" />
+        <x:Property Name="in_PlanOfCareAvailable" Type="InArgument(x:Boolean)" />
+        <x:Property Name="in_EnrollmentAvailable" Type="InArgument(x:Boolean)" />
+        <x:Property Name="in_ProviderPacketAvailable" Type="InArgument(x:Boolean)" />
+        <x:Property Name="out_EvidenceReady" Type="OutArgument(x:Boolean)" />
+        <x:Property Name="out_MissingEvidenceCsv" Type="OutArgument(x:String)" />
+        <x:Property Name="out_AutomationSummary" Type="OutArgument(x:String)" />
+    </x:Members>
+    <TextExpression.NamespacesForImplementation>
+        <sco:Collection x:TypeArguments="x:String">
+            <x:String>System.Activities</x:String>
+            <x:String>System.Activities.Statements</x:String>
+            <x:String>System.Activities.Expressions</x:String>
+            <x:String>System.Activities.Validation</x:String>
+            <x:String>System.Activities.XamlIntegration</x:String>
+            <x:String>Microsoft.VisualBasic</x:String>
+            <x:String>Microsoft.VisualBasic.Activities</x:String>
+            <x:String>System</x:String>
+            <x:String>System.Collections</x:String>
+            <x:String>System.Collections.Generic</x:String>
+            <x:String>System.Collections.ObjectModel</x:String>
+            <x:String>System.Data</x:String>
+            <x:String>System.Diagnostics</x:String>
+            <x:String>System.Drawing</x:String>
+            <x:String>System.IO</x:String>
+            <x:String>System.Linq</x:String>
+            <x:String>System.Net.Mail</x:String>
+            <x:String>System.Xml</x:String>
+            <x:String>System.Xml.Linq</x:String>
+            <x:String>UiPath.Core</x:String>
+            <x:String>UiPath.Core.Activities</x:String>
+            <x:String>System.Windows.Markup</x:String>
+        </sco:Collection>
+    </TextExpression.NamespacesForImplementation>
+    <TextExpression.ReferencesForImplementation>
+        <sco:Collection x:TypeArguments="AssemblyReference">
+            <AssemblyReference>System.Activities</AssemblyReference>
+            <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+            <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+            <AssemblyReference>mscorlib</AssemblyReference>
+            <AssemblyReference>System.Data</AssemblyReference>
+			<AssemblyReference>System.Data.Common</AssemblyReference>
+            <AssemblyReference>System</AssemblyReference>
+            <AssemblyReference>System.Linq</AssemblyReference>
+            <AssemblyReference>System.Drawing</AssemblyReference>
+            <AssemblyReference>System.Drawing.Primitives</AssemblyReference>
+            <AssemblyReference>System.Drawing.Common</AssemblyReference>
+            <AssemblyReference>System.Core</AssemblyReference>
+            <AssemblyReference>System.Xml</AssemblyReference>
+            <AssemblyReference>System.Xml.Linq</AssemblyReference>
+            <AssemblyReference>System.Xaml</AssemblyReference>
+            <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+            <AssemblyReference>UiPath.UiAutomation.Activities</AssemblyReference>
+            <AssemblyReference>System.Data.DataSetExtensions</AssemblyReference>
+            <AssemblyReference>System.Net.Mail</AssemblyReference>
+        </sco:Collection>
+    </TextExpression.ReferencesForImplementation>
+    <Sequence DisplayName="Build Evidence Snapshot" sap2010:WorkflowViewState.IdRef="Sequence_1">
+        <Assign x:TypeArguments="x:String" DisplayName="Initialize missing evidence">
+            <Assign.To>
+                <OutArgument x:TypeArguments="x:String">
+                    <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv" />
+                </OutArgument>
+            </Assign.To>
+            <Assign.Value>
+                <InArgument x:TypeArguments="x:String">
+                    <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="String.Empty" />
+                </InArgument>
+            </Assign.Value>
+        </Assign>
+        <If DisplayName="Check claims" Condition="[Not in_ClaimsAvailable]">
+            <If.Then>
+                <Sequence DisplayName="Claims missing">
+                    <Assign x:TypeArguments="x:String" DisplayName="Add claims gap">
+                        <Assign.To>
+                            <OutArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv" />
+                            </OutArgument>
+                        </Assign.To>
+                        <Assign.Value>
+                            <InArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv &amp; &quot;claims,&quot;" />
+                            </InArgument>
+                        </Assign.Value>
+                    </Assign>
+                </Sequence>
+            </If.Then>
+        </If>
+        <If DisplayName="Check EVV" Condition="[Not in_EvvAvailable]">
+            <If.Then>
+                <Sequence DisplayName="EVV missing">
+                    <Assign x:TypeArguments="x:String" DisplayName="Add EVV gap">
+                        <Assign.To>
+                            <OutArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv" />
+                            </OutArgument>
+                        </Assign.To>
+                        <Assign.Value>
+                            <InArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv &amp; &quot;evv,&quot;" />
+                            </InArgument>
+                        </Assign.Value>
+                    </Assign>
+                </Sequence>
+            </If.Then>
+        </If>
+        <If DisplayName="Check plan of care" Condition="[Not in_PlanOfCareAvailable]">
+            <If.Then>
+                <Sequence DisplayName="Plan of care missing">
+                    <Assign x:TypeArguments="x:String" DisplayName="Add plan of care gap">
+                        <Assign.To>
+                            <OutArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv" />
+                            </OutArgument>
+                        </Assign.To>
+                        <Assign.Value>
+                            <InArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv &amp; &quot;plan-of-care,&quot;" />
+                            </InArgument>
+                        </Assign.Value>
+                    </Assign>
+                </Sequence>
+            </If.Then>
+        </If>
+        <If DisplayName="Check enrollment" Condition="[Not in_EnrollmentAvailable]">
+            <If.Then>
+                <Sequence DisplayName="Enrollment missing">
+                    <Assign x:TypeArguments="x:String" DisplayName="Add enrollment gap">
+                        <Assign.To>
+                            <OutArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv" />
+                            </OutArgument>
+                        </Assign.To>
+                        <Assign.Value>
+                            <InArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv &amp; &quot;enrollment,&quot;" />
+                            </InArgument>
+                        </Assign.Value>
+                    </Assign>
+                </Sequence>
+            </If.Then>
+        </If>
+        <If DisplayName="Check provider packet" Condition="[Not in_ProviderPacketAvailable]">
+            <If.Then>
+                <Sequence DisplayName="Provider packet missing">
+                    <Assign x:TypeArguments="x:String" DisplayName="Add provider packet gap">
+                        <Assign.To>
+                            <OutArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv" />
+                            </OutArgument>
+                        </Assign.To>
+                        <Assign.Value>
+                            <InArgument x:TypeArguments="x:String">
+                                <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="out_MissingEvidenceCsv &amp; &quot;provider-packet,&quot;" />
+                            </InArgument>
+                        </Assign.Value>
+                    </Assign>
+                </Sequence>
+            </If.Then>
+        </If>
+        <Assign x:TypeArguments="x:Boolean" DisplayName="Set evidence readiness">
+            <Assign.To>
+                <OutArgument x:TypeArguments="x:Boolean">
+                    <mva:VisualBasicReference x:TypeArguments="x:Boolean" ExpressionText="out_EvidenceReady" />
+                </OutArgument>
+            </Assign.To>
+            <Assign.Value>
+                <InArgument x:TypeArguments="x:Boolean">
+                    <mva:VisualBasicValue x:TypeArguments="x:Boolean" ExpressionText="String.IsNullOrEmpty(out_MissingEvidenceCsv)" />
+                </InArgument>
+            </Assign.Value>
+        </Assign>
+        <Assign x:TypeArguments="x:String" DisplayName="Build automation summary">
+            <Assign.To>
+                <OutArgument x:TypeArguments="x:String">
+                    <mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_AutomationSummary" />
+                </OutArgument>
+            </Assign.To>
+            <Assign.Value>
+                <InArgument x:TypeArguments="x:String">
+                    <mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="If(out_EvidenceReady, &quot;Case &quot; &amp; in_CaseId &amp; &quot; evidence snapshot is complete.&quot;, &quot;Case &quot; &amp; in_CaseId &amp; &quot; is missing: &quot; &amp; out_MissingEvidenceCsv.TrimEnd(&quot;,&quot;c))" />
+                </InArgument>
+            </Assign.Value>
+        </Assign>
+        <ui:LogMessage Level="Info" DisplayName="Log evidence snapshot">
+            <ui:LogMessage.Message>
+                <InArgument x:TypeArguments="x:Object">
+                    <mva:VisualBasicValue x:TypeArguments="x:Object" ExpressionText="out_AutomationSummary" />
+                </InArgument>
+            </ui:LogMessage.Message>
+        </ui:LogMessage>
+    </Sequence>
+</Activity>

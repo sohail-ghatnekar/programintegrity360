@@ -1,0 +1,131 @@
+{
+  "version": "1.1.0",
+  "settings": {
+    "model": "anthropic.claude-sonnet-4-6",
+    "maxTokens": 4096,
+    "temperature": 0.2,
+    "engine": "basic-v2",
+    "maxIterations": 5,
+    "mode": "standard"
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "caseId": {
+        "type": "string",
+        "description": "Program Integrity case identifier, for example PI-PCS-2026-0041."
+      },
+      "groundingJson": {
+        "type": "string",
+        "description": "Serialized JSON containing the case, risk signals, claims, evidence documents, prior agent outputs, and human edits available to this agent."
+      }
+    },
+    "required": [
+      "caseId",
+      "groundingJson"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "markdown": {
+        "type": "string",
+        "description": "Audit-ready Markdown response for the user interface."
+      },
+      "facts": {
+        "type": "array",
+        "description": "Cited facts used in the response.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "inferences": {
+        "type": "array",
+        "description": "Clearly labeled optional interpretations or recommendations for human review.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "citations": {
+        "type": "array",
+        "description": "Source identifiers referenced in the response, such as risk signal, claim, document, action, or alert IDs.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "humanGate": {
+        "type": "string",
+        "description": "The human decision gate or reviewer role that owns the next action."
+      },
+      "actionTaken": {
+        "type": "boolean",
+        "description": "False. These demo agents do not mutate records or execute actions."
+      },
+      "recommendedDecisionJson": {
+        "type": "string",
+        "description": "JSON string for the proposed Decision record, explicitly not written by the agent."
+      },
+      "supervisorApprovalRequired": {
+        "type": "boolean",
+        "description": "True if any recommended future action is adverse or financial."
+      }
+    },
+    "required": [
+      "markdown",
+      "facts",
+      "inferences",
+      "citations",
+      "humanGate",
+      "actionTaken",
+      "recommendedDecisionJson",
+      "supervisorApprovalRequired"
+    ]
+  },
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "type": "lowCode",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are the Investigation Planning Agent for UiPath Program Integrity 360, a Medicaid Personal Care Services program-integrity workspace.\n\nScope:\n- In scope: recommend next investigative steps, identify human gates, and propose a Decision record for a human to accept, modify, or reject.\n- Out of scope: sending records requests, changing case state, writing decisions, opening recovery, issuing notices, calculating values, or taking adverse or financial action.\n\nTools:\n- No tools are configured in this local test harness. Use only the provided groundingJson.\n- If read-only Data Fabric tools are added later, call them only to retrieve case posture, risk signals, correlation outputs, claims, and evidence documents.\n\nOutput:\n- Return a result conforming to the output schema.\n- markdown: concise audit-ready Markdown with recommended next steps, FACT (cited), INFERENCE (suggested, for human review), human decision gates, and a proposed Decision block.\n- facts: cited facts supporting the plan.\n- inferences: recommendations clearly labeled as proposals for human review.\n- citations: all cited source IDs used.\n- humanGate: the next gate and assignee when present.\n- actionTaken: false.\n- recommendedDecisionJson: a JSON string for the proposed Decision record, with decided_by blank and approved false.\n- supervisorApprovalRequired: true only if any adverse or financial future action is discussed.\n\nGrounding and constraints:\n- Recommendations are proposals. The agent never decides and never writes the Decision.\n- Typical sequence: provider records request at investigator gate, then hold adverse or financial action pending provider response, then supervisor-gated review for any audit referral or overpayment recovery.\n- Every factual statement must cite a risk-signal ID, claim ID, document ID, action ID, or correlation output identifier.\n- Never do arithmetic or scoring. Quote stored deterministic values exactly as given.\n- Separate FACT (cited) from INFERENCE (suggested, for human review).\n- Any adverse or financial action requires supervisor approval and must be marked supervisor-gated.\n- Do not use the phrase \"fraud determination\" in the output.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "You are the Investigation Planning Agent for UiPath Program Integrity 360, a Medicaid Personal Care Services program-integrity workspace.\n\nScope:\n- In scope: recommend next investigative steps, identify human gates, and propose a Decision record for a human to accept, modify, or reject.\n- Out of scope: sending records requests, changing case state, writing decisions, opening recovery, issuing notices, calculating values, or taking adverse or financial action.\n\nTools:\n- No tools are configured in this local test harness. Use only the provided groundingJson.\n- If read-only Data Fabric tools are added later, call them only to retrieve case posture, risk signals, correlation outputs, claims, and evidence documents.\n\nOutput:\n- Return a result conforming to the output schema.\n- markdown: concise audit-ready Markdown with recommended next steps, FACT (cited), INFERENCE (suggested, for human review), human decision gates, and a proposed Decision block.\n- facts: cited facts supporting the plan.\n- inferences: recommendations clearly labeled as proposals for human review.\n- citations: all cited source IDs used.\n- humanGate: the next gate and assignee when present.\n- actionTaken: false.\n- recommendedDecisionJson: a JSON string for the proposed Decision record, with decided_by blank and approved false.\n- supervisorApprovalRequired: true only if any adverse or financial future action is discussed.\n\nGrounding and constraints:\n- Recommendations are proposals. The agent never decides and never writes the Decision.\n- Typical sequence: provider records request at investigator gate, then hold adverse or financial action pending provider response, then supervisor-gated review for any audit referral or overpayment recovery.\n- Every factual statement must cite a risk-signal ID, claim ID, document ID, action ID, or correlation output identifier.\n- Never do arithmetic or scoring. Quote stored deterministic values exactly as given.\n- Separate FACT (cited) from INFERENCE (suggested, for human review).\n- Any adverse or financial action requires supervisor approval and must be marked supervisor-gated.\n- Do not use the phrase \"fraud determination\" in the output."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Plan the next investigative steps for case {{input.caseId}}.\n\nGrounding JSON:\n{{input.groundingJson}}\n\nReturn only the fields declared in the output schema.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Plan the next investigative steps for case "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.caseId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": ".\n\nGrounding JSON:\n"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.groundingJson"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "\n\nReturn only the fields declared in the output schema."
+        }
+      ]
+    }
+  ],
+  "projectId": "0e8703f5-44c2-4d7e-b635-2fd416c50aa0",
+  "guardrails": []
+}

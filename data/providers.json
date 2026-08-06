@@ -1,0 +1,14 @@
+[
+  {
+    "provider_id": "PRV-100482",
+    "name": "Harbor Home Support Services",
+    "medicaid_provider_id": "MPI-4471902",
+    "npi": "1730456789",
+    "address": "2200 Marina Blvd, Suite 210",
+    "enrollment_status": "Active",
+    "active_attendant_count": 22,
+    "prior_integrity_history": "1 provider education letter (2024); no sanctions on record",
+    "watch_list": true,
+    "watch_list_reason": "PI-PCS-2026-0041 closed with audit referral; monitor future PCS billing patterns"
+  }
+]

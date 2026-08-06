@@ -1,0 +1,9 @@
+[project]
+name = "PI360QuickRulesAgent"
+version = "0.1.0"
+description = "Program Integrity 360 deterministic quick rules check"
+authors = [{ name = "Sohail Ghatnekar", email = "sohail.ghatnekar@uipath.com" }]
+dependencies = [
+    "uipath>=2.10.0, <2.11.0"
+]
+requires-python = ">=3.11"

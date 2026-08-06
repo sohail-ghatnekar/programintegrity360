@@ -1,0 +1,39 @@
+{
+  "inputs": {
+    "type": "object",
+    "properties": {
+      "caseId": { "type": "string", "required": true, "description": "Program Integrity case identifier." },
+      "providerName": { "type": "string", "required": false, "description": "Provider under review." },
+      "unsupportedUnits": { "type": "integer", "required": false, "description": "Human-validated unsupported units in the reviewed sample." },
+      "unitRate": { "type": "number", "required": false, "description": "Approved reimbursement rate per unit." },
+      "sampleExposure": { "type": "number", "required": false, "description": "Deterministic exposure for the reviewed sample." },
+      "projectedExposureLow": { "type": "number", "required": false, "description": "Low end of the indicative projected exposure range." },
+      "projectedExposureHigh": { "type": "number", "required": false, "description": "High end of the indicative projected exposure range." },
+      "decisionBrief": { "type": "string", "required": false, "description": "Deterministic decision brief assembled by the portable RPA workflow." },
+      "policyCitation": { "type": "string", "required": false, "description": "Policy citation supporting the proposed recovery action." }
+    }
+  },
+  "outputs": {
+    "type": "object",
+    "properties": {
+      "authorizationDecision": { "type": "string", "required": true, "description": "Final recovery authorization decision." },
+      "recoveryRoute": { "type": "string", "required": true, "description": "Approved recovery route or follow-up path." },
+      "authorizationNotes": { "type": "string", "required": false, "description": "Authorization rationale written to the case audit record." }
+    }
+  },
+  "inOuts": {
+    "type": "object",
+    "properties": {
+      "authorizedAmount": { "type": "number", "required": false, "description": "Amount authorized by the reviewer." },
+      "noticeLanguage": { "type": "string", "required": false, "description": "Reviewer-approved language for the provider notice." }
+    }
+  },
+  "outcomes": {
+    "type": "object",
+    "properties": {
+      "Authorize": { "type": "string" },
+      "Return": { "type": "string" },
+      "Hold": { "type": "string" }
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "/content/agent.json",
+      "uniqueId": "64e1b792-17d9-4028-932c-709b8c52c9a3",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Program Integrity case identifier, for example PI-PCS-2026-0041."
+          },
+          "groundingJson": {
+            "type": "string",
+            "description": "Serialized JSON containing the case, risk signals, claims, evidence documents, prior agent outputs, and human edits available to this agent."
+          },
+          "audience": {
+            "type": "string",
+            "description": "Target audience for the narrative: investigator or supervisor."
+          },
+          "version": {
+            "type": "string",
+            "description": "Narrative version, for example v1 pre provider-response or v2 post provider-response."
+          }
+        },
+        "required": [
+          "caseId",
+          "groundingJson",
+          "audience",
+          "version"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "markdown": {
+            "type": "string",
+            "description": "Audit-ready Markdown response for the user interface."
+          },
+          "facts": {
+            "type": "array",
+            "description": "Cited facts used in the response.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inferences": {
+            "type": "array",
+            "description": "Clearly labeled optional interpretations or recommendations for human review.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "citations": {
+            "type": "array",
+            "description": "Source identifiers referenced in the response, such as risk signal, claim, document, action, or alert IDs.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "humanGate": {
+            "type": "string",
+            "description": "The human decision gate or reviewer role that owns the next action."
+          },
+          "actionTaken": {
+            "type": "boolean",
+            "description": "False. These demo agents do not mutate records or execute actions."
+          },
+          "narrativeVersion": {
+            "type": "string",
+            "description": "Narrative version actually drafted."
+          },
+          "exposureDisclaimer": {
+            "type": "string",
+            "description": "Required non-determination disclaimer paired with any exposure figure."
+          }
+        },
+        "required": [
+          "markdown",
+          "facts",
+          "inferences",
+          "citations",
+          "humanGate",
+          "actionTaken",
+          "narrativeVersion",
+          "exposureDisclaimer"
+        ]
+      }
+    }
+  ]
+}

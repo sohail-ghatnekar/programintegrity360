@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Agent",
+  "Name": "PI360SummaryAgent",
+  "Description": "Drafts investigator- and supervisor-facing case narratives with cited facts and labeled inferences.",
+  "MainFile": null
+}

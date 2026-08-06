@@ -1,0 +1,2377 @@
+{
+    "id": "case-PI360CaseX",
+    "version": "23.0.0",
+    "name": "Program Integrity 360 Case",
+    "description": "Medicaid PCS program-integrity investigation case lifecycle (synthetic demo). All stage automations are Studio Web-compatible API workflow, agent, or timer nodes. The case identifies risk signals and routes decisions to humans; it does not make a fraud determination.",
+    "metadata": {
+        "caseIdentifier": "PI-PCS",
+        "caseAppEnabled": true,
+        "caseIdentifierType": "constant",
+        "publishVersion": 2,
+        "caseUnifiedSchemaEnabled": true,
+        "caseDirectlyPassTaskOutputs": true,
+        "intsvcActivityConfig": "v2",
+        "allowAdhocOptionalStageTasks": true,
+        "caseManagerData": {
+            "id": "case-manager",
+            "enabled": true,
+            "agentBehavior": [],
+            "data": {
+                "tasks": [
+                    [
+                        {
+                            "id": "tCaseManagerAgent",
+                            "elementId": "case-manager-tCaseManagerAgent",
+                            "displayName": "UiPath Case Agent",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": false,
+                            "data": {
+                                "name": "=bindings.bCaseMgrName",
+                                "folderPath": "=bindings.bCaseMgrFold",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCmaCaseId",
+                                        "var": "vCmaCaseId",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "currentStage",
+                                        "type": "string",
+                                        "id": "vCmaCurrentStage",
+                                        "var": "vCmaCurrentStage",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "Stage_Corr4a"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vCmaGrounding",
+                                        "var": "vCmaGrounding",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "=js:JSON.stringify({caseId: 'PI-PCS-2026-0041', providerId: 'PRV-100482', providerName: 'Harbor Home Support Services', currentStage: 'Stage_Corr4a', evidenceReady: vars.evidenceReady, missingEvidenceCsv: vars.missingEvidenceCsv, automationSummary: vars.automationSummary, allowedNextStages: ['Stage_Evcol2','Stage_Prreq6','Stage_Supv7a','Stage_Clos9a']})"
+                                    },
+                                    {
+                                        "name": "quickRulesJson",
+                                        "type": "string",
+                                        "id": "vCmaQuickRules",
+                                        "var": "vCmaQuickRules",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "{\"riskScore\":72,\"blockingIssue\":false,\"supervisorRequired\":true,\"evidenceRefreshRequired\":false,\"providerResponseRequired\":false}"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "caseManagerDecisions",
+                                        "type": "json",
+                                        "id": "caseManagerDecisions",
+                                        "var": "caseManagerDecisions",
+                                        "value": "caseManagerDecisions",
+                                        "source": "=caseManagerDecisions",
+                                        "target": "=caseManagerDecisions",
+                                        "elementId": "case-manager-tCaseManagerAgent"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            }
+        },
+        "caseExitRules": [
+            {
+                "id": "Condition_cls9Z1",
+                "displayName": "All required stages completed",
+                "marksCaseComplete": true,
+                "rules": [
+                    [
+                        {
+                            "id": "Rule_cls9Z1",
+                            "rule": "required-stages-completed"
+                        }
+                    ]
+                ]
+            }
+        ]
+    },
+    "variables": {
+        "inputs": [],
+        "outputs": [],
+        "inputOutputs": [
+            {
+                "id": "caseManagerNextStageId",
+                "name": "caseManagerNextStageId",
+                "type": "string",
+                "elementId": "root",
+                "custom": true
+            }
+        ]
+    },
+    "bindings": [
+        {
+            "id": "bRpaSnapName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+            "default": "PI360EvidenceSnapshotAutomation",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bRpaSnapFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+            "default": "solution_folder",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bCaseMgrName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360CaseManagerAgent",
+            "default": "PI360CaseManagerAgent",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bCaseMgrFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360CaseManagerAgent",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bRpaPacketName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "solution_folder.PI360DecisionPacketAutomation",
+            "default": "PI360DecisionPacketAutomation",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bRpaPacketFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "solution_folder.PI360DecisionPacketAutomation",
+            "default": "solution_folder",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bSupervisorAppName",
+            "name": "name",
+            "type": "string",
+            "resource": "app",
+            "resourceKey": "solution_folder.pi360-escalation-action-app",
+            "default": "pi360-escalation-action-app",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bSupervisorAppFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "app",
+            "resourceKey": "solution_folder.pi360-escalation-action-app",
+            "default": "solution_folder",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bRecoveryAppName",
+            "name": "name",
+            "type": "string",
+            "resource": "app",
+            "resourceKey": "solution_folder.pi360-recovery-approval",
+            "default": "pi360-recovery-approval",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bRecoveryAppFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "app",
+            "resourceKey": "solution_folder.pi360-recovery-approval",
+            "default": "solution_folder",
+            "propertyAttribute": "folderPath"
+        }
+    ],
+    "nodes": [
+        {
+            "id": "trigger_1",
+            "type": "case-management:Trigger",
+            "position": {
+                "x": 0,
+                "y": 0
+            },
+            "data": {
+                "label": "Claims analytics alert",
+                "uipath": {
+                    "serviceType": "None"
+                }
+            }
+        },
+        {
+            "id": "Stage_Aintk1",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 100,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1001,
+            "data": {
+                "label": "Alert intake and triage",
+                "description": "Open the case from the claims analytics alert, write the initial audit event, and have the Triage Agent explain priority using stored deterministic signal IDs.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tINT1case",
+                            "elementId": "Stage_Aintk1-tINT1case",
+                            "displayName": "API - ingest alert and create case",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cINT1case",
+                                "displayName": "When intake stage starts",
+                                "rules": [[{"id": "rINT1case", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vINT1wf",
+                                        "var": "vINT1wf",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "IntakeAlertCreateCase"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tTRI1agnt",
+                            "elementId": "Stage_Aintk1-tTRI1agnt",
+                            "displayName": "Agent - explain prioritization",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_TRI1A1",
+                                    "displayName": "After case intake",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_TRI1A1",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tINT1case"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360TriageAgent",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vTRI1case",
+                                        "var": "vTRI1case",
+                                        "elementId": "Stage_Aintk1-tTRI1agnt",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vTRI1grnd",
+                                        "var": "vTRI1grnd",
+                                        "elementId": "Stage_Aintk1-tTRI1agnt",
+                                        "value": "{\"caseId\":\"PI-PCS-2026-0041\",\"alertId\":\"ALERT-CA-2026-7781\",\"signals\":[\"RS-01\",\"RS-03\",\"RS-04\"],\"instruction\":\"Explain existing priority drivers only. Do not rescore or decide.\"}"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tAUD1log",
+                            "elementId": "Stage_Aintk1-tAUD1log",
+                            "displayName": "API - append intake audit event",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_AUD1B2",
+                                    "displayName": "After triage rationale",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_AUD1B2",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tTRI1agnt"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vAUD1wf",
+                                        "var": "vAUD1wf",
+                                        "elementId": "Stage_Aintk1-tAUD1log",
+                                        "value": "CreateCaseAuditTrail"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent1aa",
+                        "displayName": "Case entered",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "case-entered",
+                                    "id": "Rule_ent1aa"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext1aa",
+                        "displayName": "Intake complete",
+                        "type": "exit-only",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext1aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Evcol2",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 460,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1002,
+            "data": {
+                "label": "Evidence acquisition and validation",
+                "description": "Collect source records, run the Portable evidence snapshot automation, extract document fields, and validate evidence before investigation routing.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tCLM2pull",
+                            "elementId": "Stage_Evcol2-tCLM2pull",
+                            "displayName": "API - pull claims sample",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cCLM2pull",
+                                "displayName": "When evidence stage starts",
+                                "rules": [[{"id": "rCLM2pull", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vCLM2wf",
+                                        "var": "vCLM2wf",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "PullClaims"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tEVV2pull",
+                            "elementId": "Stage_Evcol2-tEVV2pull",
+                            "displayName": "API - pull EVV visits",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cEVV2pull",
+                                "displayName": "When evidence stage starts",
+                                "rules": [[{"id": "rEVV2pull", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vEVV2wf",
+                                        "var": "vEVV2wf",
+                                        "elementId": "Stage_Evcol2-tEVV2pull",
+                                        "value": "PullEvvVisits"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tPOC2pull",
+                            "elementId": "Stage_Evcol2-tPOC2pull",
+                            "displayName": "API - pull plan of care",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cPOC2pull",
+                                "displayName": "When evidence stage starts",
+                                "rules": [[{"id": "rPOC2pull", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vPOC2wf",
+                                        "var": "vPOC2wf",
+                                        "elementId": "Stage_Evcol2-tPOC2pull",
+                                        "value": "PullPlanOfCare"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tENR2look",
+                            "elementId": "Stage_Evcol2-tENR2look",
+                            "displayName": "API - lookup provider enrollment",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cENR2look",
+                                "displayName": "When evidence stage starts",
+                                "rules": [[{"id": "rENR2look", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vENR2wf",
+                                        "var": "vENR2wf",
+                                        "elementId": "Stage_Evcol2-tENR2look",
+                                        "value": "LookupProviderEnrollment"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tPRS2pkt",
+                            "elementId": "Stage_Evcol2-tPRS2pkt",
+                            "displayName": "API - pull personnel packet",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cPRS2pkt",
+                                "displayName": "When evidence stage starts",
+                                "rules": [[{"id": "rPRS2pkt", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vPRS2wf",
+                                        "var": "vPRS2wf",
+                                        "elementId": "Stage_Evcol2-tPRS2pkt",
+                                        "value": "PullPersonnelPacket"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tSIG2calc",
+                            "elementId": "Stage_Evcol2-tSIG2calc",
+                            "displayName": "API - compute deterministic risk signals",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_SIG2C3",
+                                    "displayName": "After source pulls",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_SIG2C3",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tCLM2pull",
+                                                    "tEVV2pull",
+                                                    "tPOC2pull",
+                                                    "tENR2look",
+                                                    "tPRS2pkt"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vSIG2wf",
+                                        "var": "vSIG2wf",
+                                        "elementId": "Stage_Evcol2-tSIG2calc",
+                                        "value": "ComputeRiskSignals"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tLND2docs",
+                            "elementId": "Stage_Evcol2-tLND2docs",
+                            "displayName": "API - land evidence documents",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_LND2D4",
+                                    "displayName": "After signal computation",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_LND2D4",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tSIG2calc"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vLND2wf",
+                                        "var": "vLND2wf",
+                                        "elementId": "Stage_Evcol2-tLND2docs",
+                                        "value": "LandEvidenceDocuments"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tRPA2snap",
+                            "elementId": "Stage_Evcol2-tRPA2snap",
+                            "displayName": "RPA - evaluate evidence completeness",
+                            "type": "rpa",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": false,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_RPA2A1",
+                                    "displayName": "After evidence landing",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_RPA2A1",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tLND2docs"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bRpaSnapName",
+                                "folderPath": "=bindings.bRpaSnapFold",
+                                "inputs": [
+                                    {
+                                        "name": "in_CaseId",
+                                        "type": "string",
+                                        "id": "vRpaCase2",
+                                        "var": "vRpaCase2",
+                                        "elementId": "Stage_Evcol2-tRPA2snap",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "in_ClaimsAvailable",
+                                        "type": "boolean",
+                                        "id": "vRpaClm2",
+                                        "var": "vRpaClm2",
+                                        "elementId": "Stage_Evcol2-tRPA2snap",
+                                        "value": "true"
+                                    },
+                                    {
+                                        "name": "in_EvvAvailable",
+                                        "type": "boolean",
+                                        "id": "vRpaEvv2",
+                                        "var": "vRpaEvv2",
+                                        "elementId": "Stage_Evcol2-tRPA2snap",
+                                        "value": "true"
+                                    },
+                                    {
+                                        "name": "in_PlanOfCareAvailable",
+                                        "type": "boolean",
+                                        "id": "vRpaPoc2",
+                                        "var": "vRpaPoc2",
+                                        "elementId": "Stage_Evcol2-tRPA2snap",
+                                        "value": "true"
+                                    },
+                                    {
+                                        "name": "in_EnrollmentAvailable",
+                                        "type": "boolean",
+                                        "id": "vRpaEnr2",
+                                        "var": "vRpaEnr2",
+                                        "elementId": "Stage_Evcol2-tRPA2snap",
+                                        "value": "true"
+                                    },
+                                    {
+                                        "name": "in_ProviderPacketAvailable",
+                                        "type": "boolean",
+                                        "id": "vRpaPrv2",
+                                        "var": "vRpaPrv2",
+                                        "elementId": "Stage_Evcol2-tRPA2snap",
+                                        "value": "false"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "out_EvidenceReady",
+                                        "type": "boolean",
+                                        "id": "evidenceReady",
+                                        "var": "evidenceReady",
+                                        "value": "evidenceReady",
+                                        "source": "=out_EvidenceReady",
+                                        "target": "=evidenceReady",
+                                        "elementId": "Stage_Evcol2-tRPA2snap"
+                                    },
+                                    {
+                                        "name": "out_MissingEvidenceCsv",
+                                        "type": "string",
+                                        "id": "missingEvidenceCsv",
+                                        "var": "missingEvidenceCsv",
+                                        "value": "missingEvidenceCsv",
+                                        "source": "=out_MissingEvidenceCsv",
+                                        "target": "=missingEvidenceCsv",
+                                        "elementId": "Stage_Evcol2-tRPA2snap"
+                                    },
+                                    {
+                                        "name": "out_AutomationSummary",
+                                        "type": "string",
+                                        "id": "automationSummary",
+                                        "var": "automationSummary",
+                                        "value": "automationSummary",
+                                        "source": "=out_AutomationSummary",
+                                        "target": "=automationSummary",
+                                        "elementId": "Stage_Evcol2-tRPA2snap"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tIXP3ext",
+                            "elementId": "Stage_Evcol2-tIXP3ext",
+                            "displayName": "API - extract document fields",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_IXP2B2",
+                                    "displayName": "After evidence snapshot",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_IXP2B2",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tRPA2snap"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vIXP3wf",
+                                        "var": "vIXP3wf",
+                                        "elementId": "Stage_Evcol2-tIXP3ext",
+                                        "value": "ExtractDocumentFields"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tHVL3val",
+                            "elementId": "Stage_Evcol2-tHVL3val",
+                            "displayName": "API - validate low-confidence fields",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_HVL3E5",
+                                    "displayName": "After extraction",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_HVL3E5",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tIXP3ext"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vHVL3wf",
+                                        "var": "vHVL3wf",
+                                        "elementId": "Stage_Evcol2-tHVL3val",
+                                        "value": "ValidateExtractionFields"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tQAC3rec",
+                            "elementId": "Stage_Evcol2-tQAC3rec",
+                            "displayName": "API - reconcile extraction confidence",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_QAC3F6",
+                                    "displayName": "After validation",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_QAC3F6",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tHVL3val"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vQAC3wf",
+                                        "var": "vQAC3wf",
+                                        "elementId": "Stage_Evcol2-tQAC3rec",
+                                        "value": "ReconcileExtractionConfidence"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent2aa",
+                        "displayName": "Triage stage completed",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent2aa",
+                                    "selectedStageId": "Stage_Aintk1"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ent2rt",
+                        "displayName": "Case Manager requested evidence refresh",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-exited",
+                                    "id": "Rule_ent2rt",
+                                    "selectedStageId": "Stage_Corr4a",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Evcol2'"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext2aa",
+                        "displayName": "Evidence and validation complete",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Corr4a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext2aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Corr4a",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 820,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1004,
+            "data": {
+                "label": "Investigation and Case Manager routing",
+                "description": "Correlate evidence, complete investigator review, and let the Case Manager Agent select the next ad-hoc stage from grounded case state.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tCOR4evid",
+                            "elementId": "Stage_Corr4a-tCOR4evid",
+                            "displayName": "Agent - correlate evidence",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cCOR4evid",
+                                "displayName": "When investigation stage starts",
+                                "rules": [[{"id": "rCOR4evid", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360EvidenceCorrelationAgent",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCOR4case",
+                                        "var": "vCOR4case",
+                                        "elementId": "Stage_Corr4a-tCOR4evid",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vCOR4grnd",
+                                        "var": "vCOR4grnd",
+                                        "elementId": "Stage_Corr4a-tCOR4evid",
+                                        "value": "{\"caseId\":\"PI-PCS-2026-0041\",\"claims\":[\"CLM-0491\",\"CLM-0503\",\"CLM-0540\",\"CLM-0549\"],\"signals\":[\"RS-01\",\"RS-02\",\"RS-03\",\"RS-04\",\"RS-05\"],\"instruction\":\"Cluster findings and cite IDs. Do not calculate or decide.\"}"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tREC4clm",
+                            "elementId": "Stage_Corr4a-tREC4clm",
+                            "displayName": "API - reconcile claims to evidence",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_REC4G7",
+                                    "displayName": "After evidence correlation",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_REC4G7",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tCOR4evid"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vREC4wf",
+                                        "var": "vREC4wf",
+                                        "elementId": "Stage_Corr4a-tREC4clm",
+                                        "value": "ReconcileClaimEvidence"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tPLN4plan",
+                            "elementId": "Stage_Corr4a-tPLN4plan",
+                            "displayName": "Agent - recommend investigation plan",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_PLN4H8",
+                                    "displayName": "After reconciliation",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_PLN4H8",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tREC4clm"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360InvestigationPlanningAgent",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vPLN4case",
+                                        "var": "vPLN4case",
+                                        "elementId": "Stage_Corr4a-tPLN4plan",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vPLN4grnd",
+                                        "var": "vPLN4grnd",
+                                        "elementId": "Stage_Corr4a-tPLN4plan",
+                                        "value": "{\"caseId\":\"PI-PCS-2026-0041\",\"humanGate\":\"Investigator review\",\"instruction\":\"Recommend next steps only. Flag every gate and do not execute.\"}"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tSUM5inv",
+                            "elementId": "Stage_Corr4a-tSUM5inv",
+                            "displayName": "Agent - draft investigator narrative",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_SUM4I9",
+                                    "displayName": "After investigation plan",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_SUM4I9",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tPLN4plan"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360SummaryAgent",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vSUM5case",
+                                        "var": "vSUM5case",
+                                        "elementId": "Stage_Corr4a-tSUM5inv",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vSUM5grnd",
+                                        "var": "vSUM5grnd",
+                                        "elementId": "Stage_Corr4a-tSUM5inv",
+                                        "value": "{\"caseId\":\"PI-PCS-2026-0041\",\"stage\":\"investigator-review\",\"instruction\":\"Draft a cited investigator narrative with FACT and INFERENCE labels.\"}"
+                                    },
+                                    {
+                                        "name": "audience",
+                                        "type": "string",
+                                        "id": "vSUM5aud",
+                                        "var": "vSUM5aud",
+                                        "elementId": "Stage_Corr4a-tSUM5inv",
+                                        "value": "investigator"
+                                    },
+                                    {
+                                        "name": "version",
+                                        "type": "string",
+                                        "id": "vSUM5ver",
+                                        "var": "vSUM5ver",
+                                        "elementId": "Stage_Corr4a-tSUM5inv",
+                                        "value": "v1-case-manager-routing"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tREV5task",
+                            "elementId": "Stage_Corr4a-tREV5task",
+                            "displayName": "API - create investigator review checkpoint",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_REV5J9",
+                                    "displayName": "After investigator narrative",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_REV5J9",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tSUM5inv"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vREV5wf",
+                                        "var": "vREV5wf",
+                                        "elementId": "Stage_Corr4a-tREV5task",
+                                        "value": "CreateInvestigatorReviewTask"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tCMR4route",
+                            "elementId": "Stage_Corr4a-tCMR4route",
+                            "displayName": "Agent - select next case stage",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": false,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_CMR4K1",
+                                    "displayName": "After investigator checkpoint",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_CMR4K1",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tREV5task"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bCaseMgrName",
+                                "folderPath": "=bindings.bCaseMgrFold",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCMR4case",
+                                        "var": "vCMR4case",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "currentStage",
+                                        "type": "string",
+                                        "id": "vCMR4stage",
+                                        "var": "vCMR4stage",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "Stage_Corr4a"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vCMR4grnd",
+                                        "var": "vCMR4grnd",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "=js:JSON.stringify({caseId: 'PI-PCS-2026-0041', evidenceReady: vars.evidenceReady, missingEvidenceCsv: vars.missingEvidenceCsv, automationSummary: vars.automationSummary, investigatorReviewComplete: true})"
+                                    },
+                                    {
+                                        "name": "quickRulesJson",
+                                        "type": "string",
+                                        "id": "vCMR4rules",
+                                        "var": "vCMR4rules",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "{\"riskScore\":72,\"blockingIssue\":false,\"supervisorRequired\":true}"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "nextStageId",
+                                        "type": "string",
+                                        "id": "nextStageId",
+                                        "var": "caseManagerNextStageId",
+                                        "originalVar": "nextStageId",
+                                        "value": "caseManagerNextStageId",
+                                        "source": "=nextStageId",
+                                        "target": "=nextStageId",
+                                        "elementId": "Stage_Corr4a-tCMR4route"
+                                    },
+                                    {
+                                        "name": "nextStage",
+                                        "type": "string",
+                                        "id": "caseManagerNextStage",
+                                        "var": "caseManagerNextStage",
+                                        "value": "caseManagerNextStage",
+                                        "source": "=nextStage",
+                                        "target": "=caseManagerNextStage",
+                                        "elementId": "Stage_Corr4a-tCMR4route"
+                                    },
+                                    {
+                                        "name": "routeDecision",
+                                        "type": "string",
+                                        "id": "caseManagerRouteDecision",
+                                        "var": "caseManagerRouteDecision",
+                                        "value": "caseManagerRouteDecision",
+                                        "source": "=routeDecision",
+                                        "target": "=caseManagerRouteDecision",
+                                        "elementId": "Stage_Corr4a-tCMR4route"
+                                    },
+                                    {
+                                        "name": "routeReason",
+                                        "type": "string",
+                                        "id": "caseManagerRouteReason",
+                                        "var": "caseManagerRouteReason",
+                                        "value": "caseManagerRouteReason",
+                                        "source": "=routeReason",
+                                        "target": "=caseManagerRouteReason",
+                                        "elementId": "Stage_Corr4a-tCMR4route"
+                                    },
+                                    {
+                                        "name": "completionRuleSatisfied",
+                                        "type": "boolean",
+                                        "id": "caseManagerCompletionSatisfied",
+                                        "var": "caseManagerCompletionSatisfied",
+                                        "value": "caseManagerCompletionSatisfied",
+                                        "source": "=completionRuleSatisfied",
+                                        "target": "=caseManagerCompletionSatisfied",
+                                        "elementId": "Stage_Corr4a-tCMR4route"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent4aa",
+                        "displayName": "Evidence and validation completed",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent4aa",
+                                    "selectedStageId": "Stage_Evcol2"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ent4pr",
+                        "displayName": "Provider response returned",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent4pr",
+                                    "selectedStageId": "Stage_Prreq6"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ent4sp",
+                        "displayName": "Supervisor action returned",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent4sp",
+                                    "selectedStageId": "Stage_Supv7a"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext4ev",
+                        "displayName": "Case Manager requests evidence refresh",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Evcol2",
+                        "marksStageComplete": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-tasks-completed",
+                                    "id": "Rule_ext4ev",
+                                    "selectedTasksIds": [
+                                        "tCMR4route"
+                                    ],
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Evcol2'"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ext4pr",
+                        "displayName": "Case Manager requests provider response",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Prreq6",
+                        "marksStageComplete": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-tasks-completed",
+                                    "id": "Rule_ext4pr",
+                                    "selectedTasksIds": [
+                                        "tCMR4route"
+                                    ],
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Prreq6'"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ext4sp",
+                        "displayName": "Case Manager requests supervisor action",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Supv7a",
+                        "marksStageComplete": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-tasks-completed",
+                                    "id": "Rule_ext4sp",
+                                    "selectedTasksIds": [
+                                        "tCMR4route"
+                                    ],
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Supv7a'"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ext4cl",
+                        "displayName": "Case Manager approves closure route",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Clos9a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext4cl",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Clos9a'"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Prreq6",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 1180,
+                "y": 40
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1006,
+            "data": {
+                "label": "Provider response",
+                "description": "Optional Case Manager route: send a records request, wait for the response SLA, intake the response, and refresh evidence correlation.",
+                "isRequired": false,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tREQ6send",
+                            "elementId": "Stage_Prreq6-tREQ6send",
+                            "displayName": "API - send provider records request",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cREQ6send",
+                                "displayName": "When provider response stage starts",
+                                "rules": [[{"id": "rREQ6send", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vREQ6wf",
+                                        "var": "vREQ6wf",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "SendProviderRecordsRequest"
+                                    },
+                                    {
+                                        "name": "investigatorProceed",
+                                        "type": "boolean",
+                                        "id": "vREQ6gate",
+                                        "var": "vREQ6gate",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "true"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tPRV6wait",
+                            "elementId": "Stage_Prreq6-tPRV6wait",
+                            "displayName": "Timer - await provider response SLA",
+                            "type": "wait-for-timer",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_PRV6K1",
+                                    "displayName": "After records request",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_PRV6K1",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tREQ6send"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "timerType": "timeDuration",
+                                "timeDuration": "P5D"
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tRSP6in",
+                            "elementId": "Stage_Prreq6-tRSP6in",
+                            "displayName": "API - intake provider response",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_RSP6L2",
+                                    "displayName": "After provider wait",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_RSP6L2",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tPRV6wait"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vRSP6wf",
+                                        "var": "vRSP6wf",
+                                        "elementId": "Stage_Prreq6-tRSP6in",
+                                        "value": "IntakeProviderResponse"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tREF6corr",
+                            "elementId": "Stage_Prreq6-tREF6corr",
+                            "displayName": "API - refresh correlation after response",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_REF6M3",
+                                    "displayName": "After response intake",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_REF6M3",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tRSP6in"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vREF6wf",
+                                        "var": "vREF6wf",
+                                        "elementId": "Stage_Prreq6-tREF6corr",
+                                        "value": "RefreshCorrelationAfterResponse"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent6aa",
+                        "displayName": "Case Manager selected provider response",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-exited",
+                                    "id": "Rule_ent6aa",
+                                    "selectedStageId": "Stage_Corr4a",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Prreq6'"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext6aa",
+                        "displayName": "Provider response processed",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Corr4a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext6aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Supv7a",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 1180,
+                "y": 360
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1007,
+            "data": {
+                "label": "Supervisor review and approved action",
+                "description": "Optional Case Manager route: prepare the supervisor packet, record approval, and execute only the explicitly approved referral, recovery, and notice actions.",
+                "isRequired": false,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tPKT7prep",
+                            "elementId": "Stage_Supv7a-tPKT7prep",
+                            "displayName": "API - prepare supervisor packet",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cPKT7prep",
+                                "displayName": "When supervisor stage starts",
+                                "rules": [[{"id": "rPKT7prep", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vPKT7wf",
+                                        "var": "vPKT7wf",
+                                        "elementId": "Stage_Supv7a-tPKT7prep",
+                                        "value": "PrepareSupervisorPacket"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tSUM7sup",
+                            "elementId": "Stage_Supv7a-tSUM7sup",
+                            "displayName": "Agent - draft supervisor narrative",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_SUM7N4",
+                                    "displayName": "After supervisor packet",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_SUM7N4",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tPKT7prep"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360SummaryAgent",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vSUM7case",
+                                        "var": "vSUM7case",
+                                        "elementId": "Stage_Supv7a-tSUM7sup",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vSUM7grnd",
+                                        "var": "vSUM7grnd",
+                                        "elementId": "Stage_Supv7a-tSUM7sup",
+                                        "value": "{\"caseId\":\"PI-PCS-2026-0041\",\"stage\":\"supervisor-approval\",\"instruction\":\"Draft supervisor-facing narrative and include non-determination disclaimer.\"}"
+                                    },
+                                    {
+                                        "name": "audience",
+                                        "type": "string",
+                                        "id": "vSUM7aud",
+                                        "var": "vSUM7aud",
+                                        "elementId": "Stage_Supv7a-tSUM7sup",
+                                        "value": "supervisor"
+                                    },
+                                    {
+                                        "name": "version",
+                                        "type": "string",
+                                        "id": "vSUM7ver",
+                                        "var": "vSUM7ver",
+                                        "elementId": "Stage_Supv7a-tSUM7sup",
+                                        "value": "v2-post-provider-response"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tRPA7brief",
+                            "elementId": "Stage_Supv7a-tRPA7brief",
+                            "displayName": "RPA - assemble decision control brief",
+                            "type": "rpa",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_RPA7P5",
+                                    "displayName": "After supervisor narrative",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_RPA7P5",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tSUM7sup"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bRpaPacketName",
+                                "folderPath": "=bindings.bRpaPacketFold",
+                                "inputs": [
+                                    {
+                                        "name": "in_CaseId",
+                                        "type": "string",
+                                        "id": "vRpa7Case",
+                                        "var": "vRpa7Case",
+                                        "elementId": "Stage_Supv7a-tRPA7brief",
+                                        "value": "PI-PCS-2026-0041"
+                                    },
+                                    {
+                                        "name": "in_ProviderName",
+                                        "type": "string",
+                                        "id": "vRpa7Provider",
+                                        "var": "vRpa7Provider",
+                                        "elementId": "Stage_Supv7a-tRPA7brief",
+                                        "value": "Harbor Home Support Services"
+                                    },
+                                    {
+                                        "name": "in_UnsupportedUnits",
+                                        "type": "integer",
+                                        "id": "vRpa7Units",
+                                        "var": "vRpa7Units",
+                                        "elementId": "Stage_Supv7a-tRPA7brief",
+                                        "value": "24"
+                                    },
+                                    {
+                                        "name": "in_UnitRate",
+                                        "type": "number",
+                                        "id": "vRpa7Rate",
+                                        "var": "vRpa7Rate",
+                                        "elementId": "Stage_Supv7a-tRPA7brief",
+                                        "value": "7.20"
+                                    },
+                                    {
+                                        "name": "in_RiskScore",
+                                        "type": "integer",
+                                        "id": "vRpa7Risk",
+                                        "var": "vRpa7Risk",
+                                        "elementId": "Stage_Supv7a-tRPA7brief",
+                                        "value": "72"
+                                    },
+                                    {
+                                        "name": "in_RouteReason",
+                                        "type": "string",
+                                        "id": "vRpa7Reason",
+                                        "var": "vRpa7Reason",
+                                        "elementId": "Stage_Supv7a-tRPA7brief",
+                                        "value": "Case Manager selected supervisor action because the reviewed sample contains validated unsupported units and policy requires human authorization before any financial action."
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "out_PacketId",
+                                        "type": "string",
+                                        "id": "decisionPacketId",
+                                        "var": "decisionPacketId",
+                                        "value": "decisionPacketId",
+                                        "source": "=out_PacketId",
+                                        "target": "=decisionPacketId",
+                                        "elementId": "Stage_Supv7a-tRPA7brief"
+                                    },
+                                    {
+                                        "name": "out_SampleExposure",
+                                        "type": "number",
+                                        "id": "sampleExposure",
+                                        "var": "sampleExposure",
+                                        "value": "sampleExposure",
+                                        "source": "=out_SampleExposure",
+                                        "target": "=sampleExposure",
+                                        "elementId": "Stage_Supv7a-tRPA7brief"
+                                    },
+                                    {
+                                        "name": "out_RequiresSupervisorApproval",
+                                        "type": "boolean",
+                                        "id": "requiresSupervisorApproval",
+                                        "var": "requiresSupervisorApproval",
+                                        "value": "requiresSupervisorApproval",
+                                        "source": "=out_RequiresSupervisorApproval",
+                                        "target": "=requiresSupervisorApproval",
+                                        "elementId": "Stage_Supv7a-tRPA7brief"
+                                    },
+                                    {
+                                        "name": "out_DecisionBrief",
+                                        "type": "string",
+                                        "id": "decisionBrief",
+                                        "var": "decisionBrief",
+                                        "value": "decisionBrief",
+                                        "source": "=out_DecisionBrief",
+                                        "target": "=decisionBrief",
+                                        "elementId": "Stage_Supv7a-tRPA7brief"
+                                    },
+                                    {
+                                        "name": "out_PolicyCitation",
+                                        "type": "string",
+                                        "id": "policyCitation",
+                                        "var": "policyCitation",
+                                        "value": "policyCitation",
+                                        "source": "=out_PolicyCitation",
+                                        "target": "=policyCitation",
+                                        "elementId": "Stage_Supv7a-tRPA7brief"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tSUP7gate",
+                            "elementId": "Stage_Supv7a-tSUP7gate",
+                            "displayName": "Action - supervisor disposition approval",
+                            "type": "action",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_SUP7P6",
+                                    "displayName": "After automated decision brief",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_SUP7P6",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tRPA7brief"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "taskTitle": "Supervisor disposition approval - PI-PCS-2026-0041",
+                                "priority": "High",
+                                "recipient": {
+                                    "Type": 2,
+                                    "Value": "sohail.ghatnekar@uipath.com"
+                                },
+                                "labels": "Program Integrity,Supervisor Approval",
+                                "name": "=bindings.bSupervisorAppName",
+                                "folderPath": "=bindings.bSupervisorAppFold",
+                                "inputs": [
+                                    { "name": "caseId", "type": "string", "id": "vSupCase", "var": "vSupCase", "elementId": "Stage_Supv7a-tSUP7gate", "value": "PI-PCS-2026-0041" },
+                                    { "name": "providerName", "type": "string", "id": "vSupProvider", "var": "vSupProvider", "elementId": "Stage_Supv7a-tSUP7gate", "value": "Harbor Home Support Services" },
+                                    { "name": "currentStage", "type": "string", "id": "vSupStage", "var": "vSupStage", "elementId": "Stage_Supv7a-tSUP7gate", "value": "Supervisor review and approved action" },
+                                    { "name": "riskScore", "type": "integer", "id": "vSupRisk", "var": "vSupRisk", "elementId": "Stage_Supv7a-tSUP7gate", "value": "72" },
+                                    { "name": "routeReason", "type": "string", "id": "vSupReason", "var": "vSupReason", "elementId": "Stage_Supv7a-tSUP7gate", "value": "Human authorization is required before adverse or financial action." },
+                                    { "name": "evidenceSummary", "type": "string", "id": "vSupEvidence", "var": "vSupEvidence", "elementId": "Stage_Supv7a-tSUP7gate", "value": "=vars.decisionBrief" },
+                                    { "name": "recommendedAction", "type": "string", "id": "vSupRecommended", "var": "vSupRecommended", "elementId": "Stage_Supv7a-tSUP7gate", "value": "Authorize reviewed-sample recovery with a second financial control gate" }
+                                ],
+                                "outputs": [
+                                    { "name": "supervisorDecision", "type": "string", "id": "supervisorDecision", "var": "supervisorDecision", "value": "supervisorDecision", "source": "=supervisorDecision", "target": "=supervisorDecision", "elementId": "Stage_Supv7a-tSUP7gate" },
+                                    { "name": "nextStage", "type": "string", "id": "supervisorNextStage", "var": "supervisorNextStage", "value": "supervisorNextStage", "source": "=nextStage", "target": "=supervisorNextStage", "elementId": "Stage_Supv7a-tSUP7gate" },
+                                    { "name": "reviewNotes", "type": "string", "id": "supervisorReviewNotes", "var": "supervisorReviewNotes", "value": "supervisorReviewNotes", "source": "=reviewNotes", "target": "=supervisorReviewNotes", "elementId": "Stage_Supv7a-tSUP7gate" },
+                                    { "name": "recommendedAction", "type": "string", "id": "supervisorRecommendedAction", "var": "supervisorRecommendedAction", "value": "supervisorRecommendedAction", "source": "=recommendedAction", "target": "=supervisorRecommendedAction", "elementId": "Stage_Supv7a-tSUP7gate" }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tREF8gen",
+                            "elementId": "Stage_Supv7a-tREF8gen",
+                            "displayName": "API - generate referral packet",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_REF7Q6",
+                                    "displayName": "After supervisor approval",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_REF7Q6",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tSUP7gate"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vREF8wf",
+                                        "var": "vREF8wf",
+                                        "elementId": "Stage_Supv7a-tREF8gen",
+                                        "value": "GenerateReferralPacket"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tAUT8gate",
+                            "elementId": "Stage_Supv7a-tAUT8gate",
+                            "displayName": "Action - authorize recovery scope",
+                            "type": "action",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_AUT8Q7",
+                                    "displayName": "After referral packet",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_AUT8Q7",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tREF8gen"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "taskTitle": "Recovery authorization - PI-PCS-2026-0041",
+                                "priority": "Critical",
+                                "recipient": {
+                                    "Type": 2,
+                                    "Value": "sohail.ghatnekar@uipath.com"
+                                },
+                                "labels": "Program Integrity,Financial Control",
+                                "name": "=bindings.bRecoveryAppName",
+                                "folderPath": "=bindings.bRecoveryAppFold",
+                                "inputs": [
+                                    { "name": "caseId", "type": "string", "id": "vAutCase", "var": "vAutCase", "elementId": "Stage_Supv7a-tAUT8gate", "value": "PI-PCS-2026-0041" },
+                                    { "name": "providerName", "type": "string", "id": "vAutProvider", "var": "vAutProvider", "elementId": "Stage_Supv7a-tAUT8gate", "value": "Harbor Home Support Services" },
+                                    { "name": "unsupportedUnits", "type": "integer", "id": "vAutUnits", "var": "vAutUnits", "elementId": "Stage_Supv7a-tAUT8gate", "value": "24" },
+                                    { "name": "unitRate", "type": "number", "id": "vAutRate", "var": "vAutRate", "elementId": "Stage_Supv7a-tAUT8gate", "value": "7.20" },
+                                    { "name": "sampleExposure", "type": "number", "id": "vAutSample", "var": "vAutSample", "elementId": "Stage_Supv7a-tAUT8gate", "value": "=vars.sampleExposure" },
+                                    { "name": "projectedExposureLow", "type": "number", "id": "vAutLow", "var": "vAutLow", "elementId": "Stage_Supv7a-tAUT8gate", "value": "1600" },
+                                    { "name": "projectedExposureHigh", "type": "number", "id": "vAutHigh", "var": "vAutHigh", "elementId": "Stage_Supv7a-tAUT8gate", "value": "42000" },
+                                    { "name": "decisionBrief", "type": "string", "id": "vAutBrief", "var": "vAutBrief", "elementId": "Stage_Supv7a-tAUT8gate", "value": "=vars.decisionBrief" },
+                                    { "name": "policyCitation", "type": "string", "id": "vAutPolicy", "var": "vAutPolicy", "elementId": "Stage_Supv7a-tAUT8gate", "value": "=vars.policyCitation" },
+                                    { "name": "authorizedAmount", "type": "number", "id": "vAutAmount", "var": "vAutAmount", "elementId": "Stage_Supv7a-tAUT8gate", "value": "=vars.sampleExposure" },
+                                    { "name": "noticeLanguage", "type": "string", "id": "vAutNotice", "var": "vAutNotice", "elementId": "Stage_Supv7a-tAUT8gate", "value": "This notice describes reviewed findings and preserves all provider response and appeal rights." }
+                                ],
+                                "outputs": [
+                                    { "name": "authorizationDecision", "type": "string", "id": "recoveryAuthorizationDecision", "var": "recoveryAuthorizationDecision", "value": "recoveryAuthorizationDecision", "source": "=authorizationDecision", "target": "=recoveryAuthorizationDecision", "elementId": "Stage_Supv7a-tAUT8gate" },
+                                    { "name": "recoveryRoute", "type": "string", "id": "recoveryRoute", "var": "recoveryRoute", "value": "recoveryRoute", "source": "=recoveryRoute", "target": "=recoveryRoute", "elementId": "Stage_Supv7a-tAUT8gate" },
+                                    { "name": "authorizationNotes", "type": "string", "id": "authorizationNotes", "var": "authorizationNotes", "value": "authorizationNotes", "source": "=authorizationNotes", "target": "=authorizationNotes", "elementId": "Stage_Supv7a-tAUT8gate" },
+                                    { "name": "authorizedAmount", "type": "number", "id": "authorizedAmount", "var": "authorizedAmount", "value": "authorizedAmount", "source": "=authorizedAmount", "target": "=authorizedAmount", "elementId": "Stage_Supv7a-tAUT8gate" },
+                                    { "name": "noticeLanguage", "type": "string", "id": "noticeLanguage", "var": "noticeLanguage", "value": "noticeLanguage", "source": "=noticeLanguage", "target": "=noticeLanguage", "elementId": "Stage_Supv7a-tAUT8gate" }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tREC8open",
+                            "elementId": "Stage_Supv7a-tREC8open",
+                            "displayName": "API - open approved overpayment recovery",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_REC8Q6",
+                                    "displayName": "After recovery authorization",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_REC8Q6",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tAUT8gate"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vREC8wf",
+                                        "var": "vREC8wf",
+                                        "elementId": "Stage_Supv7a-tREC8open",
+                                        "value": "OpenOverpaymentRecovery"
+                                    },
+                                    {
+                                        "name": "supervisorApproved",
+                                        "type": "boolean",
+                                        "id": "vREC8gate",
+                                        "var": "vREC8gate",
+                                        "elementId": "Stage_Supv7a-tREC8open",
+                                        "value": "=js:vars.recoveryAuthorizationDecision != null"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tNOT8queue",
+                            "elementId": "Stage_Supv7a-tNOT8queue",
+                            "displayName": "API - queue approved provider notice",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_NOT8R7",
+                                    "displayName": "After recovery handoff",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_NOT8R7",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tREC8open"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vNOT8wf",
+                                        "var": "vNOT8wf",
+                                        "elementId": "Stage_Supv7a-tNOT8queue",
+                                        "value": "QueueProviderNotice"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent7aa",
+                        "displayName": "Case Manager selected supervisor action",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-exited",
+                                    "id": "Rule_ent7aa",
+                                    "selectedStageId": "Stage_Corr4a",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Supv7a'"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext7aa",
+                        "displayName": "Supervisor action completed",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Corr4a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext7aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Clos9a",
+            "type": "case-management:Stage",
+            "position": {
+                "x": 1540,
+                "y": 200
+            },
+            "style": {
+                "width": 304,
+                "opacity": 0.8
+            },
+            "measured": {
+                "width": 304,
+                "height": 128
+            },
+            "width": 304,
+            "zIndex": 1009,
+            "data": {
+                "label": "Closure and monitoring",
+                "description": "Close the case, add provider monitoring context, and write the final audit event through Studio Web-compatible API workflow nodes.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tCLS9case",
+                            "elementId": "Stage_Clos9a-tCLS9case",
+                            "displayName": "API - close case and emit metrics",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [{
+                                "id": "cCLS9case",
+                                "displayName": "When closure stage starts",
+                                "rules": [[{"id": "rCLS9case", "rule": "current-stage-entered"}]]
+                            }],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vCLS9wf",
+                                        "var": "vCLS9wf",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "CloseCaseAndEmitMetrics"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tMON9flag",
+                            "elementId": "Stage_Clos9a-tMON9flag",
+                            "displayName": "API - add provider monitoring flag",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_MON9S8",
+                                    "displayName": "After case closure",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_MON9S8",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tCLS9case"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vMON9wf",
+                                        "var": "vMON9wf",
+                                        "elementId": "Stage_Clos9a-tMON9flag",
+                                        "value": "AddProviderMonitoringFlag"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tAUD9final",
+                            "elementId": "Stage_Clos9a-tAUD9final",
+                            "displayName": "API - write final audit record",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_AUD9T9",
+                                    "displayName": "After monitoring flag",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_AUD9T9",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tMON9flag"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "PI360ApiWorkflows",
+                                "folderPath": "solution_folder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vAUD9wf",
+                                        "var": "vAUD9wf",
+                                        "elementId": "Stage_Clos9a-tAUD9final",
+                                        "value": "WriteFinalAuditRecord"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent9aa",
+                        "displayName": "Case Manager selected closure",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent9aa",
+                                    "selectedStageId": "Stage_Corr4a",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Clos9a'"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext9aa",
+                        "displayName": "Case closed",
+                        "type": "exit-only",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext9aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        }
+    ],
+    "edges": [],
+    "layout": {}
+}

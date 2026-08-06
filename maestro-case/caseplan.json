@@ -1,0 +1,286 @@
+{
+  "_comment": "Authored per the /uipath-maestro-case skill. DEMO / SYNTHETIC data only — no real person, provider, or claim. Positioning: this case plan identifies risk signals, organizes evidence, and routes decisions to humans; it does NOT make a fraud determination. All arithmetic is deterministic (deterministic-calc-v1), never agent-computed. Adverse/financial actions require the Stage 7 supervisor approval. Every number matches CANON.md (24 unsupported units; 90-min overlap on 2026-04-14; exposure $172.80 / ~$1,600 / $18K-$42K; rate $7.20/unit).",
+  "schemaVersion": "1.0",
+  "caseType": {
+    "key": "PI-PCS",
+    "name": "Medicaid PCS Billing Integrity Review",
+    "program": "Medicaid PCS",
+    "dataFabricRootEntity": "ProgramIntegrityCase"
+  },
+  "caseInstance": {
+    "caseId": "PI-PCS-2026-0041",
+    "title": "Harbor Home Support Services — PCS billing integrity review",
+    "triggerType": "Claims Analytics Alert",
+    "triggerRef": "ALERT-CA-2026-7781",
+    "alertDate": "2026-07-20",
+    "openedDate": "2026-07-22",
+    "servicePeriodStart": "2026-03-01",
+    "servicePeriodEnd": "2026-05-31",
+    "priority": "High",
+    "providerId": "PRV-100482",
+    "attendantId": "ATT-2087",
+    "riskSignalCount": 5,
+    "potentialExposureLow": 172.80,
+    "potentialExposureHigh": 42000.00,
+    "exposureDisclaimer": "Indicative range, subject to human validation. Not a determination.",
+    "assignedInvestigator": "inv.taylor",
+    "assignedSupervisor": "sup.morgan"
+  },
+  "roles": [
+    { "key": "investigator", "displayName": "OPI Investigator", "assignee": "inv.taylor" },
+    { "key": "supervisor", "displayName": "OPI Supervisor", "assignee": "sup.morgan" },
+    { "key": "system", "displayName": "Automation / deterministic-calc-v1", "assignee": "system" }
+  ],
+  "auditPolicy": {
+    "entity": "InvestigationAction",
+    "mode": "append-only",
+    "rule": "Every task completion or record mutation appends one immutable InvestigationAction row."
+  },
+  "stages": [
+    {
+      "id": "stage-1",
+      "sequence": 1,
+      "name": "Alert intake & triage",
+      "status": "Open",
+      "purpose": "Create the case from the claims-analytics alert and explain (not decide) its High priority.",
+      "entryCondition": { "type": "trigger", "expression": "inbound alert ALERT-CA-2026-7781 received" },
+      "exitCondition": { "type": "gate", "expression": "case record created AND priority=High AND triage rationale attached" },
+      "sla": { "duration": "PT4H", "basis": "business-hours", "field": "sla_due" },
+      "tasks": [
+        {
+          "id": "t1-intake",
+          "type": "automation",
+          "name": "Ingest alert & create case",
+          "implementedBy": { "skill": "/uipath-api-workflow", "artifact": "intake-alert" },
+          "outputs": ["ProgramIntegrityCase:PI-PCS-2026-0041", "InvestigationAction (case opened)"]
+        },
+        {
+          "id": "t1-triage",
+          "type": "automation",
+          "name": "Triage rationale (agent, explain-only)",
+          "implementedBy": { "skill": "/uipath-agents", "artifact": "Triage Agent" },
+          "constraints": ["no re-scoring", "cite deterministic signals only"]
+        }
+      ]
+    },
+    {
+      "id": "stage-2",
+      "sequence": 2,
+      "name": "Automated evidence collection",
+      "status": "In Review",
+      "purpose": "Pull claims, EVV, POC, and documents into Data Fabric + buckets, then run deterministic RS-01..RS-05 and exposure math.",
+      "entryCondition": { "type": "gate", "expression": "stage-1 complete" },
+      "exitCondition": { "type": "gate", "expression": "all source records landed AND RS-01..RS-05 written AND exposure fields populated" },
+      "sla": { "duration": "P1D", "basis": "business-days" },
+      "tasks": [
+        {
+          "id": "t2-evidence",
+          "type": "automation",
+          "name": "Evidence collection & deterministic calc",
+          "implementedBy": { "skill": "/uipath-maestro-bpmn", "artifact": "evidence-collection.bpmn" },
+          "calls": ["/uipath-api-workflow (claims pull)", "/uipath-rpa (EVV + POC legacy pull)", "/uipath-platform (Data Fabric land)"],
+          "deterministic": {
+            "engine": "deterministic-calc-v1",
+            "produces": ["RS-01", "RS-02", "RS-03", "RS-04", "RS-05", "exposure range"],
+            "note": "Arithmetic performed by code, never by an agent."
+          },
+          "outputs": ["Claim[]", "EVVVisit[]", "EvidenceDocument[]", "RiskSignal[] (5)"]
+        }
+      ]
+    },
+    {
+      "id": "stage-3",
+      "sequence": 3,
+      "name": "Document extraction & validation",
+      "status": "In Review",
+      "purpose": "Extract fields from timesheets/POC/notes/personnel packet; route low-confidence extractions to a human.",
+      "entryCondition": { "type": "gate", "expression": "stage-2 complete AND documents in buckets" },
+      "exitCondition": { "type": "gate", "expression": "all EvidenceDocument rows validation_status in [Auto-confirmed, Human-validated]" },
+      "sla": { "duration": "P2D", "basis": "business-days" },
+      "tasks": [
+        {
+          "id": "t3-extract",
+          "type": "automation",
+          "name": "IXP extraction",
+          "implementedBy": { "skill": "/uipath-ixp", "artifact": "pcs-document-extraction" },
+          "targets": ["DOC-TS-0416", "DOC-TS-0519", "DOC-POC-33915", "DOC-SN-0414", "DOC-PP-2087"]
+        },
+        {
+          "id": "t3-validate",
+          "type": "human",
+          "name": "Validate low-confidence extractions",
+          "implementedBy": { "skill": "/uipath-human-in-the-loop", "artifact": "extraction-validation-task" },
+          "assigneeRole": "investigator",
+          "writes": "EvidenceDocument.validation_status = Human-validated"
+        }
+      ]
+    },
+    {
+      "id": "stage-4",
+      "sequence": 4,
+      "name": "Evidence correlation & investigation planning",
+      "status": "In Review",
+      "purpose": "Group deterministic findings, explain conflicts, recommend next steps — no arithmetic.",
+      "entryCondition": { "type": "gate", "expression": "stage-3 complete" },
+      "exitCondition": { "type": "gate", "expression": "correlated findings + planning recommendation attached, FACT/INFERENCE labeled" },
+      "sla": { "duration": "PT4H", "basis": "business-hours" },
+      "tasks": [
+        {
+          "id": "t4-correlate",
+          "type": "automation",
+          "name": "Correlate findings (agent, reference-by-ID)",
+          "implementedBy": { "skill": "/uipath-agents", "artifact": "Evidence Correlation Agent" },
+          "constraints": ["no arithmetic", "reference deterministic values by ID (RS-01..RS-05)"]
+        },
+        {
+          "id": "t4-plan",
+          "type": "automation",
+          "name": "Recommend next steps (agent, recommend-only)",
+          "implementedBy": { "skill": "/uipath-agents", "artifact": "Investigation Planning Agent" },
+          "constraints": ["recommends only, never executes", "flags every human gate"]
+        }
+      ]
+    },
+    {
+      "id": "stage-5",
+      "sequence": 5,
+      "name": "Investigator human review",
+      "status": "In Review",
+      "humanGate": true,
+      "gateRole": "investigator",
+      "purpose": "Investigator validates signals, edits the narrative, and decides whether to proceed (recommendation, not an adverse action).",
+      "entryCondition": { "type": "gate", "expression": "stage-4 complete" },
+      "exitCondition": { "type": "gate", "expression": "Decision(decision_role=Investigator) recorded to proceed" },
+      "sla": { "duration": "P3D", "basis": "business-days" },
+      "tasks": [
+        {
+          "id": "t5-summary",
+          "type": "automation",
+          "name": "Draft investigator narrative (agent)",
+          "implementedBy": { "skill": "/uipath-agents", "artifact": "Summary Agent" },
+          "constraints": ["FACT vs INFERENCE labeling", "citations mandatory"]
+        },
+        {
+          "id": "t5-review",
+          "type": "human",
+          "name": "Investigator review & decision",
+          "implementedBy": { "skill": "/uipath-human-in-the-loop", "artifact": "investigator-review-task", "ui": "/uipath-coded-apps (Decision Center)" },
+          "assignee": "inv.taylor",
+          "assigneeRole": "investigator",
+          "writes": "Decision { decision_type: 'Proceed to records request', decision_role: 'Investigator', adverse_or_financial: false }"
+        }
+      ]
+    },
+    {
+      "id": "stage-6",
+      "sequence": 6,
+      "name": "Provider records request & wait state",
+      "status": "Awaiting Provider",
+      "purpose": "Send outbound provider records request, wait for the response, then reprocess on arrival.",
+      "entryCondition": { "type": "gate", "expression": "stage-5 investigator decided to proceed" },
+      "exitCondition": { "type": "gate", "expression": "provider response DOC-CORR-01 received AND correlation re-run" },
+      "sla": { "duration": "P15D", "basis": "calendar-days", "onExpiry": "escalate" },
+      "tasks": [
+        {
+          "id": "t6-request",
+          "type": "automation",
+          "name": "Assemble & send records request",
+          "implementedBy": { "skill": "/uipath-maestro-bpmn", "artifact": "records-request.bpmn" },
+          "calls": ["/uipath-api-workflow (send request)"]
+        },
+        {
+          "id": "t6-wait",
+          "type": "wait",
+          "name": "Await provider response",
+          "waitFor": { "messageEvent": "provider-records-response", "correlatesTo": "PI-PCS-2026-0041", "expectedDocument": "DOC-CORR-01" },
+          "timer": { "boundary": "P15D", "onExpiry": "escalate-to-supervisor" }
+        },
+        {
+          "id": "t6-intake",
+          "type": "automation",
+          "name": "Intake response & re-run correlation",
+          "implementedBy": { "skill": "/uipath-maestro-bpmn", "artifact": "records-request.bpmn" },
+          "inputs": ["DOC-CORR-01"],
+          "outputs": ["EvidenceDocument:DOC-CORR-01", "refreshed correlation"]
+        }
+      ]
+    },
+    {
+      "id": "stage-7",
+      "sequence": 7,
+      "name": "Supervisor approval / disposition",
+      "status": "Pending Approval",
+      "humanGate": true,
+      "gateRole": "supervisor",
+      "purpose": "Supervisor approves (or rejects) any adverse/financial disposition before execution.",
+      "entryCondition": { "type": "gate", "expression": "stage-6 complete (response reprocessed)" },
+      "exitCondition": { "type": "gate", "expression": "Decision(decision_role=Supervisor).approved resolved (true|false)" },
+      "sla": { "duration": "P2D", "basis": "business-days" },
+      "tasks": [
+        {
+          "id": "t7-approve",
+          "type": "human",
+          "name": "Supervisor approval (gates adverse/financial action)",
+          "implementedBy": { "skill": "/uipath-human-in-the-loop", "artifact": "supervisor-approval-task", "ui": "/uipath-coded-apps (Decision Center, gated)" },
+          "assignee": "sup.morgan",
+          "assigneeRole": "supervisor",
+          "requiresApprovalWhen": "Decision.adverse_or_financial == true",
+          "writes": "Decision { decision_role: 'Supervisor', approved: <bool> }"
+        }
+      ],
+      "transitions": [
+        { "when": "Decision.approved == true", "to": "stage-8" },
+        { "when": "Decision.approved == false", "to": "stage-9", "note": "Close-no-action" }
+      ]
+    },
+    {
+      "id": "stage-8",
+      "sequence": 8,
+      "name": "Approved action execution",
+      "status": "In Review",
+      "purpose": "Execute only the supervisor-approved actions: referral packet, overpayment recovery, provider notice.",
+      "entryCondition": { "type": "gate", "expression": "stage-7 Decision.approved == true" },
+      "exitCondition": { "type": "gate", "expression": "referral packet generated AND recovery record opened AND provider notice queued" },
+      "sla": { "duration": "P1D", "basis": "business-days" },
+      "tasks": [
+        {
+          "id": "t8-execute",
+          "type": "automation",
+          "name": "Generate referral packet & open recovery",
+          "implementedBy": { "skill": "/uipath-maestro-bpmn", "artifact": "referral-packet.bpmn" },
+          "calls": ["/uipath-api-workflow (recovery record, notice queue)", "/uipath-rpa (legacy write-back)"],
+          "confirmedUnsupportedUnits": 24,
+          "recoveryBasis": "24 units x $7.20 = $172.80 (reviewed-sample basis; ~$1,600 reviewed-period projection)"
+        }
+      ]
+    },
+    {
+      "id": "stage-9",
+      "sequence": 9,
+      "name": "Closure & monitoring",
+      "status": "Closed",
+      "purpose": "Close the case, write the final audit record, add provider to watch list, emit Insights metrics.",
+      "entryCondition": { "type": "gate", "expression": "stage-8 complete OR stage-7 rejected (close-no-action)" },
+      "exitCondition": { "type": "gate", "expression": "case Closed AND Provider.watch_list=true AND Insights metrics emitted" },
+      "sla": { "duration": "P1D", "basis": "business-days" },
+      "tasks": [
+        {
+          "id": "t9-close",
+          "type": "automation",
+          "name": "Write audit record, close case, watch-list, emit metrics",
+          "implementedBy": { "skill": "/uipath-maestro-bpmn", "artifact": "closure.bpmn" },
+          "calls": ["/uipath-platform (Provider.watch_list=true)", "/uipath-insights (metrics)"],
+          "outputs": ["InvestigationAction (final audit)", "Provider:PRV-100482 watch_list=true"]
+        }
+      ]
+    }
+  ],
+  "milestones": [
+    { "key": "case-opened", "atStage": "stage-1" },
+    { "key": "signals-computed", "atStage": "stage-2" },
+    { "key": "investigator-decision", "atStage": "stage-5", "gate": "investigator" },
+    { "key": "provider-response-received", "atStage": "stage-6", "wait": true },
+    { "key": "supervisor-approval", "atStage": "stage-7", "gate": "supervisor" },
+    { "key": "case-closed", "atStage": "stage-9" }
+  ]
+}

@@ -1,0 +1,81 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main" mva:VisualBasic.Settings="{x:Null}"
+xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:mva="clr-namespace:Microsoft.VisualBasic.Activities;assembly=System.Activities"
+xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=mscorlib"
+xmlns:ui="http://schemas.uipath.com/workflow/activities"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:Members>
+        <x:Property Name="in_CaseId" Type="InArgument(x:String)" />
+        <x:Property Name="in_ProviderName" Type="InArgument(x:String)" />
+        <x:Property Name="in_UnsupportedUnits" Type="InArgument(x:Int32)" />
+        <x:Property Name="in_UnitRate" Type="InArgument(x:Double)" />
+        <x:Property Name="in_RiskScore" Type="InArgument(x:Int32)" />
+        <x:Property Name="in_RouteReason" Type="InArgument(x:String)" />
+        <x:Property Name="out_PacketId" Type="OutArgument(x:String)" />
+        <x:Property Name="out_SampleExposure" Type="OutArgument(x:Double)" />
+        <x:Property Name="out_RequiresSupervisorApproval" Type="OutArgument(x:Boolean)" />
+        <x:Property Name="out_DecisionBrief" Type="OutArgument(x:String)" />
+        <x:Property Name="out_PolicyCitation" Type="OutArgument(x:String)" />
+    </x:Members>
+    <TextExpression.NamespacesForImplementation>
+        <sco:Collection x:TypeArguments="x:String">
+            <x:String>System.Activities</x:String>
+            <x:String>System.Activities.Statements</x:String>
+            <x:String>System.Activities.Expressions</x:String>
+            <x:String>Microsoft.VisualBasic</x:String>
+            <x:String>Microsoft.VisualBasic.Activities</x:String>
+            <x:String>System</x:String>
+            <x:String>System.Collections</x:String>
+            <x:String>System.Collections.Generic</x:String>
+            <x:String>System.Collections.ObjectModel</x:String>
+            <x:String>System.Data</x:String>
+            <x:String>System.Linq</x:String>
+            <x:String>System.Xml</x:String>
+            <x:String>System.Xml.Linq</x:String>
+            <x:String>UiPath.Core</x:String>
+            <x:String>UiPath.Core.Activities</x:String>
+        </sco:Collection>
+    </TextExpression.NamespacesForImplementation>
+    <TextExpression.ReferencesForImplementation>
+        <sco:Collection x:TypeArguments="AssemblyReference">
+            <AssemblyReference>System.Activities</AssemblyReference>
+            <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+            <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+            <AssemblyReference>mscorlib</AssemblyReference>
+            <AssemblyReference>System</AssemblyReference>
+            <AssemblyReference>System.Core</AssemblyReference>
+            <AssemblyReference>System.Linq</AssemblyReference>
+            <AssemblyReference>System.Xml</AssemblyReference>
+            <AssemblyReference>System.Xml.Linq</AssemblyReference>
+            <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+        </sco:Collection>
+    </TextExpression.ReferencesForImplementation>
+    <Sequence DisplayName="Assemble Decision Brief" sap2010:WorkflowViewState.IdRef="Sequence_1">
+        <Assign x:TypeArguments="x:String" DisplayName="Create packet identifier">
+            <Assign.To><OutArgument x:TypeArguments="x:String"><mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_PacketId" /></OutArgument></Assign.To>
+            <Assign.Value><InArgument x:TypeArguments="x:String"><mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="&quot;AUTH-&quot; &amp; in_CaseId &amp; &quot;-&quot; &amp; DateTime.UtcNow.ToString(&quot;yyyyMMddHHmmss&quot;)" /></InArgument></Assign.Value>
+        </Assign>
+        <Assign x:TypeArguments="x:Double" DisplayName="Calculate reviewed sample exposure">
+            <Assign.To><OutArgument x:TypeArguments="x:Double"><mva:VisualBasicReference x:TypeArguments="x:Double" ExpressionText="out_SampleExposure" /></OutArgument></Assign.To>
+            <Assign.Value><InArgument x:TypeArguments="x:Double"><mva:VisualBasicValue x:TypeArguments="x:Double" ExpressionText="Math.Round(CDbl(in_UnsupportedUnits) * in_UnitRate, 2)" /></InArgument></Assign.Value>
+        </Assign>
+        <Assign x:TypeArguments="x:Boolean" DisplayName="Apply approval threshold">
+            <Assign.To><OutArgument x:TypeArguments="x:Boolean"><mva:VisualBasicReference x:TypeArguments="x:Boolean" ExpressionText="out_RequiresSupervisorApproval" /></OutArgument></Assign.To>
+            <Assign.Value><InArgument x:TypeArguments="x:Boolean"><mva:VisualBasicValue x:TypeArguments="x:Boolean" ExpressionText="out_SampleExposure &gt; 0 OrElse in_RiskScore &gt;= 60" /></InArgument></Assign.Value>
+        </Assign>
+        <Assign x:TypeArguments="x:String" DisplayName="Attach policy citation">
+            <Assign.To><OutArgument x:TypeArguments="x:String"><mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_PolicyCitation" /></OutArgument></Assign.To>
+            <Assign.Value><InArgument x:TypeArguments="x:String"><mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="&quot;PCS Program Integrity Manual, Section 8.4 - unsupported service units and recovery review&quot;" /></InArgument></Assign.Value>
+        </Assign>
+        <Assign x:TypeArguments="x:String" DisplayName="Compose grounded decision brief">
+            <Assign.To><OutArgument x:TypeArguments="x:String"><mva:VisualBasicReference x:TypeArguments="x:String" ExpressionText="out_DecisionBrief" /></OutArgument></Assign.To>
+            <Assign.Value><InArgument x:TypeArguments="x:String"><mva:VisualBasicValue x:TypeArguments="x:String" ExpressionText="&quot;Case &quot; &amp; in_CaseId &amp; &quot; for &quot; &amp; in_ProviderName &amp; &quot; contains &quot; &amp; in_UnsupportedUnits.ToString() &amp; &quot; human-validated unsupported units at &quot; &amp; in_UnitRate.ToString(&quot;C2&quot;) &amp; &quot; per unit. Reviewed-sample exposure is &quot; &amp; out_SampleExposure.ToString(&quot;C2&quot;) &amp; &quot;. Stored risk score: &quot; &amp; in_RiskScore.ToString() &amp; &quot;. Case Manager route reason: &quot; &amp; in_RouteReason &amp; &quot;. This packet proposes review only and does not initiate recovery.&quot;" /></InArgument></Assign.Value>
+        </Assign>
+        <ui:LogMessage Level="Info" DisplayName="Log decision packet">
+            <ui:LogMessage.Message><InArgument x:TypeArguments="x:Object"><mva:VisualBasicValue x:TypeArguments="x:Object" ExpressionText="out_PacketId &amp; &quot; | approvalRequired=&quot; &amp; out_RequiresSupervisorApproval.ToString()" /></InArgument></ui:LogMessage.Message>
+        </ui:LogMessage>
+    </Sequence>
+</Activity>

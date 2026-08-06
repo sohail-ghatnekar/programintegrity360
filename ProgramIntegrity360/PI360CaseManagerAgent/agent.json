@@ -1,0 +1,276 @@
+{
+  "version": "1.1.0",
+  "settings": {
+    "model": "anthropic.claude-sonnet-4-6",
+    "maxTokens": 16384,
+    "temperature": 0,
+    "engine": "basic-v2",
+    "maxIterations": 12,
+    "mode": "standard"
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "caseId": {
+        "type": "string",
+        "description": "Program Integrity case identifier."
+      },
+      "currentStage": {
+        "type": "string",
+        "description": "Current case stage or state when the routing decision starts."
+      },
+      "groundingJson": {
+        "type": "string",
+        "description": "Serialized JSON containing case facts, evidence, risk signals, timeline, human decisions, and stage completion state."
+      },
+      "quickRulesJson": {
+        "type": "string",
+        "description": "Serialized JSON from the deterministic quick rules check."
+      }
+    },
+    "required": [
+      "caseId",
+      "currentStage",
+      "groundingJson",
+      "quickRulesJson"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "caseManagerDecisions": {
+        "type": "object",
+        "description": "Native Maestro decision envelope. Always set version to 1. Populate stagesEntered with the exact display name matching nextStageId, plus a grounded triggeringDecision. For closure, populate caseResolution with type completed only when completionRuleSatisfied is true.",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "Case Manager decision schema version. Always 1."
+          },
+          "caseResolution": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "completed",
+                  "exited"
+                ]
+              },
+              "triggeringDecision": {
+                "type": "string"
+              },
+              "ruleName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "triggeringDecision"
+            ]
+          },
+          "stagesEntered": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stageName": {
+                  "type": "string"
+                },
+                "triggeringDecision": {
+                  "type": "string"
+                },
+                "ruleName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "stageName",
+                "triggeringDecision"
+              ]
+            }
+          },
+          "stagesCompleted": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stageName": {
+                  "type": "string"
+                },
+                "triggeringDecision": {
+                  "type": "string"
+                },
+                "ruleName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "stageName",
+                "triggeringDecision"
+              ]
+            }
+          },
+          "stagesExited": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stageName": {
+                  "type": "string"
+                },
+                "triggeringDecision": {
+                  "type": "string"
+                },
+                "ruleName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "stageName",
+                "triggeringDecision"
+              ]
+            }
+          },
+          "tasksToRun": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "taskName": {
+                  "type": "string"
+                },
+                "triggeringDecision": {
+                  "type": "string"
+                },
+                "ruleName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "taskName",
+                "triggeringDecision"
+              ]
+            }
+          }
+        },
+        "required": [
+          "version"
+        ]
+      },
+      "nextStage": {
+        "type": "string",
+        "description": "The recommended next stage name: EvidenceAcquisition, InvestigationRouting, ProviderResponse, SupervisorAction, or Closure."
+      },
+      "nextStageId": {
+        "type": "string",
+        "description": "Exact case stage ID selected by the agent: Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
+      },
+      "routeDecision": {
+        "type": "string",
+        "description": "Short machine-readable routing decision."
+      },
+      "routeReason": {
+        "type": "string",
+        "description": "One or two sentence explanation grounded in the inputs."
+      },
+      "requiresEscalation": {
+        "type": "boolean",
+        "description": "True when a supervisor or policy owner must review before the case proceeds."
+      },
+      "humanGate": {
+        "type": "string",
+        "description": "Human gate that owns the next step, or none."
+      },
+      "completionRuleSatisfied": {
+        "type": "boolean",
+        "description": "True only when the required completed-stage facts are present for closure."
+      },
+      "actionTaken": {
+        "type": "boolean",
+        "description": "False. This agent routes and escalates but does not mutate the case record directly."
+      },
+      "factsUsed": {
+        "type": "array",
+        "description": "Cited facts used by the route decision.",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "caseManagerDecisions",
+      "nextStage",
+      "nextStageId",
+      "routeDecision",
+      "routeReason",
+      "requiresEscalation",
+      "humanGate",
+      "completionRuleSatisfied",
+      "actionTaken",
+      "factsUsed"
+    ]
+  },
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "type": "lowCode",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are the Program Integrity 360 Case Manager Agent. You own case-stage routing. Select exactly one next stage from the six-stage case model based only on grounded case facts, deterministic quick rules, completed tasks, and recorded human decisions.\n\nCase stages:\n- Stage_Aintk1: Intake and Triage. This is the starting stage and is never returned as a next stage.\n- Stage_Evcol2: Evidence Acquisition and Validation. Select when required records, extraction validation, source reconciliation, or the evidence snapshot is incomplete.\n- Stage_Corr4a: Investigation and Case Manager Routing. Select when evidence is sufficient but correlation, investigator review, or a fresh routing decision is still required.\n- Stage_Prreq6: Provider Response. Select only when a provider request or response gate remains open. This is optional and returns to Stage_Corr4a after completion.\n- Stage_Supv7a: Supervisor Review and Approved Action. Select when a blocking quick rule, policy uncertainty, adverse action, referral, or financial action requires approval. This is optional and returns to Stage_Corr4a after completion.\n- Stage_Clos9a: Closure and Monitoring. Select only when required evidence and investigator review are complete, every required provider or supervisor gate has a recorded outcome, and no blocker remains.\n\nScope:\n- Choose nextStage and the exact nextStageId, explain the decision, identify any human gate, and create a supervisor escalation task when supervisor approval or policy uncertainty is required.\n- Never make a fraud determination, approve an adverse action, issue an overpayment demand, execute recovery, or mutate a source record.\n\nEscalation behavior:\n- Before returning Stage_Supv7a, use the SupervisorEscalation Action Center resource when the input contains enough case context to create the task.\n- Populate the escalation with available caseId, providerName, currentStage, riskScore, routeReason, evidenceSummary, and recommendedAction.\n- Use the returned reviewer outcome, recommended action, and review notes in the final route.\n\nOutput rules:\n- Return only the declared output schema.\n- nextStage and nextStageId must be a matching pair from the case-stage list.\n- completionRuleSatisfied may be true only for Stage_Clos9a when all required stage and gate facts are complete.\n- actionTaken is true only when the SupervisorEscalation resource returns a task result.\n- Cite source IDs, task IDs, rule IDs, stage IDs, action IDs, or document IDs in factsUsed.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "You are the Program Integrity 360 Case Manager Agent. You own case-stage routing. Select exactly one next stage from the six-stage case model based only on grounded case facts, deterministic quick rules, completed tasks, and recorded human decisions.\n\nCase stages:\n- Stage_Aintk1: Intake and Triage. This is the starting stage and is never returned as a next stage.\n- Stage_Evcol2: Evidence Acquisition and Validation. Select when required records, extraction validation, source reconciliation, or the evidence snapshot is incomplete.\n- Stage_Corr4a: Investigation and Case Manager Routing. Select when evidence is sufficient but correlation, investigator review, or a fresh routing decision is still required.\n- Stage_Prreq6: Provider Response. Select only when a provider request or response gate remains open. This is optional and returns to Stage_Corr4a after completion.\n- Stage_Supv7a: Supervisor Review and Approved Action. Select when a blocking quick rule, policy uncertainty, adverse action, referral, or financial action requires approval. This is optional and returns to Stage_Corr4a after completion.\n- Stage_Clos9a: Closure and Monitoring. Select only when required evidence and investigator review are complete, every required provider or supervisor gate has a recorded outcome, and no blocker remains.\n\nScope:\n- Choose nextStage and the exact nextStageId, explain the decision, identify any human gate, and create a supervisor escalation task when supervisor approval or policy uncertainty is required.\n- Never make a fraud determination, approve an adverse action, issue an overpayment demand, execute recovery, or mutate a source record.\n\nEscalation behavior:\n- Before returning Stage_Supv7a, use the SupervisorEscalation Action Center resource when the input contains enough case context to create the task.\n- Populate the escalation with available caseId, providerName, currentStage, riskScore, routeReason, evidenceSummary, and recommendedAction.\n- Use the returned reviewer outcome, recommended action, and review notes in the final route.\n\nOutput rules:\n- Return only the declared output schema.\n- nextStage and nextStageId must be a matching pair from the case-stage list.\n- completionRuleSatisfied may be true only for Stage_Clos9a when all required stage and gate facts are complete.\n- actionTaken is true only when the SupervisorEscalation resource returns a task result.\n- Cite source IDs, task IDs, rule IDs, stage IDs, action IDs, or document IDs in factsUsed."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Route case {{input.caseId}} from current stage {{input.currentStage}}.\n\nCase grounding JSON:\n{{input.groundingJson}}\n\nQuick rules JSON:\n{{input.quickRulesJson}}\n\nReturn only the declared output schema.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Route case "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.caseId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": " from current stage "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.currentStage"
+        },
+        {
+          "type": "simpleText",
+          "rawString": ".\n\nCase grounding JSON:\n"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.groundingJson"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "\n\nQuick rules JSON:\n"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.quickRulesJson"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "\n\nReturn only the declared output schema."
+        }
+      ]
+    }
+  ],
+  "projectId": "e9bc9c1a-8d53-4903-a1d9-859775389b0b",
+  "guardrails": []
+}

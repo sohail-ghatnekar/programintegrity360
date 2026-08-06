@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Agent",
+  "Name": "PI360QuickRulesCodedAgent",
+  "Description": "Program Integrity 360 deterministic quick-rules coded agent",
+  "MainFile": null
+}

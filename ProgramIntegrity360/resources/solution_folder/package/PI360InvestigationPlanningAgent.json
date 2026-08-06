@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360InvestigationPlanningAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "f27c930e-42d5-4db7-8597-5c606122a15d",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360InvestigationPlanningAgent"
+    },
+    "locks": [],
+    "key": "c5a54f6f-1c99-4153-8078-7c70c0e1d861",
+    "files": []
+  }
+}

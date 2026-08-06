@@ -1,0 +1,81 @@
+{
+  "inputs": {
+    "type": "object",
+    "properties": {
+      "caseId": {
+        "type": "string",
+        "required": true,
+        "description": "Program Integrity case identifier."
+      },
+      "providerName": {
+        "type": "string",
+        "required": false,
+        "description": "Provider or organization under review."
+      },
+      "currentStage": {
+        "type": "string",
+        "required": false,
+        "description": "Current ad-hoc case stage."
+      },
+      "riskScore": {
+        "type": "integer",
+        "required": false,
+        "description": "Stored risk score or priority score supplied by the case manager."
+      },
+      "routeReason": {
+        "type": "string",
+        "required": false,
+        "description": "Grounded explanation from the Case Manager agent."
+      },
+      "evidenceSummary": {
+        "type": "string",
+        "required": false,
+        "description": "Concise cited evidence summary."
+      }
+    }
+  },
+  "outputs": {
+    "type": "object",
+    "properties": {
+      "supervisorDecision": {
+        "type": "string",
+        "required": true,
+        "description": "Supervisor decision captured from the task."
+      },
+      "nextStage": {
+        "type": "string",
+        "required": true,
+        "description": "Stage the case should move to after review."
+      },
+      "reviewNotes": {
+        "type": "string",
+        "required": false,
+        "description": "Reviewer notes for the case record."
+      }
+    }
+  },
+  "inOuts": {
+    "type": "object",
+    "properties": {
+      "recommendedAction": {
+        "type": "string",
+        "required": false,
+        "description": "Pre-populated recommendation that the reviewer may update."
+      }
+    }
+  },
+  "outcomes": {
+    "type": "object",
+    "properties": {
+      "Approve": {
+        "type": "string"
+      },
+      "Return": {
+        "type": "string"
+      },
+      "Escalate": {
+        "type": "string"
+      }
+    }
+  }
+}

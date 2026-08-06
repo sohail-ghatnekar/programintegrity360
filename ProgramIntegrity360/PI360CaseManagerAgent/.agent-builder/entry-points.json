@@ -1,0 +1,213 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "/content/agent.json",
+      "uniqueId": "51e7aded-9acb-4ce0-895d-f64fb3c36c1c",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Program Integrity case identifier."
+          },
+          "currentStage": {
+            "type": "string",
+            "description": "Current case stage or state when the routing decision starts."
+          },
+          "groundingJson": {
+            "type": "string",
+            "description": "Serialized JSON containing case facts, evidence, risk signals, timeline, human decisions, and stage completion state."
+          },
+          "quickRulesJson": {
+            "type": "string",
+            "description": "Serialized JSON from the deterministic quick rules check."
+          }
+        },
+        "required": [
+          "caseId",
+          "currentStage",
+          "groundingJson",
+          "quickRulesJson"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "caseManagerDecisions": {
+            "type": "object",
+            "description": "Native Maestro decision envelope. Always set version to 1. Populate stagesEntered with the exact display name matching nextStageId, plus a grounded triggeringDecision. For closure, populate caseResolution with type completed only when completionRuleSatisfied is true.",
+            "properties": {
+              "version": {
+                "type": "number",
+                "description": "Case Manager decision schema version. Always 1."
+              },
+              "caseResolution": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "completed",
+                      "exited"
+                    ]
+                  },
+                  "triggeringDecision": {
+                    "type": "string"
+                  },
+                  "ruleName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "triggeringDecision"
+                ]
+              },
+              "stagesEntered": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stageName": {
+                      "type": "string"
+                    },
+                    "triggeringDecision": {
+                      "type": "string"
+                    },
+                    "ruleName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "stageName",
+                    "triggeringDecision"
+                  ]
+                }
+              },
+              "stagesCompleted": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stageName": {
+                      "type": "string"
+                    },
+                    "triggeringDecision": {
+                      "type": "string"
+                    },
+                    "ruleName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "stageName",
+                    "triggeringDecision"
+                  ]
+                }
+              },
+              "stagesExited": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "stageName": {
+                      "type": "string"
+                    },
+                    "triggeringDecision": {
+                      "type": "string"
+                    },
+                    "ruleName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "stageName",
+                    "triggeringDecision"
+                  ]
+                }
+              },
+              "tasksToRun": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "taskName": {
+                      "type": "string"
+                    },
+                    "triggeringDecision": {
+                      "type": "string"
+                    },
+                    "ruleName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "taskName",
+                    "triggeringDecision"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "version"
+            ]
+          },
+          "nextStage": {
+            "type": "string",
+            "description": "The recommended next stage name: EvidenceAcquisition, InvestigationRouting, ProviderResponse, SupervisorAction, or Closure."
+          },
+          "nextStageId": {
+            "type": "string",
+            "description": "Exact case stage ID selected by the agent: Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
+          },
+          "routeDecision": {
+            "type": "string",
+            "description": "Short machine-readable routing decision."
+          },
+          "routeReason": {
+            "type": "string",
+            "description": "One or two sentence explanation grounded in the inputs."
+          },
+          "requiresEscalation": {
+            "type": "boolean",
+            "description": "True when a supervisor or policy owner must review before the case proceeds."
+          },
+          "humanGate": {
+            "type": "string",
+            "description": "Human gate that owns the next step, or none."
+          },
+          "completionRuleSatisfied": {
+            "type": "boolean",
+            "description": "True only when the required completed-stage facts are present for closure."
+          },
+          "actionTaken": {
+            "type": "boolean",
+            "description": "False. This agent routes and escalates but does not mutate the case record directly."
+          },
+          "factsUsed": {
+            "type": "array",
+            "description": "Cited facts used by the route decision.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "caseManagerDecisions",
+          "nextStage",
+          "nextStageId",
+          "routeDecision",
+          "routeReason",
+          "requiresEscalation",
+          "humanGate",
+          "completionRuleSatisfied",
+          "actionTaken",
+          "factsUsed"
+        ]
+      }
+    }
+  ]
+}

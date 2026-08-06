@@ -1,0 +1,157 @@
+{
+    "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+    "$id": "entry-points.json",
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "91d5e846-1a29-4f60-9a17-27404c0e8ce2",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "case_id": {
+                        "default": "PI-PCS-2026-0041",
+                        "description": "Program Integrity case identifier.",
+                        "title": "Case Id",
+                        "type": "string"
+                    },
+                    "current_stage": {
+                        "default": "Investigation",
+                        "description": "Current case stage or state when the rules check starts.",
+                        "title": "Current Stage",
+                        "type": "string"
+                    },
+                    "risk_score": {
+                        "type": "integer"
+                    },
+                    "unsupported_units": {
+                        "type": "integer"
+                    },
+                    "missing_evidence_count": {
+                        "type": "integer"
+                    },
+                    "provider_response_needed": {
+                        "type": "boolean"
+                    },
+                    "provider_response_received": {
+                        "type": "boolean"
+                    },
+                    "supervisor_approved": {
+                        "type": "boolean"
+                    },
+                    "proposed_action": {
+                        "type": "string"
+                    },
+                    "gating_json": {
+                        "type": "string"
+                    }
+                },
+                "required": []
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "case_id": {
+                        "description": "Program Integrity case identifier.",
+                        "title": "Case Id",
+                        "type": "string"
+                    },
+                    "status": {
+                        "description": "blocked or clear_for_case_manager.",
+                        "title": "Status",
+                        "type": "string"
+                    },
+                    "recommended_stage": {
+                        "description": "Recommended next ad-hoc stage for the Case Manager agent.",
+                        "title": "Recommended Stage",
+                        "type": "string"
+                    },
+                    "blockers": {
+                        "description": "Blocking rule failures that must be resolved before closure.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Blockers",
+                        "type": "array"
+                    },
+                    "warnings": {
+                        "description": "Non-blocking issues for the case manager to review.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Warnings",
+                        "type": "array"
+                    },
+                    "facts_checked": {
+                        "description": "Primitive facts used by the deterministic rules.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Facts Checked",
+                        "type": "array"
+                    },
+                    "supervisor_gate_required": {
+                        "default": false,
+                        "description": "True when the proposed action requires supervisor approval.",
+                        "title": "Supervisor Gate Required",
+                        "type": "boolean"
+                    },
+                    "provider_wait_required": {
+                        "default": false,
+                        "description": "True when provider response is still required.",
+                        "title": "Provider Wait Required",
+                        "type": "boolean"
+                    },
+                    "evidence_gap": {
+                        "default": false,
+                        "description": "True when material evidence is missing.",
+                        "title": "Evidence Gap",
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "case_id",
+                    "status",
+                    "recommended_stage"
+                ]
+            },
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "__start__",
+                        "name": "__start__",
+                        "type": "__start__",
+                        "subgraph": null,
+                        "metadata": {}
+                    },
+                    {
+                        "id": "evaluate_quick_rules",
+                        "name": "evaluate_quick_rules",
+                        "type": "node",
+                        "subgraph": null,
+                        "metadata": {}
+                    },
+                    {
+                        "id": "__end__",
+                        "name": "__end__",
+                        "type": "__end__",
+                        "subgraph": null,
+                        "metadata": {}
+                    }
+                ],
+                "edges": [
+                    {
+                        "source": "__start__",
+                        "target": "evaluate_quick_rules",
+                        "label": null
+                    },
+                    {
+                        "source": "evaluate_quick_rules",
+                        "target": "__end__",
+                        "label": null
+                    }
+                ]
+            }
+        }
+    ]
+}

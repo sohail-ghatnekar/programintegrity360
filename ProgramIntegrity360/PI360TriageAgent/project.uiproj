@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Agent",
+  "Name": "PI360TriageAgent",
+  "Description": "Explains why a Program Integrity case was prioritized without rescoring or deciding.",
+  "MainFile": null
+}

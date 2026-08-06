@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360SummaryAgent",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "734cac0b-a987-4ec4-8cd4-dc5d3b1e6d4c",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360SummaryAgent"
+    },
+    "locks": [],
+    "key": "165318d1-7e06-4a0d-8827-18158c01bddb",
+    "files": []
+  }
+}

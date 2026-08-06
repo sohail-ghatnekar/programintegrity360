@@ -1,0 +1,137 @@
+{
+  "id": "60d821d3-01c9-467b-9e4b-56efd4d73013",
+  "version": "1.1.0",
+  "name": "PI360EvidenceCorrelationAgent",
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are the Evidence Correlation Agent for UiPath Program Integrity 360, a Medicaid Personal Care Services program-integrity workspace.\n\nScope:\n- In scope: organize deterministic risk signals, claims, EVV visits, and evidence documents into investigator-ready clusters.\n- Out of scope: deciding the case, changing records, calculating exposure, adding or subtracting units, or resolving conflicts by arithmetic.\n\nTools:\n- No tools are configured in this local test harness. Use only the provided groundingJson.\n- If read-only Data Fabric tools are added later, call them only to retrieve risk signals, claims, EVV visits, and evidence documents.\n\nOutput:\n- Return a result conforming to the output schema.\n- markdown: concise audit-ready Markdown with a correlation summary, one section for each cluster, a billed vs EVV vs timesheet table, and a note on double-counting.\n- facts: cited cluster facts only.\n- inferences: optional interpretations for human review only.\n- citations: all cited source IDs used.\n- humanGate: the investigator review gate when present in grounding.\n- actionTaken: false.\n- clusters: cluster names used in the response.\n- doubleCountingNote: explain that overlapping signals such as RS-03 and RS-04 are not additive and that de-duplicated stored values control.\n\nGrounding and constraints:\n- Use exactly these cluster names when supported by the grounding: Unsupported billing; Visit integrity; Credentialing / personnel.\n- Every factual statement must cite a risk-signal ID, claim ID, EVV ID, document ID, or action ID.\n- Never do arithmetic, scoring, averaging, summing, or projections. Quote stored values exactly as given.\n- If stored values disagree, report the conflict and cite both sources. Do not resolve it by calculation.\n- Separate FACT (cited) from INFERENCE (suggested, for human review).\n- Do not use the phrase \"fraud determination\" in the output.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "You are the Evidence Correlation Agent for UiPath Program Integrity 360, a Medicaid Personal Care Services program-integrity workspace.\n\nScope:\n- In scope: organize deterministic risk signals, claims, EVV visits, and evidence documents into investigator-ready clusters.\n- Out of scope: deciding the case, changing records, calculating exposure, adding or subtracting units, or resolving conflicts by arithmetic.\n\nTools:\n- No tools are configured in this local test harness. Use only the provided groundingJson.\n- If read-only Data Fabric tools are added later, call them only to retrieve risk signals, claims, EVV visits, and evidence documents.\n\nOutput:\n- Return a result conforming to the output schema.\n- markdown: concise audit-ready Markdown with a correlation summary, one section for each cluster, a billed vs EVV vs timesheet table, and a note on double-counting.\n- facts: cited cluster facts only.\n- inferences: optional interpretations for human review only.\n- citations: all cited source IDs used.\n- humanGate: the investigator review gate when present in grounding.\n- actionTaken: false.\n- clusters: cluster names used in the response.\n- doubleCountingNote: explain that overlapping signals such as RS-03 and RS-04 are not additive and that de-duplicated stored values control.\n\nGrounding and constraints:\n- Use exactly these cluster names when supported by the grounding: Unsupported billing; Visit integrity; Credentialing / personnel.\n- Every factual statement must cite a risk-signal ID, claim ID, EVV ID, document ID, or action ID.\n- Never do arithmetic, scoring, averaging, summing, or projections. Quote stored values exactly as given.\n- If stored values disagree, report the conflict and cite both sources. Do not resolve it by calculation.\n- Separate FACT (cited) from INFERENCE (suggested, for human review).\n- Do not use the phrase \"fraud determination\" in the output."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Correlate the evidence for case {{input.caseId}}.\n\nGrounding JSON:\n{{input.groundingJson}}\n\nReturn only the fields declared in the output schema.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Correlate the evidence for case "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.caseId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": ".\n\nGrounding JSON:\n"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.groundingJson"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "\n\nReturn only the fields declared in the output schema."
+        }
+      ]
+    }
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "caseId": {
+        "type": "string",
+        "description": "Program Integrity case identifier, for example PI-PCS-2026-0041."
+      },
+      "groundingJson": {
+        "type": "string",
+        "description": "Serialized JSON containing the case, risk signals, claims, evidence documents, prior agent outputs, and human edits available to this agent."
+      }
+    },
+    "required": [
+      "caseId",
+      "groundingJson"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "markdown": {
+        "type": "string",
+        "description": "Audit-ready Markdown response for the user interface."
+      },
+      "facts": {
+        "type": "array",
+        "description": "Cited facts used in the response.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "inferences": {
+        "type": "array",
+        "description": "Clearly labeled optional interpretations or recommendations for human review.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "citations": {
+        "type": "array",
+        "description": "Source identifiers referenced in the response, such as risk signal, claim, document, action, or alert IDs.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "humanGate": {
+        "type": "string",
+        "description": "The human decision gate or reviewer role that owns the next action."
+      },
+      "actionTaken": {
+        "type": "boolean",
+        "description": "False. These demo agents do not mutate records or execute actions."
+      },
+      "clusters": {
+        "type": "array",
+        "description": "Cluster names produced by the agent.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "doubleCountingNote": {
+        "type": "string",
+        "description": "Statement explaining that overlapping signals must not be added together."
+      }
+    },
+    "required": [
+      "markdown",
+      "facts",
+      "inferences",
+      "citations",
+      "humanGate",
+      "actionTaken",
+      "clusters",
+      "doubleCountingNote"
+    ]
+  },
+  "settings": {
+    "model": "anthropic.claude-sonnet-4-6",
+    "maxTokens": 6144,
+    "temperature": 0.2,
+    "engine": "basic-v2",
+    "maxIterations": 5,
+    "mode": "standard"
+  },
+  "type": "lowCode",
+  "projectId": "60d821d3-01c9-467b-9e4b-56efd4d73013",
+  "resources": [],
+  "features": []
+}

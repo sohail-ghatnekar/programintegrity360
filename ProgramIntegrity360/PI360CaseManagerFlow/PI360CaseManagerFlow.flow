@@ -1,0 +1,2033 @@
+{
+  "id": "3da6bf1e-3d42-4cd4-aa75-072a12d49572",
+  "version": "1.0.0",
+  "name": "PI360CaseManagerFlow",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "core.trigger.manual",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Case Manager trigger"
+      },
+      "inputs": {},
+      "outputs": {
+        "output": {
+          "type": "object",
+          "description": "Case routing payload supplied by the case manager or test harness.",
+          "source": "null",
+          "var": "output"
+        }
+      },
+      "model": {
+        "type": "bpmn:StartEvent",
+        "entryPointId": "3432a4f6-53ad-4a3a-8992-9ee2a5c036fe",
+        "isDefaultEntryPoint": true
+      }
+    },
+    {
+      "id": "normalizeCase",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Normalize case facts"
+      },
+      "inputs": {
+        "script": "const raw = ($vars.start && $vars.start.output) || {};\nconst payload = raw.payload || raw.case || raw;\nconst quickRules = payload.quickRules || payload.rules || {};\nreturn {\n  caseId: String(payload.caseId || payload.id || 'PI-PCS-2026-0041'),\n  currentStage: String(payload.currentStage || payload.stage || 'Stage_Aintk1'),\n  claimsAvailable: Boolean(payload.claimsAvailable ?? true),\n  evvAvailable: Boolean(payload.evvAvailable ?? true),\n  planOfCareAvailable: Boolean(payload.planOfCareAvailable ?? true),\n  enrollmentAvailable: Boolean(payload.enrollmentAvailable ?? true),\n  providerPacketAvailable: Boolean(payload.providerPacketAvailable ?? !payload.providerResponseNeeded),\n  grounding: payload,\n  quickRules\n};"
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "description": "Normalized case routing facts.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the script fails",
+          "source": "=result.Error",
+          "var": "error"
+        }
+      }
+    },
+    {
+      "id": "needsSupervisorReview",
+      "type": "core.logic.decision",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Supervisor gate?"
+      },
+      "inputs": {
+        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Supv7a'",
+        "trueLabel": "Escalate",
+        "falseLabel": "Continue"
+      }
+    },
+    {
+      "id": "prepareSupervisorEscalation",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Prepare escalation packet"
+      },
+      "inputs": {
+        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Supv7a' };"
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "description": "Supervisor escalation payload.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the script fails",
+          "source": "=result.Error",
+          "var": "error"
+        }
+      }
+    },
+    {
+      "id": "needsProviderResponse",
+      "type": "core.logic.decision",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Provider response needed?"
+      },
+      "inputs": {
+        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Prreq6'",
+        "trueLabel": "Await response",
+        "falseLabel": "Evaluate closure"
+      }
+    },
+    {
+      "id": "routeProviderResponse",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Route to provider response"
+      },
+      "inputs": {
+        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Prreq6' };"
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "description": "Provider-response route payload.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the script fails",
+          "source": "=result.Error",
+          "var": "error"
+        }
+      }
+    },
+    {
+      "id": "isClosureReady",
+      "type": "core.logic.decision",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Closure ready?"
+      },
+      "inputs": {
+        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Clos9a'",
+        "trueLabel": "Close",
+        "falseLabel": "Investigate"
+      }
+    },
+    {
+      "id": "routeClosure",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Route to closure"
+      },
+      "inputs": {
+        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Clos9a' };"
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "description": "Closure route payload.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the script fails",
+          "source": "=result.Error",
+          "var": "error"
+        }
+      }
+    },
+    {
+      "id": "routeInvestigation",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Route to investigation"
+      },
+      "inputs": {
+        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Corr4a' };"
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "description": "Investigation route payload.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the script fails",
+          "source": "=result.Error",
+          "var": "error"
+        }
+      }
+    },
+    {
+      "id": "endEscalated",
+      "type": "core.control.end",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "End - escalation prepared"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "endProvider",
+      "type": "core.control.end",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "End - await provider"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "endClosure",
+      "type": "core.control.end",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "End - closure"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "endInvestigation",
+      "type": "core.control.end",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "End - investigate"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "rpaEvidenceCompletenessSnapshot1",
+      "type": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "RPA - evidence completeness snapshot"
+      },
+      "inputs": {
+        "in_CaseId": "=js:$vars.normalizeCase.output.caseId",
+        "in_ClaimsAvailable": "=js:$vars.normalizeCase.output.claimsAvailable",
+        "in_EvvAvailable": "=js:$vars.normalizeCase.output.evvAvailable",
+        "in_PlanOfCareAvailable": "=js:$vars.normalizeCase.output.planOfCareAvailable",
+        "in_EnrollmentAvailable": "=js:$vars.normalizeCase.output.enrollmentAvailable",
+        "in_ProviderPacketAvailable": "=js:$vars.normalizeCase.output.providerPacketAvailable"
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartJob",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Process",
+          "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+          "orchestratorType": "process",
+          "values": {
+            "name": "PI360EvidenceSnapshotAutomation",
+            "folderPath": ""
+          }
+        },
+        "projectId": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+        "projectName": "PI360EvidenceSnapshotAutomation",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "=bindings.bybLZkmcn",
+            "default": "PI360EvidenceSnapshotAutomation"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "=bindings.bHJVld2gM",
+            "default": ""
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360EvidenceSnapshotAutomation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "agentSelectNextCaseStage1",
+      "type": "uipath.core.agent.64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Agent - select next case stage"
+      },
+      "inputs": {
+        "caseId": "=js:$vars.normalizeCase.output.caseId",
+        "currentStage": "=js:$vars.normalizeCase.output.currentStage",
+        "groundingJson": "=js:$vars.buildGroundedAgentContext1.output.groundingJson",
+        "quickRulesJson": "=js:$vars.buildGroundedAgentContext1.output.quickRulesJson"
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartAgentJob",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Agent",
+          "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+          "orchestratorType": "agent",
+          "values": {
+            "name": "PI360CaseManagerAgent",
+            "folderPath": ""
+          }
+        },
+        "projectId": "72209049-a669-4dee-af0f-f67a87df1253",
+        "projectName": "PI360CaseManagerAgent",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "=bindings.bNmrKcVz5",
+            "default": "PI360CaseManagerAgent"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "=bindings.b4AcADDYO",
+            "default": ""
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360CaseManagerAgent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "buildGroundedAgentContext1",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Build grounded agent context"
+      },
+      "inputs": {
+        "script": "const normalized = $vars.normalizeCase.output;\nconst evidenceSnapshot = $vars.rpaEvidenceCompletenessSnapshot1.output || {};\nreturn {\n  groundingJson: JSON.stringify({\n    ...normalized.grounding,\n    caseId: normalized.caseId,\n    currentStage: normalized.currentStage,\n    evidenceSnapshot\n  }),\n  quickRulesJson: JSON.stringify(normalized.quickRules || {})\n};"
+      },
+      "model": {
+        "type": "bpmn:ScriptTask"
+      }
+    },
+    {
+      "id": "evidenceStageSelected1",
+      "type": "core.logic.decision",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Evidence stage selected?"
+      },
+      "inputs": {
+        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Evcol2'",
+        "trueLabel": "Acquire evidence",
+        "falseLabel": "Evaluate other routes"
+      },
+      "model": {
+        "type": "bpmn:InclusiveGateway"
+      }
+    },
+    {
+      "id": "routeToEvidenceAndValidation1",
+      "type": "core.action.script",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Route to evidence and validation"
+      },
+      "inputs": {
+        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Evcol2' };"
+      },
+      "model": {
+        "type": "bpmn:ScriptTask"
+      }
+    },
+    {
+      "id": "endEvidenceAndValidation1",
+      "type": "core.control.end",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "End - evidence and validation"
+      },
+      "inputs": {},
+      "model": {
+        "type": "bpmn:EndEvent"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-start-normalize",
+      "sourceNodeId": "start",
+      "sourcePort": "output",
+      "targetNodeId": "normalizeCase",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-normalize-rpa",
+      "sourceNodeId": "normalizeCase",
+      "sourcePort": "success",
+      "targetNodeId": "rpaEvidenceCompletenessSnapshot1",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-rpa-context",
+      "sourceNodeId": "rpaEvidenceCompletenessSnapshot1",
+      "sourcePort": "output",
+      "targetNodeId": "buildGroundedAgentContext1",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-context-agent",
+      "sourceNodeId": "buildGroundedAgentContext1",
+      "sourcePort": "success",
+      "targetNodeId": "agentSelectNextCaseStage1",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-agent-evidence",
+      "sourceNodeId": "agentSelectNextCaseStage1",
+      "sourcePort": "output",
+      "targetNodeId": "evidenceStageSelected1",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-evidence-true",
+      "sourceNodeId": "evidenceStageSelected1",
+      "sourcePort": "true",
+      "targetNodeId": "routeToEvidenceAndValidation1",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-evidence-false",
+      "sourceNodeId": "evidenceStageSelected1",
+      "sourcePort": "false",
+      "targetNodeId": "needsSupervisorReview",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-evidence-end",
+      "sourceNodeId": "routeToEvidenceAndValidation1",
+      "sourcePort": "success",
+      "targetNodeId": "endEvidenceAndValidation1",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-supervisor-true",
+      "sourceNodeId": "needsSupervisorReview",
+      "sourcePort": "true",
+      "targetNodeId": "prepareSupervisorEscalation",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-supervisor-false",
+      "sourceNodeId": "needsSupervisorReview",
+      "sourcePort": "false",
+      "targetNodeId": "needsProviderResponse",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-escalation-end",
+      "sourceNodeId": "prepareSupervisorEscalation",
+      "sourcePort": "success",
+      "targetNodeId": "endEscalated",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-provider-true",
+      "sourceNodeId": "needsProviderResponse",
+      "sourcePort": "true",
+      "targetNodeId": "routeProviderResponse",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-provider-false",
+      "sourceNodeId": "needsProviderResponse",
+      "sourcePort": "false",
+      "targetNodeId": "isClosureReady",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-provider-end",
+      "sourceNodeId": "routeProviderResponse",
+      "sourcePort": "success",
+      "targetNodeId": "endProvider",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-closure-true",
+      "sourceNodeId": "isClosureReady",
+      "sourcePort": "true",
+      "targetNodeId": "routeClosure",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-closure-false",
+      "sourceNodeId": "isClosureReady",
+      "sourcePort": "false",
+      "targetNodeId": "routeInvestigation",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-closure-end",
+      "sourceNodeId": "routeClosure",
+      "sourcePort": "success",
+      "targetNodeId": "endClosure",
+      "targetPort": "input"
+    },
+    {
+      "id": "edge-investigation-end",
+      "sourceNodeId": "routeInvestigation",
+      "sourcePort": "success",
+      "targetNodeId": "endInvestigation",
+      "targetPort": "input"
+    }
+  ],
+  "definitions": [
+    {
+      "nodeType": "core.trigger.manual",
+      "version": "1.0.0",
+      "category": "trigger",
+      "description": "Start workflow manually",
+      "tags": [
+        "trigger",
+        "start",
+        "manual"
+      ],
+      "sortOrder": 40,
+      "display": {
+        "label": "Manual trigger",
+        "icon": "play",
+        "shape": "circle",
+        "iconBackground": "linear-gradient(225deg, #FAFAFB 0%, #ECEDEF 100%)",
+        "iconBackgroundDark": "linear-gradient(225deg, #526069 0%, rgba(50, 60, 66, 0.6) 100%)"
+      },
+      "handleConfiguration": [
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output",
+              "showButton": true,
+              "constraints": {
+                "forbiddenTargetCategories": [
+                  "trigger"
+                ]
+              }
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "model": {
+        "type": "bpmn:StartEvent",
+        "entryPointId": true
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "description": "Data passed when manually triggering the workflow.",
+          "source": "null",
+          "var": "output"
+        }
+      },
+      "toolbarExtensions": {
+        "design": {
+          "actions": [
+            {
+              "id": "change-trigger-type",
+              "icon": "replace",
+              "label": "Change trigger type"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "nodeType": "core.action.script",
+      "version": "1.0.0",
+      "category": "data-operations",
+      "description": "Run custom JavaScript code",
+      "tags": [
+        "code",
+        "javascript",
+        "python"
+      ],
+      "sortOrder": 35,
+      "supportsErrorHandling": true,
+      "display": {
+        "label": "Script",
+        "icon": "code",
+        "iconBackground": "linear-gradient(225deg, #FAFAFB 0%, #ECEDEF 100%)",
+        "iconBackgroundDark": "linear-gradient(225deg, #526069 0%, rgba(50, 60, 66, 0.6) 100%)"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "success",
+              "type": "source",
+              "handleType": "output"
+            }
+          ]
+        }
+      ],
+      "debug": {
+        "runtime": "clientScript"
+      },
+      "model": {
+        "type": "bpmn:ScriptTask"
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "script": {
+            "type": "string",
+            "minLength": 1,
+            "errorMessage": "A script function is required",
+            "validationSeverity": "warning"
+          }
+        },
+        "required": [
+          "script"
+        ]
+      },
+      "inputDefaults": {
+        "script": ""
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "description": "The return value of the script",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the script fails",
+          "source": "=result.Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "form": {
+        "id": "script-properties",
+        "title": "Script configuration",
+        "sections": [
+          {
+            "id": "script",
+            "title": "Script",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.script",
+                "type": "custom",
+                "component": "script-editor",
+                "componentProps": {
+                  "language": "javascript",
+                  "returnType": "any",
+                  "validationMode": "script",
+                  "minHeight": 200,
+                  "placeholder": " // Return an object with your result\nreturn {\n  message: \"Web request response\",\n  data: $vars.httpRequest1.output\n                  };"
+                },
+                "label": "Code",
+                "description": "JavaScript expression that returns a result object"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "nodeType": "core.logic.decision",
+      "version": "1.0.0",
+      "category": "control-flow",
+      "description": "Branch based on a true/false condition",
+      "tags": [
+        "control-flow",
+        "if",
+        "loop",
+        "switch"
+      ],
+      "sortOrder": 20,
+      "display": {
+        "label": "Decision",
+        "icon": "trending-up-down",
+        "iconBackground": "linear-gradient(225deg, #FAFAFB 0%, #ECEDEF 100%)",
+        "iconBackgroundDark": "linear-gradient(225deg, #526069 0%, rgba(50, 60, 66, 0.6) 100%)"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "true",
+              "type": "source",
+              "handleType": "output",
+              "label": "{inputs.trueLabel}",
+              "constraints": {
+                "minConnections": 1
+              }
+            },
+            {
+              "id": "false",
+              "type": "source",
+              "handleType": "output",
+              "label": "{inputs.falseLabel}",
+              "constraints": {
+                "minConnections": 1
+              }
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "debug": {
+        "runtime": "clientScript"
+      },
+      "model": {
+        "type": "bpmn:InclusiveGateway"
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "errorMessage": "A condition expression is required"
+          },
+          "trueLabel": {
+            "type": "string"
+          },
+          "falseLabel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expression"
+        ]
+      },
+      "outputDefinition": {
+        "matchedCase": {
+          "type": "string",
+          "description": "The label of the matched branch (true/false label)",
+          "var": "matchedCase"
+        },
+        "matchedCaseId": {
+          "type": "string",
+          "description": "The branch that was taken (true or false)",
+          "var": "matchedCaseId"
+        }
+      },
+      "inputDefaults": {
+        "trueLabel": "True",
+        "falseLabel": "False"
+      },
+      "form": {
+        "id": "decision-properties",
+        "title": "Decision configuration",
+        "sections": [
+          {
+            "id": "condition",
+            "title": "Condition",
+            "fields": [
+              {
+                "name": "inputs.expression",
+                "type": "custom",
+                "component": "script-editor",
+                "componentProps": {
+                  "language": "javascript",
+                  "returnType": "boolean",
+                  "validationMode": "expression",
+                  "minHeight": 100,
+                  "placeholder": "e.g., $vars.data.status === \"approved\" && $vars.data.amount > 1000"
+                },
+                "label": "Expression",
+                "description": "JavaScript expression that evaluates to true or false"
+              },
+              {
+                "name": "inputs.trueLabel",
+                "type": "text",
+                "label": "True branch label",
+                "description": "Label shown when condition is true"
+              },
+              {
+                "name": "inputs.falseLabel",
+                "type": "text",
+                "label": "False branch label",
+                "description": "Label shown when condition is false"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "nodeType": "core.control.end",
+      "version": "1.0.0",
+      "category": "control-flow",
+      "description": "Mark the end of a workflow path",
+      "tags": [
+        "control-flow",
+        "end",
+        "finish",
+        "complete"
+      ],
+      "sortOrder": 20,
+      "display": {
+        "label": "End",
+        "icon": "circle-check",
+        "shape": "circle"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        }
+      ],
+      "model": {
+        "type": "bpmn:EndEvent"
+      },
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      }
+    },
+    {
+      "nodeType": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "version": "1.0.0",
+      "category": "rpa-workflow",
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      },
+      "description": "(In-solution) PI360EvidenceSnapshotAutomation",
+      "tags": [
+        "in-solution",
+        "local"
+      ],
+      "sortOrder": 530,
+      "supportsErrorHandling": true,
+      "display": {
+        "label": "PI360EvidenceSnapshotAutomation",
+        "icon": "rpa",
+        "iconBackground": "linear-gradient(225deg, #DDFBF1 0%, #DAF3FF 100%)",
+        "iconBackgroundDark": "linear-gradient(225deg, rgba(131, 255, 214, 0.30) 0%, rgba(109, 122, 128, 0.30) 100%)"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            }
+          ]
+        }
+      ],
+      "toolbarExtensions": {
+        "design": {
+          "actions": [
+            {
+              "id": "open-workflow",
+              "icon": "external-link",
+              "label": "Open"
+            }
+          ]
+        }
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartJob",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Process",
+          "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+          "orchestratorType": "process",
+          "values": {
+            "name": "PI360EvidenceSnapshotAutomation",
+            "folderPath": ""
+          }
+        },
+        "projectId": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+        "projectName": "PI360EvidenceSnapshotAutomation",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "=bindings.bybLZkmcn",
+            "default": "PI360EvidenceSnapshotAutomation"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "=bindings.bHJVld2gM",
+            "default": ""
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360EvidenceSnapshotAutomation"
+          }
+        ]
+      },
+      "form": {
+        "id": "activity-properties",
+        "title": "RPA workflow",
+        "sections": [
+          {
+            "id": "inputs",
+            "title": "Inputs",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.in_CaseId",
+                "type": "text",
+                "label": "in_CaseId"
+              },
+              {
+                "name": "inputs.in_ClaimsAvailable",
+                "type": "checkbox",
+                "label": "in_ClaimsAvailable"
+              },
+              {
+                "name": "inputs.in_EvvAvailable",
+                "type": "checkbox",
+                "label": "in_EvvAvailable"
+              },
+              {
+                "name": "inputs.in_PlanOfCareAvailable",
+                "type": "checkbox",
+                "label": "in_PlanOfCareAvailable"
+              },
+              {
+                "name": "inputs.in_EnrollmentAvailable",
+                "type": "checkbox",
+                "label": "in_EnrollmentAvailable"
+              },
+              {
+                "name": "inputs.in_ProviderPacketAvailable",
+                "type": "checkbox",
+                "label": "in_ProviderPacketAvailable"
+              }
+            ]
+          }
+        ]
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "in_CaseId": {
+            "type": "string"
+          },
+          "in_ClaimsAvailable": {
+            "type": "boolean"
+          },
+          "in_EvvAvailable": {
+            "type": "boolean"
+          },
+          "in_PlanOfCareAvailable": {
+            "type": "boolean"
+          },
+          "in_EnrollmentAvailable": {
+            "type": "boolean"
+          },
+          "in_ProviderPacketAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "inputDefaults": {
+        "in_CaseId": "",
+        "in_ClaimsAvailable": false,
+        "in_EvvAvailable": false,
+        "in_PlanOfCareAvailable": false,
+        "in_EnrollmentAvailable": false,
+        "in_ProviderPacketAvailable": false
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "source": "=this",
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "out_EvidenceReady": {
+                "type": "boolean"
+              },
+              "out_MissingEvidenceCsv": {
+                "type": "string"
+              },
+              "out_AutomationSummary": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      }
+    },
+    {
+      "nodeType": "uipath.core.agent.64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "version": "1.0.0",
+      "category": "agent",
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      },
+      "description": "(In-solution) PI360CaseManagerAgent",
+      "tags": [
+        "in-solution",
+        "local"
+      ],
+      "sortOrder": 505,
+      "supportsErrorHandling": true,
+      "display": {
+        "label": "PI360CaseManagerAgent",
+        "icon": "coded-agent",
+        "iconBackground": "linear-gradient(225deg, rgba(225, 246, 253, 0.60) 0%, rgba(193, 160, 255, 0.20) 100%)",
+        "iconBackgroundDark": "linear-gradient(225deg, rgba(236, 211, 255, 0.40) 0%, rgba(211, 229, 255, 0.40) 100%)"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            }
+          ]
+        }
+      ],
+      "toolbarExtensions": {
+        "design": {
+          "actions": [
+            {
+              "id": "open-workflow",
+              "icon": "external-link",
+              "label": "Open"
+            }
+          ]
+        }
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartAgentJob",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Agent",
+          "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+          "orchestratorType": "agent",
+          "values": {
+            "name": "PI360CaseManagerAgent",
+            "folderPath": ""
+          }
+        },
+        "projectId": "72209049-a669-4dee-af0f-f67a87df1253",
+        "projectName": "PI360CaseManagerAgent",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "=bindings.bNmrKcVz5",
+            "default": "PI360CaseManagerAgent"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "=bindings.b4AcADDYO",
+            "default": ""
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360CaseManagerAgent"
+          }
+        ]
+      },
+      "form": {
+        "id": "activity-properties",
+        "title": "Autonomous agent",
+        "sections": [
+          {
+            "id": "inputs",
+            "title": "Inputs",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.caseId",
+                "type": "text",
+                "label": "caseId"
+              },
+              {
+                "name": "inputs.currentStage",
+                "type": "text",
+                "label": "currentStage"
+              },
+              {
+                "name": "inputs.groundingJson",
+                "type": "text",
+                "label": "groundingJson"
+              },
+              {
+                "name": "inputs.quickRulesJson",
+                "type": "text",
+                "label": "quickRulesJson"
+              }
+            ]
+          }
+        ]
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Program Integrity case identifier."
+          },
+          "currentStage": {
+            "type": "string",
+            "description": "Current case stage or state when the routing decision starts."
+          },
+          "groundingJson": {
+            "type": "string",
+            "description": "Serialized JSON containing case facts, evidence, risk signals, timeline, human decisions, and stage completion state."
+          },
+          "quickRulesJson": {
+            "type": "string",
+            "description": "Serialized JSON from the deterministic quick rules check."
+          }
+        }
+      },
+      "inputDefaults": {
+        "caseId": "",
+        "currentStage": "",
+        "groundingJson": "",
+        "quickRulesJson": ""
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "source": "=this",
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "nextStage": {
+                "type": "string",
+                "description": "The recommended next stage name: EvidenceAcquisition, InvestigationRouting, ProviderResponse, SupervisorAction, or Closure."
+              },
+              "nextStageId": {
+                "type": "string",
+                "description": "Exact case stage ID selected by the agent: Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
+              },
+              "routeDecision": {
+                "type": "string",
+                "description": "Short machine-readable routing decision."
+              },
+              "routeReason": {
+                "type": "string",
+                "description": "One or two sentence explanation grounded in the inputs."
+              },
+              "requiresEscalation": {
+                "type": "boolean",
+                "description": "True when a supervisor or policy owner must review before the case proceeds."
+              },
+              "humanGate": {
+                "type": "string",
+                "description": "Human gate that owns the next step, or none."
+              },
+              "completionRuleSatisfied": {
+                "type": "boolean",
+                "description": "True only when the required completed-stage facts are present for closure."
+              },
+              "actionTaken": {
+                "type": "boolean",
+                "description": "False. This agent routes and escalates but does not mutate the case record directly."
+              },
+              "factsUsed": {
+                "type": "array",
+                "description": "Cited facts used by the route decision.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "id": "bybLZkmcn",
+      "name": "name",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "default": "PI360EvidenceSnapshotAutomation",
+      "propertyAttribute": "name",
+      "resourceSubType": "Process"
+    },
+    {
+      "id": "bHJVld2gM",
+      "name": "folderPath",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "propertyAttribute": "folderPath",
+      "resourceSubType": "Process",
+      "default": ""
+    },
+    {
+      "id": "bNmrKcVz5",
+      "name": "name",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "default": "PI360CaseManagerAgent",
+      "propertyAttribute": "name",
+      "resourceSubType": "Agent"
+    },
+    {
+      "id": "b4AcADDYO",
+      "name": "folderPath",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "propertyAttribute": "folderPath",
+      "resourceSubType": "Agent",
+      "default": ""
+    }
+  ],
+  "variables": {
+    "nodes": [
+      {
+        "id": "start.output",
+        "type": "object",
+        "description": "Case routing payload supplied by the case manager or test harness.",
+        "binding": {
+          "nodeId": "start",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "normalizeCase.output",
+        "type": "object",
+        "description": "Normalized case routing facts.",
+        "binding": {
+          "nodeId": "normalizeCase",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "normalizeCase.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "binding": {
+          "nodeId": "normalizeCase",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "needsSupervisorReview.matchedCase",
+        "type": "string",
+        "description": "The label of the matched branch (true/false label)",
+        "binding": {
+          "nodeId": "needsSupervisorReview",
+          "outputId": "matchedCase"
+        }
+      },
+      {
+        "id": "needsSupervisorReview.matchedCaseId",
+        "type": "string",
+        "description": "The branch that was taken (true or false)",
+        "binding": {
+          "nodeId": "needsSupervisorReview",
+          "outputId": "matchedCaseId"
+        }
+      },
+      {
+        "id": "prepareSupervisorEscalation.output",
+        "type": "object",
+        "description": "Supervisor escalation payload.",
+        "binding": {
+          "nodeId": "prepareSupervisorEscalation",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "prepareSupervisorEscalation.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "binding": {
+          "nodeId": "prepareSupervisorEscalation",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "needsProviderResponse.matchedCase",
+        "type": "string",
+        "description": "The label of the matched branch (true/false label)",
+        "binding": {
+          "nodeId": "needsProviderResponse",
+          "outputId": "matchedCase"
+        }
+      },
+      {
+        "id": "needsProviderResponse.matchedCaseId",
+        "type": "string",
+        "description": "The branch that was taken (true or false)",
+        "binding": {
+          "nodeId": "needsProviderResponse",
+          "outputId": "matchedCaseId"
+        }
+      },
+      {
+        "id": "routeProviderResponse.output",
+        "type": "object",
+        "description": "Provider-response route payload.",
+        "binding": {
+          "nodeId": "routeProviderResponse",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "routeProviderResponse.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "binding": {
+          "nodeId": "routeProviderResponse",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "isClosureReady.matchedCase",
+        "type": "string",
+        "description": "The label of the matched branch (true/false label)",
+        "binding": {
+          "nodeId": "isClosureReady",
+          "outputId": "matchedCase"
+        }
+      },
+      {
+        "id": "isClosureReady.matchedCaseId",
+        "type": "string",
+        "description": "The branch that was taken (true or false)",
+        "binding": {
+          "nodeId": "isClosureReady",
+          "outputId": "matchedCaseId"
+        }
+      },
+      {
+        "id": "routeClosure.output",
+        "type": "object",
+        "description": "Closure route payload.",
+        "binding": {
+          "nodeId": "routeClosure",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "routeClosure.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "binding": {
+          "nodeId": "routeClosure",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "routeInvestigation.output",
+        "type": "object",
+        "description": "Investigation route payload.",
+        "binding": {
+          "nodeId": "routeInvestigation",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "routeInvestigation.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "binding": {
+          "nodeId": "routeInvestigation",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "rpaEvidenceCompletenessSnapshot1.output",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "out_EvidenceReady": {
+              "type": "boolean"
+            },
+            "out_MissingEvidenceCsv": {
+              "type": "string"
+            },
+            "out_AutomationSummary": {
+              "type": "string"
+            }
+          }
+        },
+        "binding": {
+          "nodeId": "rpaEvidenceCompletenessSnapshot1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "rpaEvidenceCompletenessSnapshot1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "rpaEvidenceCompletenessSnapshot1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "agentSelectNextCaseStage1.output",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "nextStage": {
+              "type": "string",
+              "description": "The recommended next stage name: EvidenceAcquisition, InvestigationRouting, ProviderResponse, SupervisorAction, or Closure."
+            },
+            "nextStageId": {
+              "type": "string",
+              "description": "Exact case stage ID selected by the agent: Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
+            },
+            "routeDecision": {
+              "type": "string",
+              "description": "Short machine-readable routing decision."
+            },
+            "routeReason": {
+              "type": "string",
+              "description": "One or two sentence explanation grounded in the inputs."
+            },
+            "requiresEscalation": {
+              "type": "boolean",
+              "description": "True when a supervisor or policy owner must review before the case proceeds."
+            },
+            "humanGate": {
+              "type": "string",
+              "description": "Human gate that owns the next step, or none."
+            },
+            "completionRuleSatisfied": {
+              "type": "boolean",
+              "description": "True only when the required completed-stage facts are present for closure."
+            },
+            "actionTaken": {
+              "type": "boolean",
+              "description": "False. This agent routes and escalates but does not mutate the case record directly."
+            },
+            "factsUsed": {
+              "type": "array",
+              "description": "Cited facts used by the route decision.",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "binding": {
+          "nodeId": "agentSelectNextCaseStage1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "agentSelectNextCaseStage1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "agentSelectNextCaseStage1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "buildGroundedAgentContext1.output",
+        "type": "object",
+        "description": "The return value of the script",
+        "binding": {
+          "nodeId": "buildGroundedAgentContext1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "buildGroundedAgentContext1.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "buildGroundedAgentContext1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "evidenceStageSelected1.matchedCase",
+        "type": "string",
+        "description": "The label of the matched branch (true/false label)",
+        "binding": {
+          "nodeId": "evidenceStageSelected1",
+          "outputId": "matchedCase"
+        }
+      },
+      {
+        "id": "evidenceStageSelected1.matchedCaseId",
+        "type": "string",
+        "description": "The branch that was taken (true or false)",
+        "binding": {
+          "nodeId": "evidenceStageSelected1",
+          "outputId": "matchedCaseId"
+        }
+      },
+      {
+        "id": "routeToEvidenceAndValidation1.output",
+        "type": "object",
+        "description": "The return value of the script",
+        "binding": {
+          "nodeId": "routeToEvidenceAndValidation1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "routeToEvidenceAndValidation1.error",
+        "type": "object",
+        "description": "Error information if the script fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "routeToEvidenceAndValidation1",
+          "outputId": "error"
+        }
+      }
+    ]
+  },
+  "runtime": "maestro",
+  "layout": {
+    "nodes": {
+      "start": {
+        "position": {
+          "x": 256,
+          "y": 144
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "normalizeCase": {
+        "position": {
+          "x": 448,
+          "y": 144
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "needsSupervisorReview": {
+        "position": {
+          "x": 1408,
+          "y": 320
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "prepareSupervisorEscalation": {
+        "position": {
+          "x": 1600,
+          "y": 144
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "needsProviderResponse": {
+        "position": {
+          "x": 1600,
+          "y": 480
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "routeProviderResponse": {
+        "position": {
+          "x": 1792,
+          "y": 336
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "isClosureReady": {
+        "position": {
+          "x": 1792,
+          "y": 624
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "routeClosure": {
+        "position": {
+          "x": 1984,
+          "y": 528
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "routeInvestigation": {
+        "position": {
+          "x": 1984,
+          "y": 720
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "endEscalated": {
+        "position": {
+          "x": 1792,
+          "y": 144
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "endProvider": {
+        "position": {
+          "x": 1984,
+          "y": 336
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "endClosure": {
+        "position": {
+          "x": 2176,
+          "y": 528
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "endInvestigation": {
+        "position": {
+          "x": 2176,
+          "y": 720
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "collapsed": false
+      },
+      "rpaEvidenceCompletenessSnapshot1": {
+        "position": {
+          "x": 640,
+          "y": 144
+        }
+      },
+      "agentSelectNextCaseStage1": {
+        "position": {
+          "x": 1024,
+          "y": 144
+        }
+      },
+      "buildGroundedAgentContext1": {
+        "position": {
+          "x": 832,
+          "y": 144
+        }
+      },
+      "evidenceStageSelected1": {
+        "position": {
+          "x": 1216,
+          "y": 144
+        }
+      },
+      "routeToEvidenceAndValidation1": {
+        "position": {
+          "x": 1408,
+          "y": -48
+        }
+      },
+      "endEvidenceAndValidation1": {
+        "position": {
+          "x": 1600,
+          "y": -48
+        }
+      }
+    }
+  }
+}

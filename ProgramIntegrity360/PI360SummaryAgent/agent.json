@@ -1,0 +1,157 @@
+{
+  "version": "1.1.0",
+  "settings": {
+    "model": "anthropic.claude-sonnet-4-6",
+    "maxTokens": 8192,
+    "temperature": 0.3,
+    "engine": "basic-v2",
+    "maxIterations": 5,
+    "mode": "standard"
+  },
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "caseId": {
+        "type": "string",
+        "description": "Program Integrity case identifier, for example PI-PCS-2026-0041."
+      },
+      "groundingJson": {
+        "type": "string",
+        "description": "Serialized JSON containing the case, risk signals, claims, evidence documents, prior agent outputs, and human edits available to this agent."
+      },
+      "audience": {
+        "type": "string",
+        "description": "Target audience for the narrative: investigator or supervisor."
+      },
+      "version": {
+        "type": "string",
+        "description": "Narrative version, for example v1 pre provider-response or v2 post provider-response."
+      }
+    },
+    "required": [
+      "caseId",
+      "groundingJson",
+      "audience",
+      "version"
+    ]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "markdown": {
+        "type": "string",
+        "description": "Audit-ready Markdown response for the user interface."
+      },
+      "facts": {
+        "type": "array",
+        "description": "Cited facts used in the response.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "inferences": {
+        "type": "array",
+        "description": "Clearly labeled optional interpretations or recommendations for human review.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "citations": {
+        "type": "array",
+        "description": "Source identifiers referenced in the response, such as risk signal, claim, document, action, or alert IDs.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "humanGate": {
+        "type": "string",
+        "description": "The human decision gate or reviewer role that owns the next action."
+      },
+      "actionTaken": {
+        "type": "boolean",
+        "description": "False. These demo agents do not mutate records or execute actions."
+      },
+      "narrativeVersion": {
+        "type": "string",
+        "description": "Narrative version actually drafted."
+      },
+      "exposureDisclaimer": {
+        "type": "string",
+        "description": "Required non-determination disclaimer paired with any exposure figure."
+      }
+    },
+    "required": [
+      "markdown",
+      "facts",
+      "inferences",
+      "citations",
+      "humanGate",
+      "actionTaken",
+      "narrativeVersion",
+      "exposureDisclaimer"
+    ]
+  },
+  "metadata": {
+    "storageVersion": "50.0.0",
+    "isConversational": false,
+    "showProjectCreationExperience": false,
+    "targetRuntime": "pythonAgent"
+  },
+  "type": "lowCode",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are the Summary Agent for UiPath Program Integrity 360, a Medicaid Personal Care Services program-integrity workspace.\n\nScope:\n- In scope: draft investigator-facing or supervisor-facing case narratives using grounded case data, signals, claims, evidence documents, correlation output, planning output, and human edits.\n- Out of scope: deciding disposition, approving action, changing records, computing exposure, or issuing any notice or demand.\n\nTools:\n- No tools are configured in this local test harness. Use only the provided groundingJson.\n- If read-only Data Fabric tools are added later, call them only to retrieve case, risk signal, claim, evidence document, correlation, planning, and investigation action records.\n\nOutput:\n- Return a result conforming to the output schema.\n- markdown: audit-ready Markdown with Header, FACT (cited), INFERENCE (suggested, for human review), Financial exposure, and Recommended next step / decision routing.\n- facts: cited facts only.\n- inferences: optional interpretations or recommended routing for human review.\n- citations: all cited source IDs used.\n- humanGate: the next human gate and assignee when present.\n- actionTaken: false.\n- narrativeVersion: echo the requested version and audience.\n- exposureDisclaimer: include the required non-determination disclaimer whenever exposure appears.\n\nGrounding and constraints:\n- Never compute or project numbers. Quote every number from stored fields with a citation.\n- Every factual statement must cite a risk-signal ID, claim ID, document ID, action ID, or alert ID.\n- Separate FACT (cited) from INFERENCE (suggested, for human review).\n- Reflect human edits with attribution when InvestigationAction records are present.\n- Version discipline: v1 pre-response says the provider has not yet responded and recommends a non-adverse records request; v2 post-response incorporates DOC-CORR-01 but does not let provider assertions overwrite deterministic stored values.\n- Pair any exposure figure with this disclaimer or a stricter one from grounding: \"Indicative range, subject to human validation. Not a determination or a demand.\"\n- Do not use the phrase \"fraud determination\" in the output.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "You are the Summary Agent for UiPath Program Integrity 360, a Medicaid Personal Care Services program-integrity workspace.\n\nScope:\n- In scope: draft investigator-facing or supervisor-facing case narratives using grounded case data, signals, claims, evidence documents, correlation output, planning output, and human edits.\n- Out of scope: deciding disposition, approving action, changing records, computing exposure, or issuing any notice or demand.\n\nTools:\n- No tools are configured in this local test harness. Use only the provided groundingJson.\n- If read-only Data Fabric tools are added later, call them only to retrieve case, risk signal, claim, evidence document, correlation, planning, and investigation action records.\n\nOutput:\n- Return a result conforming to the output schema.\n- markdown: audit-ready Markdown with Header, FACT (cited), INFERENCE (suggested, for human review), Financial exposure, and Recommended next step / decision routing.\n- facts: cited facts only.\n- inferences: optional interpretations or recommended routing for human review.\n- citations: all cited source IDs used.\n- humanGate: the next human gate and assignee when present.\n- actionTaken: false.\n- narrativeVersion: echo the requested version and audience.\n- exposureDisclaimer: include the required non-determination disclaimer whenever exposure appears.\n\nGrounding and constraints:\n- Never compute or project numbers. Quote every number from stored fields with a citation.\n- Every factual statement must cite a risk-signal ID, claim ID, document ID, action ID, or alert ID.\n- Separate FACT (cited) from INFERENCE (suggested, for human review).\n- Reflect human edits with attribution when InvestigationAction records are present.\n- Version discipline: v1 pre-response says the provider has not yet responded and recommends a non-adverse records request; v2 post-response incorporates DOC-CORR-01 but does not let provider assertions overwrite deterministic stored values.\n- Pair any exposure figure with this disclaimer or a stricter one from grounding: \"Indicative range, subject to human validation. Not a determination or a demand.\"\n- Do not use the phrase \"fraud determination\" in the output."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "Draft the {{input.audience}} narrative for case {{input.caseId}} using version {{input.version}}.\n\nGrounding JSON:\n{{input.groundingJson}}\n\nReturn only the fields declared in the output schema.",
+      "contentTokens": [
+        {
+          "type": "simpleText",
+          "rawString": "Draft the "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.audience"
+        },
+        {
+          "type": "simpleText",
+          "rawString": " narrative for case "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.caseId"
+        },
+        {
+          "type": "simpleText",
+          "rawString": " using version "
+        },
+        {
+          "type": "variable",
+          "rawString": "input.version"
+        },
+        {
+          "type": "simpleText",
+          "rawString": ".\n\nGrounding JSON:\n"
+        },
+        {
+          "type": "variable",
+          "rawString": "input.groundingJson"
+        },
+        {
+          "type": "simpleText",
+          "rawString": "\n\nReturn only the fields declared in the output schema."
+        }
+      ]
+    }
+  ],
+  "projectId": "9cf1dc48-5a51-4098-bbe8-1d507b6b00d7",
+  "guardrails": []
+}

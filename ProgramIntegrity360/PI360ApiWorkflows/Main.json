@@ -1,0 +1,181 @@
+{
+  "document": {
+    "dsl": "1.0.0",
+    "namespace": "pi360.api",
+    "name": "PI360ApiWorkflows",
+    "version": "0.3.0",
+    "title": "Program Integrity 360 API Workflows",
+    "metadata": {
+      "variables": []
+    }
+  },
+  "input": {
+    "schema": {
+      "format": "json",
+      "document": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string",
+            "default": "PullClaims"
+          },
+          "caseId": {
+            "type": "string",
+            "default": "PI-PCS-2026-0041"
+          },
+          "providerId": {
+            "type": "string",
+            "default": "PRV-100482"
+          },
+          "attendantId": {
+            "type": "string",
+            "default": "ATT-2087"
+          },
+          "investigatorProceed": {
+            "type": "boolean",
+            "default": false
+          },
+          "supervisorApproved": {
+            "type": "boolean",
+            "default": false
+          },
+          "currentStage": {
+            "type": "string",
+            "default": "Investigation"
+          },
+          "riskScore": {
+            "type": "number",
+            "default": 86
+          },
+          "unsupportedUnits": {
+            "type": "number",
+            "default": 24
+          },
+          "missingEvidenceCount": {
+            "type": "number",
+            "default": 0
+          },
+          "providerResponseNeeded": {
+            "type": "boolean",
+            "default": false
+          },
+          "providerResponseReceived": {
+            "type": "boolean",
+            "default": true
+          },
+          "proposedAction": {
+            "type": "string",
+            "default": "refer for audit"
+          }
+        },
+        "title": "Inputs"
+      }
+    }
+  },
+  "output": {
+    "schema": {
+      "format": "json",
+      "document": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "gated": {
+            "type": "boolean"
+          },
+          "recordsAffected": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "title": "Outputs"
+      }
+    }
+  },
+  "evaluate": {
+    "mode": "strict",
+    "language": "javascript"
+  },
+  "do": [
+    {
+      "Main": {
+        "metadata": {
+          "activityType": "Sequence",
+          "displayName": "Main",
+          "fullName": "Sequence",
+          "outputName": "Main",
+          "showHeader": true
+        },
+        "do": [
+          {
+            "WorkflowStart": {
+              "set": "${$workflow.definition?.document?.metadata?.variables?.reduce((acc, v) => ({ ...acc, [v.name]: v.value }), {}) }",
+              "output": {
+                "as": "${$input}"
+              },
+              "export": {
+                "as": "{ ...$context, variables: { ...$context.variables, ...$output } }"
+              },
+              "metadata": {
+                "activityType": "Assign",
+                "displayName": "Workflow start",
+                "fullName": "Assign",
+                "isTransparent": true
+              }
+            }
+          },
+          {
+            "SimulateApiWorkflow": {
+              "run": {
+                "script": {
+                  "language": "javascript",
+                  "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                  "code": "const input = $workflow.input || {};\nconst workflowName = String(input.workflowName || 'PullClaims').trim();\nconst caseId = String(input.caseId || 'PI-PCS-2026-0041');\nconst providerId = String(input.providerId || 'PRV-100482');\nconst attendantId = String(input.attendantId || 'ATT-2087');\nconst riskScore = Number(input.riskScore ?? 86);\nconst unsupportedUnits = Number(input.unsupportedUnits ?? 24);\nconst missingEvidenceCount = Number(input.missingEvidenceCount ?? 0);\nconst providerResponseNeeded = input.providerResponseNeeded === true || input.providerResponseNeeded === 'true';\nconst providerResponseReceived = input.providerResponseReceived !== false && input.providerResponseReceived !== 'false';\nconst proposedAction = String(input.proposedAction || 'refer for audit');\nconst supervisorApproved = input.supervisorApproved === true || input.supervisorApproved === 'true';\nconst supportedWorkflows = ['IntakeAlertCreateCase', 'CreateCaseAuditTrail', 'PullClaims', 'PullEvvVisits', 'PullPlanOfCare', 'LookupProviderEnrollment', 'PullPersonnelPacket', 'LandEvidenceDocuments', 'ExtractDocumentFields', 'ValidateExtractionFields', 'ReconcileExtractionConfidence', 'ComputeRiskSignals', 'QuickRulesCheck', 'ReconcileClaimEvidence', 'CreateInvestigatorReviewTask', 'SendProviderRecordsRequest', 'IntakeProviderResponse', 'RefreshCorrelationAfterResponse', 'PrepareSupervisorPacket', 'CreateSupervisorApprovalTask', 'GenerateReferralPacket', 'OpenOverpaymentRecovery', 'QueueProviderNotice', 'CloseCaseAndEmitMetrics', 'AddProviderMonitoringFlag', 'WriteFinalAuditRecord'];\nconst base = { workflowName, caseId, gated: false, recordsAffected: 0, mockMode: true, note: 'No external connector or Data Fabric mutation is performed by this local simulator.' };\nfunction result(status, recordsAffected, message, payload, gated = false) {\n  return { ...base, status, recordsAffected, message, payload, gated };\n}\nconst catalog = {\n  IntakeAlertCreateCase: () => result('Open', 2, 'Case creation contract accepted for claims analytics alert ALERT-CA-2026-7781.', { alertId: 'ALERT-CA-2026-7781', providerId, attendantId, stage: 'Alert intake and triage', writes: ['PI360ProgramIntegrityCase', 'PI360InvestigationAction'] }),\n  CreateCaseAuditTrail: () => result('Completed', 1, 'Initial audit trail entry contract accepted.', { actionId: 'ACT-0001', actor: 'Case intake', event: 'Case created from alert' }),\n  PullClaims: () => result('Completed', 9, 'Claims pull contract returns the canonical 9-claim reviewed sample.', { claimCount: 9, flaggedClaims: ['CLM-0491', 'CLM-0503', 'CLM-0540', 'CLM-0549'], deDuplicatedImproperUnits: 24, sampleExposure: 172.8, computedBy: 'deterministic-calc-v1' }),\n  PullEvvVisits: () => result('Completed', 44, 'EVV pull contract returns the visit sample used by RS-01 and RS-02.', { visitCount: 44, manualNoGpsCount: 12, overlapAnchors: ['EVV-88231', 'EVV-88237'] }),\n  PullPlanOfCare: () => result('Completed', 2, 'Plan-of-care pull contract returns authorized daily and weekly unit limits.', { primaryMember: 'MBR-33915', dailyUnits: 20, weeklyUnits: 80, documentId: 'DOC-POC-33915' }),\n  LookupProviderEnrollment: () => result('Active', 1, 'Provider enrollment lookup contract resolved Harbor Home Support Services.', { providerId, medicaidProviderId: 'MPI-4471902', npi: '1730456789', activeAttendantCount: 22, priorIntegrityHistory: '1 education letter (2024), no sanctions' }),\n  PullPersonnelPacket: () => result('Completed', 1, 'Personnel-packet contract returns credential and missing-document signals.', { attendantId, certification: 'PCA-556210', certificationExpiry: '2026-03-31', missingDocuments: 2, documentId: 'DOC-PP-2087' }),\n  LandEvidenceDocuments: () => result('Completed', 6, 'Evidence landing contract accepts the canonical six-document bundle.', { bucketPrefix: `pi-evidence/${caseId}`, documents: ['DOC-TS-0416', 'DOC-TS-0519', 'DOC-POC-33915', 'DOC-SN-0414', 'DOC-PP-2087', 'DOC-CORR-01'] }),\n  ExtractDocumentFields: () => result('Completed', 6, 'Document extraction contract returns typed fields for timesheets, plan of care, notes, personnel packet, and correspondence.', { extractedDocumentCount: 6, lowConfidenceFields: ['DOC-SN-0414.documented_end', 'DOC-TS-0416.time_out'] }),\n  ValidateExtractionFields: () => result('HumanValidated', 2, 'Human validation write-back contract accepts corrected low-confidence extraction fields.', { validatedFields: ['DOC-SN-0414.documented_end', 'DOC-TS-0416.time_out'], validationStatus: 'Human-validated' }),\n  ReconcileExtractionConfidence: () => result('Completed', 6, 'Extraction reconciliation contract normalizes document validation statuses.', { autoConfirmed: 3, humanValidated: 3, needsReview: 0 }),\n  ComputeRiskSignals: () => result('Completed', 5, 'Deterministic risk-signal contract computes RS-01 through RS-05.', { signals: ['RS-01', 'RS-02', 'RS-03', 'RS-04', 'RS-05'], unsupportedUnits: 24, overlapMinutes: 90, computedBy: 'deterministic-calc-v1' }),\n  QuickRulesCheck: () => {\n    const blockers = [];\n    const warnings = [];\n    if (riskScore < 0 || riskScore > 100) blockers.push('risk_score_out_of_range');\n    if (unsupportedUnits < 0) blockers.push('unsupported_units_negative');\n    if (missingEvidenceCount > 0) blockers.push('missing_material_evidence');\n    if (providerResponseNeeded && !providerResponseReceived) blockers.push('await_provider_response');\n    const gatedTerms = ['recovery', 'overpayment', 'refer', 'audit', 'sanction', 'notice', 'adverse'];\n    const supervisorGateRequired = gatedTerms.some(term => proposedAction.toLowerCase().includes(term));\n    if (supervisorGateRequired && !supervisorApproved) blockers.push('supervisor_approval_required');\n    if (riskScore >= 85 && !supervisorGateRequired) warnings.push('high_risk_review_recommended');\n    if (unsupportedUnits === 0 && !proposedAction.toLowerCase().includes('close')) warnings.push('no_unsupported_units_in_input');\n    const recommendedStage = providerResponseNeeded && !providerResponseReceived\n      ? 'ProviderResponse'\n      : missingEvidenceCount > 0\n        ? 'Evidence'\n        : supervisorGateRequired && !supervisorApproved\n          ? 'SupervisorEscalation'\n          : blockers.length === 0\n            ? 'Investigation'\n            : 'SupervisorEscalation';\n    const payload = { caseId, currentStage: String(input.currentStage || 'Investigation'), riskScore, unsupportedUnits, missingEvidenceCount, providerResponseNeeded, providerResponseReceived, supervisorApproved, proposedAction, supervisorGateRequired, blockers, warnings, recommendedStage, checkedBy: 'quick-rules-v1' };\n    return result(blockers.length ? 'Blocked' : 'Clear', 0, blockers.length ? 'Quick rules found blockers before routing.' : 'Quick rules found no blocking issue before routing.', payload, blockers.length > 0);\n  },\n  ReconcileClaimEvidence: () => result('Completed', 4, 'Claim/evidence reconciliation contract links flagged claims to supporting source IDs.', { reconciledClaims: ['CLM-0491', 'CLM-0503', 'CLM-0540', 'CLM-0549'], evidenceIds: ['DOC-SN-0414', 'DOC-TS-0416', 'DOC-TS-0519', 'EVV-88288'] }),\n  CreateInvestigatorReviewTask: () => result('PendingHumanReview', 1, 'Investigator review task contract created a gated review checkpoint.', { assignee: 'inv.taylor', role: 'Investigator', adverseOrFinancialAllowed: false }),\n  SendProviderRecordsRequest: () => input.investigatorProceed === true || input.investigatorProceed === 'true' ? result('Awaiting Provider', 2, 'Provider records request contract accepted after investigator gate.', { requestId: 'REQ-PI360-0041', requestedDocs: ['Personnel packet', 'Timesheets 04-16 / 05-19', 'Service note 04-14'], respondBy: '2026-08-12', writes: ['PI360ProgramIntegrityCase.Status', 'PI360InvestigationAction'] }) : result('Blocked', 0, 'Investigator proceed gate is required before a provider records request is sent.', { requiredGate: 'investigatorProceed', outboundSent: false }, true),\n  IntakeProviderResponse: () => result('Completed', 1, 'Provider response intake contract accepts DOC-CORR-01 and reopens review.', { documentId: 'DOC-CORR-01', received: '2026-07-28T14:02:00Z', responseDoesResolveMismatch: false }),\n  RefreshCorrelationAfterResponse: () => result('Completed', 2, 'Post-response correlation refresh contract keeps unsupported units unchanged.', { unsupportedUnitsRemain: 24, refreshedOutputs: ['correlation', 'summary-v2'] }),\n  PrepareSupervisorPacket: () => result('Completed', 1, 'Supervisor packet contract bundles evidence, decisions, and non-determination disclaimers.', { packetId: 'PKT-PI360-0041', includes: ['risk signals', 'claim sample', 'provider response', 'decision log'] }),\n  CreateSupervisorApprovalTask: () => result('PendingSupervisor', 1, 'Supervisor approval task contract created the adverse/financial action gate.', { assignee: 'sup.morgan', role: 'Supervisor', requiredFor: ['Refer for audit', 'Open recovery'] }),\n  GenerateReferralPacket: () => result('Completed', 1, 'Referral packet generation contract accepts supervisor-approved disposition.', { referralPacketId: 'REF-PI360-0041', disposition: 'Refer for audit' }),\n  OpenOverpaymentRecovery: () => input.supervisorApproved === true || input.supervisorApproved === 'true' ? result('Recovery Opened', 1, 'Overpayment recovery handoff contract accepted after supervisor approval.', { recoveryId: 'REC-PI360-0041', basis: '24 unsupported units across CLM-0491, CLM-0503, CLM-0540, CLM-0549', sampleAmount: 172.8, reviewedPeriodEstimate: 1600, indicativeRange: { low: 18000, high: 42000 }, disclaimer: 'Indicative range, subject to human validation. Not a determination.' }) : result('Blocked', 0, 'Supervisor approval is required before any adverse or financial action is opened.', { requiredGate: 'supervisorApproved', recoveryOpened: false }, true),\n  QueueProviderNotice: () => result('Queued', 1, 'Provider notice queue contract accepts the approved notification payload.', { noticeId: 'NOT-PI360-0041', channel: 'provider-portal', sendAfterSupervisorApproval: true }),\n  CloseCaseAndEmitMetrics: () => result('Closed', 3, 'Closure contract writes final case state and emits Insights metrics.', { finalStatus: 'Closed', insightsMetrics: ['cycle_time', 'unsupported_units', 'human_gate_count'] }),\n  AddProviderMonitoringFlag: () => result('Completed', 1, 'Provider monitoring contract adds a review flag for future sampling.', { providerId, monitoringFlag: true, reason: 'Confirmed unsupported units in reviewed sample' }),\n  WriteFinalAuditRecord: () => result('Completed', 1, 'Final audit trail contract appends immutable closure action.', { actionId: 'ACT-0015', actor: 'Closure automation', event: 'Case closed and monitoring flag written' })\n};\nconst handler = catalog[workflowName];\nif (!handler) {\n  return result('InvalidRequest', 0, `Unknown workflowName '${workflowName}'.`, { supportedWorkflows });\n}\nreturn handler();"
+                }
+              },
+              "export": {
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"SimulateApiWorkflow\": $output }, apiWorkflowResult: $output }"
+              },
+              "metadata": {
+                "activityType": "JsInvoke",
+                "displayName": "Simulate API Workflow Contract",
+                "fullName": "JsInvoke",
+                "outputName": "SimulateApiWorkflow",
+                "showHeader": true
+              }
+            }
+          },
+          {
+            "ReturnResult": {
+              "response": "${$context.apiWorkflowResult}",
+              "markJobAsFailed": false,
+              "then": "end",
+              "export": {
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"ReturnResult\": $output } }"
+              },
+              "metadata": {
+                "activityType": "Response",
+                "displayName": "Return API Workflow Result",
+                "fullName": "Response",
+                "outputName": "ReturnResult",
+                "showHeader": true
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

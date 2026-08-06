@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360DecisionPacketAutomation",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "6f19e849-d1e4-4509-a32f-e4a2335996ac",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360DecisionPacketAutomation"
+    },
+    "locks": [],
+    "key": "e52e6a4d-5992-43f5-83bb-6c03a54daea5",
+    "files": []
+  }
+}

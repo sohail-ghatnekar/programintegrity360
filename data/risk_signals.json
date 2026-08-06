@@ -1,0 +1,57 @@
+[
+  {
+    "signal_id": "RS-01",
+    "case_id": "PI-PCS-2026-0041",
+    "name": "Overlapping visits",
+    "rule_expression": "For same attendant, any two EVVVisit rows where time intervals intersect > 0 minutes on the same date.",
+    "inputs": { "visits": ["EVV-88231 (08:00-12:00, MBR-33915)", "EVV-88237 (10:30-14:00, MBR-40122)"], "date": "2026-04-14" },
+    "result_value": "1 overlap detected on 2026-04-14; overlap window 10:30-12:00 = 90 minutes across two different members.",
+    "severity": "High",
+    "computed_by": "deterministic-calc-v1",
+    "computed_at": "2026-07-22T10:41:00Z"
+  },
+  {
+    "signal_id": "RS-02",
+    "case_id": "PI-PCS-2026-0041",
+    "name": "Manual EVV / missing GPS confirmation",
+    "rule_expression": "count(EVVVisit where capture_method = 'Manual' AND gps_confirmed = 'No') over the service period.",
+    "inputs": { "period_visit_count": 44, "manual_no_gps_count": 12, "sample_visible": ["EVV-88208","EVV-88231","EVV-88244","EVV-88258","EVV-88280","EVV-88288"] },
+    "result_value": "12 of 44 visits (27.3%) entered manually with no GPS confirmation.",
+    "severity": "Medium",
+    "computed_by": "deterministic-calc-v1",
+    "computed_at": "2026-07-22T10:41:00Z"
+  },
+  {
+    "signal_id": "RS-03",
+    "case_id": "PI-PCS-2026-0041",
+    "name": "Units above plan of care",
+    "rule_expression": "For each Claim, flag when units_billed > member.poc_daily_units; overage = units_billed - poc_daily_units.",
+    "inputs": { "flagged_claims": [ {"claim":"CLM-0491","billed":24,"poc":20,"overage":4}, {"claim":"CLM-0503","billed":24,"poc":20,"overage":4}, {"claim":"CLM-0540","billed":24,"poc":20,"overage":4} ] },
+    "result_value": "3 dates of service billed above the plan-of-care daily authorization; total overage 12 units.",
+    "severity": "High",
+    "computed_by": "deterministic-calc-v1",
+    "computed_at": "2026-07-22T10:41:00Z"
+  },
+  {
+    "signal_id": "RS-04",
+    "case_id": "PI-PCS-2026-0041",
+    "name": "Unsupported units (timesheet / EVV mismatch)",
+    "rule_expression": "For each Claim, improper_units = units_billed - min(evv_supported_units, timesheet_supported_units); flag when > 0.",
+    "inputs": { "flagged_claims": [ {"claim":"CLM-0491","improper":8}, {"claim":"CLM-0503","improper":8}, {"claim":"CLM-0540","improper":4}, {"claim":"CLM-0549","improper":4} ] },
+    "result_value": "4 claims with unsupported units; 24 de-duplicated unsupported units total.",
+    "severity": "High",
+    "computed_by": "deterministic-calc-v1",
+    "computed_at": "2026-07-22T10:41:00Z"
+  },
+  {
+    "signal_id": "RS-05",
+    "case_id": "PI-PCS-2026-0041",
+    "name": "Personnel documentation gap",
+    "rule_expression": "Flag when attendant.credential_expiry < date_of_service OR any required personnel doc is missing.",
+    "inputs": { "credential_id": "PCA-556210", "credential_expiry": "2026-03-31", "dos_after_expiry": 8, "missing_docs": ["Signed training acknowledgment", "Current background-check attestation"] },
+    "result_value": "Certification lapsed 2026-03-31; 8 dates of service rendered after lapse; 2 required personnel documents missing.",
+    "severity": "Medium",
+    "computed_by": "deterministic-calc-v1",
+    "computed_at": "2026-07-22T10:41:00Z"
+  }
+]

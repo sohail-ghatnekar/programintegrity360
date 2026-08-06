@@ -1,0 +1,24 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EvidenceSnapshotAutomation",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360EvidenceSnapshotAutomation",
+      "description": "Portable evidence completeness automation for Program Integrity case routing."
+    },
+    "locks": [],
+    "key": "86dcc831-9532-40a1-9a96-309010314afc",
+    "files": []
+  }
+}

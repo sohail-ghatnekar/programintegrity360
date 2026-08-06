@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360AdHocReviewBpmn",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "442a257b-bb42-4053-93c2-dd511080885f",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360AdHocReviewBpmn"
+    },
+    "locks": [],
+    "key": "4dafc4c7-2090-4d24-bbc2-7a51f0b539ca",
+    "files": []
+  }
+}

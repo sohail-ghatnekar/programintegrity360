@@ -1,0 +1,6 @@
+{
+  "Name": "PI360DecisionPacketAutomation",
+  "ProjectType": "Process",
+  "Description": "Builds a deterministic supervisor decision brief from Program Integrity case facts.",
+  "MainFile": "Main.xaml"
+}

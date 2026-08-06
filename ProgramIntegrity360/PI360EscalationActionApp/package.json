@@ -1,0 +1,25 @@
+{
+  "name": "pi360-escalation-action-app",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "npm run build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@uipath/coded-action-app": "1.0.0-beta.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.7"
+  }
+}

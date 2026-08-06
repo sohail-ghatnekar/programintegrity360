@@ -1,0 +1,6 @@
+{
+  "Tags": ["program-integrity", "studio-web", "human-approval"],
+  "SeparateRuntimeDependencies": true,
+  "IncludeSources": true,
+  "ConnectorKeys": []
+}

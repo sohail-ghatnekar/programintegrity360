@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360CaseManagerFlow",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "d150de15-dafd-45ed-8573-a311d655a055",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360CaseManagerFlow"
+    },
+    "locks": [],
+    "key": "eeb0ef1d-53cd-4174-8fd6-a13b54f8ae8a",
+    "files": []
+  }
+}

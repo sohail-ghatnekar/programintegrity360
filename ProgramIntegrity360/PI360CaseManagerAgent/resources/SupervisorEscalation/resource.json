@@ -1,0 +1,125 @@
+{
+  "$resourceType": "escalation",
+  "id": "effd3351-8eae-4b41-b3e3-54e398f688b8",
+  "name": "SupervisorEscalation",
+  "description": "Escalate a Program Integrity 360 case to a supervisor through the coded Action Center app.",
+  "escalationType": 0,
+  "isAgentMemoryEnabled": false,
+  "ixpToolId": null,
+  "storageBucketName": null,
+  "properties": {},
+  "governanceProperties": {
+    "isEscalatedAtRuntime": false
+  },
+  "isEnabled": true,
+  "channels": [
+    {
+      "id": "eac23a35-6ae3-4fd8-b376-1ecf0cc9e23a",
+      "name": "SupervisorActionCenterReview",
+      "description": "Create a supervisor review task for gated case routing decisions.",
+      "type": "actionCenter",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Program Integrity case identifier."
+          },
+          "providerName": {
+            "type": "string",
+            "description": "Provider or organization under review."
+          },
+          "currentStage": {
+            "type": "string",
+            "description": "Current ad-hoc case stage."
+          },
+          "riskScore": {
+            "type": "number",
+            "description": "Stored risk score or priority score supplied by the case manager."
+          },
+          "routeReason": {
+            "type": "string",
+            "description": "Grounded explanation from the Case Manager agent."
+          },
+          "evidenceSummary": {
+            "type": "string",
+            "description": "Concise cited evidence summary."
+          },
+          "recommendedAction": {
+            "type": "string",
+            "description": "Pre-populated recommendation that the reviewer may update."
+          }
+        }
+      },
+      "inputSchemaDotnetTypeMapping": {
+        "caseId": "System.String",
+        "providerName": "System.String",
+        "currentStage": "System.String",
+        "riskScore": "System.Int64",
+        "routeReason": "System.String",
+        "evidenceSummary": "System.String",
+        "recommendedAction": "System.String"
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "recommendedAction": {
+            "type": "string",
+            "description": "Recommendation returned from the reviewer."
+          },
+          "supervisorDecision": {
+            "type": "string",
+            "description": "Supervisor decision captured from the task."
+          },
+          "nextStage": {
+            "type": "string",
+            "description": "Stage the case should move to after review."
+          },
+          "reviewNotes": {
+            "type": "string",
+            "description": "Reviewer notes for the case record."
+          }
+        }
+      },
+      "outputSchemaDotnetTypeMapping": {
+        "recommendedAction": "System.String",
+        "supervisorDecision": "System.String",
+        "nextStage": "System.String",
+        "reviewNotes": "System.String"
+      },
+      "outcomeMapping": {
+        "Approve": "continue",
+        "Return": "continue",
+        "Escalate": "continue"
+      },
+      "properties": {
+        "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+        "appName": "pi360-escalation-action-app",
+        "folderName": "AMER Presales/Public Sector/ProgramIntegrity360",
+        "appVersion": 1,
+        "isActionableMessageEnabled": false,
+        "actionableMessageMetaData": null
+      },
+      "recipients": [
+        {
+          "type": 3,
+          "value": "sohail.ghatnekar@uipath.com"
+        }
+      ],
+      "taskTitle": "Program Integrity supervisor review",
+      "taskTitleV2": {
+        "type": "textBuilder",
+        "tokens": [
+          {
+            "type": "simpleText",
+            "rawString": "Program Integrity supervisor review"
+          }
+        ]
+      },
+      "labels": [
+        "ProgramIntegrity360",
+        "SupervisorReview"
+      ]
+    }
+  ]
+}
