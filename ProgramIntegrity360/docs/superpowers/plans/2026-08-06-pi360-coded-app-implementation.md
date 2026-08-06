@@ -33,7 +33,9 @@
 - Modify: `ProgramIntegrity360/PI360CodedApp/package-lock.json`
 - Create: `ProgramIntegrity360/PI360CodedApp/vitest.config.ts`
 - Create: `ProgramIntegrity360/PI360CodedApp/src/test/setup.ts`
+- Create: `ProgramIntegrity360/PI360CodedApp/src/test/smoke.test.ts`
 - Create: `ProgramIntegrity360/PI360CodedApp/playwright.config.ts`
+- Modify: `ProgramIntegrity360/PI360CodedApp/src/components/ClaimsDashboard.tsx` (only the existing lint-blocking declaration)
 
 **Interfaces:**
 - Consumes: existing Vite application and npm lockfile.
@@ -124,6 +126,8 @@ Create `src/test/setup.ts`:
 import '@testing-library/jest-dom/vitest';
 ```
 
+Create `src/test/smoke.test.ts` with one focused assertion that proves the jsdom environment and Testing Library matcher setup are active. This gives `npm test` a meaningful green baseline without weakening Vitest's empty-suite behavior.
+
 - [ ] **Step 5: Configure visual tests**
 
 Create `playwright.config.ts`:
@@ -160,10 +164,9 @@ npm run lint
 npm run build
 git add .
 git commit -m "chore: initialize PI360 coded app repository"
-git push -u origin main
 ```
 
-Expected: all commands pass and the approved design and plan are present on `main`.
+Expected: all commands pass and the task is committed on the isolated feature branch. The repository baseline was pushed to `origin/main` before isolated execution; Task 8 integrates and pushes the reviewed implementation to `main`.
 
 ---
 

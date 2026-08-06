@@ -50,3 +50,26 @@ The amended contract authorized the smoke test after the test setup configuratio
 
 - The required full lint command does not pass because of an unchanged baseline error in `src/components/ClaimsDashboard.tsx:99`, which is outside the Task 1 write set. It is deliberately not modified.
 - The baseline also has 62 lint warnings, npm reports 17 dependency audit vulnerabilities, and the production bundle emits a Vite large-chunk advisory. None were introduced or changed by Task 1.
+
+## Fix Round 1
+
+### Implementation
+
+- Updated the now-authorized declaration in `ProgramIntegrity360/PI360CodedApp/src/components/ClaimsDashboard.tsx:99` from `let` to `const`. The value is never reassigned, so this resolves the `prefer-const` lint error without changing runtime behavior.
+- Included the amended implementation plan in this fix commit to preserve the isolated-worktree contract, its permitted smoke test, the authorized lint declaration, and Task 8 push deferral.
+
+### Commands And Exact Results
+
+| Command | Exact result |
+| --- | --- |
+| `npx eslint src/components/ClaimsDashboard.tsx` before the change | Exit 1. `99:11 error 'finalFilePath' is never reassigned. Use 'const' instead prefer-const`; `108:16 warning Unexpected any. Specify a different type @typescript-eslint/no-explicit-any`; `2 problems (1 error, 1 warning)`. |
+| `npx eslint src/components/ClaimsDashboard.tsx` after the change | Exit 0. `108:16 warning Unexpected any. Specify a different type @typescript-eslint/no-explicit-any`; `1 problem (0 errors, 1 warning)`. |
+| `npm test` | Exit 0. `Test Files 1 passed (1)`; `Tests 1 passed (1)`. |
+| `npm run lint` | Exit 0. `62 problems (0 errors, 62 warnings)`; `0 errors and 4 warnings potentially fixable with the --fix option`. |
+| `npm run build` | Exit 0. TypeScript, Vite, and `prepare-codedapp-index.mjs` completed; Vite transformed 444 modules and emitted a 767.56 kB JavaScript bundle with its existing over-500 kB advisory. |
+
+### Review
+
+- This is a static lint-rule correction, so no new runtime behavior was introduced and no additional TDD test is applicable.
+- Full lint is now green with zero errors. The remaining 62 warnings are pre-existing and out of scope for this authorized one-declaration fix.
+- No generated files, cloud operations, remote changes, or pushes are included.

@@ -96,7 +96,7 @@ export const ClaimsDashboard = () => {
       const resolvedProcessFolderId = Number(processFolderId) || FOLDER_ID;
 
       // Upload the file to the bucket if one was selected
-      let finalFilePath = applicationFilePath;
+      const finalFilePath = applicationFilePath;
       if (uploadedFile) {
         const uploadPath = `/${applicationFilePath}`;
         try {
