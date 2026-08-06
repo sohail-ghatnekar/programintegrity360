@@ -166,6 +166,9 @@ function TopBar({
         <div className="min-w-0">
           <div className="truncate text-lg font-bold tracking-normal text-slate-950">Program Integrity 360</div>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <span className="rounded-md bg-sky-50 px-2 py-1 font-semibold text-sky-900 ring-1 ring-sky-200">
+              Demo data
+            </span>
             <span className="rounded-md bg-amber-50 px-2 py-1 font-semibold text-amber-900 ring-1 ring-amber-200">
               Risk signals - not a determination
             </span>
@@ -682,7 +685,7 @@ function KeyValue({ rows }: { rows: Array<[string, string]> }) {
   );
 }
 
-function CitationRow({ citations }: { citations: string[] }) {
+function CitationRow({ citations }: { citations: readonly string[] }) {
   return (
     <div className="mt-3 flex flex-wrap gap-1">
       {citations.map((citation) => (

@@ -1,19 +1,8 @@
-import { DEMO_CASE_WORKSPACE } from './demoCase';
-import type { CaseRepository, CaseWorkspaceModel } from './types';
+import { createDemoCaseWorkspace as createWorkspaceSnapshot } from './demoCase';
+import type { CaseRepository, CaseWorkspaceSnapshot, TaskRefreshSnapshot } from './types';
 
-function deepFreeze<T>(value: T): T {
-  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const child of Object.values(value)) {
-      deepFreeze(child);
-    }
-  }
-
-  return value;
-}
-
-export function createDemoCaseWorkspace(): CaseWorkspaceModel {
-  return deepFreeze(structuredClone(DEMO_CASE_WORKSPACE));
+export function createDemoCaseWorkspace(): CaseWorkspaceSnapshot {
+  return createWorkspaceSnapshot();
 }
 
 export class DemoCaseRepository implements CaseRepository {
@@ -31,7 +20,7 @@ export class DemoCaseRepository implements CaseRepository {
     return workspace;
   }
 
-  async refreshTasks(caseId: string) {
+  async refreshTasks(caseId: string): Promise<TaskRefreshSnapshot> {
     const workspace = await this.loadWorkspace(caseId);
 
     return {

@@ -2,7 +2,9 @@ import { STAGE_DEFINITIONS } from './stages';
 import type {
   ActivityEvent,
   CaseTaskModel,
+  CaseWorkspaceSnapshot,
   CaseWorkspaceModel,
+  DeepReadonly,
   EvidenceDocumentModel,
   RiskSignalModel,
   SourceMetadata,
@@ -10,6 +12,17 @@ import type {
 
 const dataSource = 'demo' as const;
 const sourceUpdatedAt = '2026-07-29T14:00:00Z';
+
+function deepFreeze<T>(value: T): DeepReadonly<T> {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) {
+      deepFreeze(child);
+    }
+  }
+
+  return value as DeepReadonly<T>;
+}
 
 function withDemoSource<T extends { id: string | number }>(
   records: T[],
@@ -23,7 +36,7 @@ function withDemoSource<T extends { id: string | number }>(
   }));
 }
 
-export const DEMO_CASE_WORKSPACE: CaseWorkspaceModel = {
+const DEMO_CASE_WORKSPACE = deepFreeze<CaseWorkspaceModel>({
   dataSource,
   sourceId: 'demo-case-workspace:PI-PCS-2026-0041',
   sourceUpdatedAt,
@@ -36,7 +49,7 @@ export const DEMO_CASE_WORKSPACE: CaseWorkspaceModel = {
     program: 'Medicaid PCS',
     priority: 'High',
     status: 'In Review',
-    stage: 'Investigator human review',
+    stage: 'Investigation and case management',
     trigger: 'ALERT-CA-2026-7781',
     alertDate: '2026-07-20',
     servicePeriod: '2026-03-01 to 2026-05-31',
@@ -110,11 +123,11 @@ export const DEMO_CASE_WORKSPACE: CaseWorkspaceModel = {
     { id: 'DOC-CORR-01', type: 'Correspondence', source: 'Records-request inbox', confidence: 0.86, status: 'Human-validated', note: 'Provider response does not resolve the 04-16 EVV/timesheet mismatch', fields: { received: '2026-07-28', summary: 'Provider states 04-16 visit extended to 14:00 due to member need; acknowledges certification renewal in progress.' } },
   ], 'evidence'),
   caseTasks: withDemoSource<Omit<CaseTaskModel, keyof SourceMetadata>>([
-    { id: 1002, folderId: 987654, type: 'App', title: 'Investigator review - reconciliation and narrative', priority: 'High', status: 'Pending', assignee: 'inv.taylor', sla: 'Due soon', gated: false, stageLabel: 'Investigation', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1002', createdAt: '2026-07-24T11:10:00Z' },
-    { id: 1003, folderId: 987654, type: 'App', title: 'Supervisor approval - refer for audit and recovery', priority: 'High', status: 'Unassigned', assignee: '-', sla: 'Due soon', gated: true, stageLabel: 'Supervisor Review', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1003', createdAt: '2026-07-28T14:30:00Z' },
+    { id: 1002, folderId: 987654, type: 'App', title: 'Investigator review - reconciliation and narrative', priority: 'High', status: 'Pending', assignee: 'inv.taylor', sla: 'Due soon', gated: false, stageLabel: 'Investigation and case management', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1002', createdAt: '2026-07-24T11:10:00Z' },
+    { id: 1003, folderId: 987654, type: 'App', title: 'Supervisor approval - refer for audit and recovery', priority: 'High', status: 'Unassigned', assignee: '-', sla: 'Due soon', gated: true, stageLabel: 'Supervisor review and approval', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1003', createdAt: '2026-07-28T14:30:00Z' },
   ], 'action-center-task'),
   folderTasks: withDemoSource<Omit<CaseTaskModel, keyof SourceMetadata>>([
-    { id: 1001, folderId: 987654, type: 'Form', title: 'Validate low-confidence extraction - DOC-SN-0414', priority: 'Medium', status: 'Pending', assignee: 'inv.taylor', sla: 'On time', gated: false, stageLabel: 'Evidence', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1001', createdAt: '2026-07-23T08:20:00Z' },
+    { id: 1001, folderId: 987654, type: 'Form', title: 'Validate low-confidence extraction - DOC-SN-0414', priority: 'Medium', status: 'Pending', assignee: 'inv.taylor', sla: 'On time', gated: false, stageLabel: 'Evidence acquisition and validation', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1001', createdAt: '2026-07-23T08:20:00Z' },
   ], 'action-center-task'),
   executionTimeline: withDemoSource<Omit<ActivityEvent, keyof SourceMetadata>>([
     { id: 'ACT-0001', timestamp: '2026-07-22 09:12', actorKind: 'System', actor: 'Case intake', type: 'Case created', detail: 'Opened from alert ALERT-CA-2026-7781.' },
@@ -132,4 +145,8 @@ export const DEMO_CASE_WORKSPACE: CaseWorkspaceModel = {
     { id: 'ACT-0013', timestamp: '2026-07-29 13:50', actorKind: 'Human', actor: 'sup.morgan', type: 'Approval', detail: 'Approved DEC-0002: refer for audit and open overpayment recovery.' },
     { id: 'ACT-0014', timestamp: '2026-07-29 14:00', actorKind: 'System', actor: 'Action execution workflow', type: 'Action executed', detail: 'Referral packet created and recovery opened for confirmed unsupported units.' },
   ], 'activity'),
-};
+});
+
+export function createDemoCaseWorkspace(): CaseWorkspaceSnapshot {
+  return deepFreeze(structuredClone(DEMO_CASE_WORKSPACE));
+}

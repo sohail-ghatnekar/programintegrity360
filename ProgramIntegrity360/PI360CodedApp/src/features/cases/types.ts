@@ -3,6 +3,11 @@ export type DataSource = 'live' | 'demo';
 export type StageStatus = 'not-started' | 'active' | 'waiting' | 'completed' | 'faulted';
 export type TaskStatus = 'Unassigned' | 'Pending' | 'Completed';
 export type Severity = 'High' | 'Medium' | 'Low';
+export type DeepReadonly<T> = T extends readonly (infer Item)[]
+  ? readonly DeepReadonly<Item>[]
+  : T extends object
+    ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+    : T;
 export type CaseStageKey =
   | 'intake'
   | 'evidence'
@@ -144,8 +149,14 @@ export interface CaseWorkspaceModel extends SourceMetadata {
   executionTimeline: ActivityEvent[];
 }
 
+export type CaseWorkspaceSnapshot = DeepReadonly<CaseWorkspaceModel>;
+export type TaskRefreshSnapshot = {
+  readonly caseTasks: readonly DeepReadonly<CaseTaskModel>[];
+  readonly folderTasks: readonly DeepReadonly<CaseTaskModel>[];
+};
+
 export interface CaseRepository {
-  listCases(): Promise<CaseSummary[]>;
-  loadWorkspace(caseId: string): Promise<CaseWorkspaceModel>;
-  refreshTasks(caseId: string): Promise<{ caseTasks: CaseTaskModel[]; folderTasks: CaseTaskModel[] }>;
+  listCases(): Promise<readonly DeepReadonly<CaseSummary>[]>;
+  loadWorkspace(caseId: string): Promise<CaseWorkspaceSnapshot>;
+  refreshTasks(caseId: string): Promise<TaskRefreshSnapshot>;
 }

@@ -15,8 +15,28 @@ describe('demo case repository', () => {
       'supervisor-review',
       'closure',
     ]);
+    expect(workspace.stages.map((stage) => stage.label)).toEqual([
+      'Alert intake and triage',
+      'Evidence acquisition and validation',
+      'Investigation and case management',
+      'Provider response',
+      'Supervisor review and approval',
+      'Closure and monitoring',
+    ]);
+    expect(workspace.case.stage).toBe('Investigation and case management');
     expect(workspace.caseTasks.filter((task) => task.type === 'App')).toHaveLength(2);
     expect(workspace.executionTimeline).not.toHaveLength(0);
+  });
+
+  it('keeps the demo fixture private and returns deeply frozen snapshots', async () => {
+    const workspace = createDemoCaseWorkspace();
+    const fixtureModule = await import('./demoCase');
+
+    expect(fixtureModule).not.toHaveProperty('DEMO_CASE_WORKSPACE');
+    expect(Object.isFrozen(workspace)).toBe(true);
+    expect(Object.isFrozen(workspace.stages)).toBe(true);
+    expect(Object.isFrozen(workspace.stages[0])).toBe(true);
+    expect(Object.isFrozen(workspace.evidenceDocuments[0].fields)).toBe(true);
   });
 
   it('returns immutable demo task snapshots without simulating completion', async () => {
