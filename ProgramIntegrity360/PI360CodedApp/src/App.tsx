@@ -4,8 +4,18 @@ import { getUiPathAuthSetup, getUiPathConfigurationError } from './config/uipath
 import { AuthProvider } from './hooks/useAuth';
 import { RecordAssistantPanel } from './components/RecordAssistantPanel';
 
-type Role = 'investigator' | 'supervisor';
-type Severity = 'High' | 'Medium' | 'Low';
+import { createDemoCaseWorkspace } from './features/cases/demoRepository';
+import type {
+  ActivityEvent,
+  DemoRole,
+  EvidenceDocumentModel,
+  Severity as CaseSeverity,
+} from './features/cases/types';
+
+type Role = DemoRole;
+type Severity = CaseSeverity;
+type EvidenceDocument = EvidenceDocumentModel;
+type Action = ActivityEvent;
 type ScreenId =
   | 'command'
   | 'case360'
@@ -17,227 +27,20 @@ type ScreenId =
   | 'signals'
   | 'tasks';
 
-type Claim = {
-  id: string;
-  dos: string;
-  member: string;
-  billed: number;
-  evv: number;
-  timesheet: number;
-  poc: number;
-  improper: number;
-  pocOverage: number;
-  status: string;
-  note: string;
-  source: string;
-};
-
-type RiskSignal = {
-  id: string;
-  name: string;
-  rule: string;
-  result: string;
-  severity: Severity;
-  citations: string[];
-};
-
-type EvidenceDocument = {
-  id: string;
-  type: string;
-  source: string;
-  confidence: number;
-  status: string;
-  note: string;
-  fields: Record<string, string>;
-};
-
-type Action = {
-  id: string;
-  timestamp: string;
-  actorKind: 'Human' | 'System' | 'Agent';
-  actor: string;
-  type: string;
-  detail: string;
-};
-
 const authSetup = getUiPathAuthSetup();
 const configurationError = getUiPathConfigurationError(authSetup.missingFields);
 
-const caseRecord = {
-  id: 'PI-PCS-2026-0041',
-  title: 'Harbor Home Support Services - PCS billing integrity review',
-  program: 'Medicaid PCS',
-  priority: 'High',
-  status: 'In Review',
-  stage: 'Investigator human review',
-  trigger: 'ALERT-CA-2026-7781',
-  alertDate: '2026-07-20',
-  servicePeriod: '2026-03-01 to 2026-05-31',
-  opened: '2026-07-22',
-  slaDue: '2026-08-05 17:00Z',
-  investigator: 'inv.taylor',
-  supervisor: 'sup.morgan',
-  providerId: 'PRV-100482',
-  attendantId: 'ATT-2087',
-  riskSignalCount: 5,
-  sampleExposure: '$172.80',
-  periodExposure: '$1,600',
-  rangeExposure: '$18K-$42K',
-};
-
-const provider = {
-  name: 'Harbor Home Support Services',
-  medicaidId: 'MPI-4471902',
-  npi: '1730456789',
-  address: '2200 Marina Blvd, Suite 210',
-  enrollment: 'Active',
-  attendants: '22 active attendants',
-  history: '1 provider education letter in 2024; no sanctions on record',
-};
-
-const attendant = {
-  name: 'Jordan Ellis',
-  id: 'ATT-2087',
-  role: 'Personal Care Attendant',
-  cert: 'PCA-556210',
-  certStatus: 'Expired 2026-03-31',
-  docs: ['Signed training acknowledgment', 'Current background-check attestation'],
-};
-
-const claims: Claim[] = [
-  { id: 'CLM-0468', dos: '2026-03-03', member: 'MBR-33915', billed: 16, evv: 16, timesheet: 16, poc: 20, improper: 0, pocOverage: 0, status: 'Cleared', note: 'Matched EVV and timesheet', source: 'EVV-88201' },
-  { id: 'CLM-0475', dos: '2026-03-10', member: 'MBR-33915', billed: 16, evv: 16, timesheet: 16, poc: 20, improper: 0, pocOverage: 0, status: 'Under Review', note: 'Manual/no-GPS method flag only', source: 'EVV-88208' },
-  { id: 'CLM-0491', dos: '2026-04-14', member: 'MBR-33915', billed: 24, evv: 16, timesheet: 16, poc: 20, improper: 8, pocOverage: 4, status: 'Flagged', note: 'Overlap day; billed above EVV and POC', source: 'DOC-SN-0414' },
-  { id: 'CLM-0492', dos: '2026-04-14', member: 'MBR-40122', billed: 14, evv: 14, timesheet: 14, poc: 16, improper: 0, pocOverage: 0, status: 'Under Review', note: 'Second member on overlap day', source: 'EVV-88237' },
-  { id: 'CLM-0503', dos: '2026-04-16', member: 'MBR-33915', billed: 24, evv: 24, timesheet: 16, poc: 20, improper: 8, pocOverage: 4, status: 'Flagged', note: 'Timesheet DOC-TS-0416 supports 08:00-12:00', source: 'DOC-TS-0416' },
-  { id: 'CLM-0517', dos: '2026-04-21', member: 'MBR-33915', billed: 18, evv: 18, timesheet: 18, poc: 20, improper: 0, pocOverage: 0, status: 'Cleared', note: 'Matched EVV and timesheet', source: 'EVV-88250' },
-  { id: 'CLM-0528', dos: '2026-04-28', member: 'MBR-33915', billed: 20, evv: 20, timesheet: 20, poc: 20, improper: 0, pocOverage: 0, status: 'Under Review', note: 'Manual/no-GPS method flag only', source: 'EVV-88258' },
-  { id: 'CLM-0540', dos: '2026-05-19', member: 'MBR-33915', billed: 24, evv: 24, timesheet: 20, poc: 20, improper: 4, pocOverage: 4, status: 'Flagged', note: 'Timesheet DOC-TS-0519 supports 08:00-13:00', source: 'DOC-TS-0519' },
-  { id: 'CLM-0549', dos: '2026-05-26', member: 'MBR-33915', billed: 20, evv: 16, timesheet: 16, poc: 20, improper: 4, pocOverage: 0, status: 'Flagged', note: 'EVV-88288 supports 16 units', source: 'EVV-88288' },
-];
-
-const signals: RiskSignal[] = [
-  {
-    id: 'RS-01',
-    name: 'Overlapping visits',
-    rule: 'Same attendant, two EVV rows, time intervals intersect same date',
-    result: '1 overlap on 2026-04-14; window 10:30-12:00 = 90 minutes across two members',
-    severity: 'High',
-    citations: ['EVV-88231', 'EVV-88237'],
-  },
-  {
-    id: 'RS-02',
-    name: 'Manual EVV / missing GPS',
-    rule: 'count(capture_method=Manual and gps_confirmed=No) over period',
-    result: '12 of 44 visits (27.3%)',
-    severity: 'Medium',
-    citations: ['EVV sample'],
-  },
-  {
-    id: 'RS-03',
-    name: 'Units above plan of care',
-    rule: 'units_billed > poc_daily_units; overage = billed - poc',
-    result: '3 dates of service; total overage 12 units',
-    severity: 'High',
-    citations: ['DOC-POC-33915', 'CLM-0491', 'CLM-0503', 'CLM-0540'],
-  },
-  {
-    id: 'RS-04',
-    name: 'Unsupported units',
-    rule: 'improper = units_billed - min(evv_supported, timesheet_supported); flag > 0',
-    result: '4 claims; 24 de-duplicated unsupported units',
-    severity: 'High',
-    citations: ['CLM-0491', 'CLM-0503', 'CLM-0540', 'CLM-0549'],
-  },
-  {
-    id: 'RS-05',
-    name: 'Personnel documentation gap',
-    rule: 'credential_expiry < DOS or required document missing',
-    result: 'Cert lapsed 2026-03-31; 8 DOS after lapse; 2 required docs missing',
-    severity: 'Medium',
-    citations: ['DOC-PP-2087'],
-  },
-];
-
-const evidenceDocs: EvidenceDocument[] = [
-  {
-    id: 'DOC-TS-0416',
-    type: 'Timesheet',
-    source: 'Provider portal upload',
-    confidence: 0.71,
-    status: 'Human-validated',
-    note: 'Handwritten time_out confirmed 12:00; contradicts CLM-0503',
-    fields: { attendant: 'Jordan Ellis', member: 'MBR-33915', date: '2026-04-16', time_in: '08:00', time_out: '12:00', supported_units: '16' },
-  },
-  {
-    id: 'DOC-TS-0519',
-    type: 'Timesheet',
-    source: 'Provider portal upload',
-    confidence: 0.88,
-    status: 'Auto-confirmed',
-    note: 'Contradicts CLM-0540',
-    fields: { attendant: 'Jordan Ellis', member: 'MBR-33915', date: '2026-05-19', time_in: '08:00', time_out: '13:00', supported_units: '20' },
-  },
-  {
-    id: 'DOC-POC-33915',
-    type: 'Plan of Care',
-    source: 'Legacy care-management pull',
-    confidence: 0.94,
-    status: 'Auto-confirmed',
-    note: 'Establishes 20 units/day used by RS-03',
-    fields: { member: 'MBR-33915', authorized_units_per_day: '20', authorized_units_per_week: '80', service: 'Personal Care', effective: '2026-01-01', expires: '2026-12-31' },
-  },
-  {
-    id: 'DOC-SN-0414',
-    type: 'Service Note',
-    source: 'Provider portal upload',
-    confidence: 0.83,
-    status: 'Needs review',
-    note: 'Narrative supports AM-only visit; relevant to RS-01 / CLM-0491',
-    fields: { member: 'MBR-33915', date: '2026-04-14', documented_end: '12:00', narrative: 'left at noon' },
-  },
-  {
-    id: 'DOC-PP-2087',
-    type: 'Personnel Packet',
-    source: 'Provider records request',
-    confidence: 0.9,
-    status: 'Human-validated',
-    note: 'Feeds RS-05; 2 docs missing; cert lapsed',
-    fields: { attendant: 'ATT-2087', certification: 'PCA-556210', certification_expiry: '2026-03-31', missing_documents: '2' },
-  },
-  {
-    id: 'DOC-CORR-01',
-    type: 'Correspondence',
-    source: 'Records-request inbox',
-    confidence: 0.86,
-    status: 'Human-validated',
-    note: 'Provider response does not resolve the 04-16 EVV/timesheet mismatch',
-    fields: { received: '2026-07-28', summary: 'Provider states 04-16 visit extended to 14:00 due to member need; acknowledges certification renewal in progress.' },
-  },
-];
-
-const actions: Action[] = [
-  { id: 'ACT-0001', timestamp: '2026-07-22 09:12', actorKind: 'System', actor: 'Case intake', type: 'Case created', detail: 'Opened from alert ALERT-CA-2026-7781.' },
-  { id: 'ACT-0002', timestamp: '2026-07-22 10:41', actorKind: 'System', actor: 'deterministic-calc-v1', type: 'Signal computed', detail: 'Computed RS-01 through RS-05.' },
-  { id: 'ACT-0003', timestamp: '2026-07-22 10:45', actorKind: 'Agent', actor: 'Triage Agent', type: 'Agent output', detail: 'Priority explained as High, grounded in RS-01, RS-03, RS-04.' },
-  { id: 'ACT-0004', timestamp: '2026-07-23 08:20', actorKind: 'System', actor: 'IXP', type: 'Doc extracted', detail: 'Six evidence documents extracted; two fields below confidence threshold.' },
-  { id: 'ACT-0005', timestamp: '2026-07-23 09:05', actorKind: 'Human', actor: 'inv.taylor', type: 'Human validated', detail: 'Validated DOC-TS-0416 time_out as 12:00.' },
-  { id: 'ACT-0006', timestamp: '2026-07-23 09:30', actorKind: 'Agent', actor: 'Evidence Correlation Agent', type: 'Agent output', detail: 'Grouped findings into Unsupported billing, Visit integrity, and Credentialing / personnel.' },
-  { id: 'ACT-0007', timestamp: '2026-07-23 09:35', actorKind: 'Agent', actor: 'Investigation Planning Agent', type: 'Agent output', detail: 'Recommended records request and no adverse action pending provider response.' },
-  { id: 'ACT-0008', timestamp: '2026-07-24 11:10', actorKind: 'Human', actor: 'inv.taylor', type: 'Edit', detail: 'Reclassified CLM-0475 method flag as informational.' },
-  { id: 'ACT-0009', timestamp: '2026-07-24 11:20', actorKind: 'Human', actor: 'inv.taylor', type: 'Decision', detail: 'Recorded DEC-0001: proceed to records request.' },
-  { id: 'ACT-0010', timestamp: '2026-07-24 11:25', actorKind: 'System', actor: 'Records request workflow', type: 'Request sent', detail: 'Status moved to Awaiting Provider.' },
-  { id: 'ACT-0011', timestamp: '2026-07-28 14:02', actorKind: 'System', actor: 'Records inbox', type: 'Response received', detail: 'Received DOC-CORR-01 and moved status back to In Review.' },
-  { id: 'ACT-0012', timestamp: '2026-07-28 14:30', actorKind: 'Agent', actor: 'Summary Agent', type: 'Agent output', detail: 'Drafted supervisor-facing summary v2.' },
-  { id: 'ACT-0013', timestamp: '2026-07-29 13:50', actorKind: 'Human', actor: 'sup.morgan', type: 'Approval', detail: 'Approved DEC-0002: refer for audit and open overpayment recovery.' },
-  { id: 'ACT-0014', timestamp: '2026-07-29 14:00', actorKind: 'System', actor: 'Action execution workflow', type: 'Action executed', detail: 'Referral packet created and recovery opened for confirmed unsupported units.' },
-];
-
-const tasks = [
-  { title: 'Validate low-confidence extraction - DOC-SN-0414', type: 'Form', priority: 'Medium', status: 'Pending', assignee: 'inv.taylor', sla: 'On time', gated: false },
-  { title: 'Investigator review - reconciliation and narrative', type: 'App', priority: 'High', status: 'Pending', assignee: 'inv.taylor', sla: 'Due soon', gated: false },
-  { title: 'Supervisor approval - refer for audit and recovery', type: 'App', priority: 'High', status: 'Unassigned', assignee: '-', sla: 'Due soon', gated: true },
-];
+const workspace = createDemoCaseWorkspace();
+const caseRecord = workspace.case;
+const caseStages = workspace.stages;
+const provider = workspace.provider;
+const attendant = workspace.attendant;
+const claims = workspace.claims;
+const signals = workspace.riskSignals;
+const evidenceDocs = workspace.evidenceDocuments;
+const actions = workspace.executionTimeline;
+const tasks = [...workspace.folderTasks, ...workspace.caseTasks];
+const stageLabels = caseStages.map((stage) => stage.label);
 
 const navItems: Array<{ id: ScreenId; label: string }> = [
   { id: 'command', label: 'Command' },
@@ -250,8 +53,6 @@ const navItems: Array<{ id: ScreenId; label: string }> = [
   { id: 'signals', label: 'Signals' },
   { id: 'tasks', label: 'Tasks' },
 ];
-
-const stageLabels = ['Intake', 'Collect', 'Extract', 'Correlate', 'Review', 'Records', 'Approve', 'Execute', 'Close'];
 
 function App() {
   return (
@@ -288,15 +89,15 @@ function ProgramIntegrityDashboard() {
       />
       <div className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-[1600px] items-center gap-2 overflow-x-auto px-4 py-2">
-          {stageLabels.map((stage, index) => (
+          {caseStages.map((stage, index) => (
             <div
-              key={stage}
+              key={stage.key}
               className={`flex min-w-fit items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold ${
-                index === 4 ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-300' : 'bg-slate-50 text-slate-600'
+                stage.status === 'active' ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-300' : 'bg-slate-50 text-slate-600'
               }`}
             >
               <span className="tabular-nums">{index + 1}</span>
-              <span>{stage}</span>
+              <span>{stage.label}</span>
             </div>
           ))}
         </div>

@@ -1,0 +1,151 @@
+export type DemoRole = 'investigator' | 'supervisor';
+export type DataSource = 'live' | 'demo';
+export type StageStatus = 'not-started' | 'active' | 'waiting' | 'completed' | 'faulted';
+export type TaskStatus = 'Unassigned' | 'Pending' | 'Completed';
+export type Severity = 'High' | 'Medium' | 'Low';
+export type CaseStageKey =
+  | 'intake'
+  | 'evidence'
+  | 'investigation'
+  | 'provider-response'
+  | 'supervisor-review'
+  | 'closure';
+
+export interface SourceMetadata {
+  dataSource: DataSource;
+  sourceId: string;
+  sourceUpdatedAt: string;
+}
+
+export interface CaseSummary extends SourceMetadata {
+  id: string;
+  title: string;
+  program: string;
+  priority: Severity;
+  status: string;
+  stage: string;
+  trigger: string;
+  alertDate: string;
+  servicePeriod: string;
+  opened: string;
+  slaDue: string;
+  investigator: string;
+  supervisor: string;
+  providerId: string;
+  attendantId: string;
+  riskSignalCount: number;
+  sampleExposure: string;
+  periodExposure: string;
+  rangeExposure: string;
+}
+
+export interface CaseStageDefinition {
+  key: CaseStageKey;
+  label: string;
+  description: string;
+}
+
+export interface CaseStageModel extends SourceMetadata {
+  key: CaseStageKey;
+  label: string;
+  description: string;
+  status: StageStatus;
+  enteredAt?: string;
+  completedAt?: string;
+}
+
+export interface CaseTaskModel extends SourceMetadata {
+  id: number;
+  folderId: number;
+  type: 'Form' | 'App';
+  title: string;
+  priority: Severity;
+  assignee: string;
+  status: TaskStatus;
+  stageLabel: string;
+  actionCenterUrl: string;
+  createdAt: string;
+  sla: string;
+  gated: boolean;
+}
+
+export interface ActivityEvent extends SourceMetadata {
+  id: string;
+  timestamp: string;
+  actorKind: 'Human' | 'System' | 'Agent';
+  actor: string;
+  type: string;
+  detail: string;
+}
+
+export interface ProviderModel extends SourceMetadata {
+  name: string;
+  medicaidId: string;
+  npi: string;
+  address: string;
+  enrollment: string;
+  attendants: string;
+  history: string;
+}
+
+export interface AttendantModel extends SourceMetadata {
+  name: string;
+  id: string;
+  role: string;
+  cert: string;
+  certStatus: string;
+  docs: string[];
+}
+
+export interface ClaimModel extends SourceMetadata {
+  id: string;
+  dos: string;
+  member: string;
+  billed: number;
+  evv: number;
+  timesheet: number;
+  poc: number;
+  improper: number;
+  pocOverage: number;
+  status: string;
+  note: string;
+  source: string;
+}
+
+export interface RiskSignalModel extends SourceMetadata {
+  id: string;
+  name: string;
+  rule: string;
+  result: string;
+  severity: Severity;
+  citations: string[];
+}
+
+export interface EvidenceDocumentModel extends SourceMetadata {
+  id: string;
+  type: string;
+  source: string;
+  confidence: number;
+  status: string;
+  note: string;
+  fields: Record<string, string>;
+}
+
+export interface CaseWorkspaceModel extends SourceMetadata {
+  case: CaseSummary;
+  stages: CaseStageModel[];
+  provider: ProviderModel;
+  attendant: AttendantModel;
+  claims: ClaimModel[];
+  riskSignals: RiskSignalModel[];
+  evidenceDocuments: EvidenceDocumentModel[];
+  caseTasks: CaseTaskModel[];
+  folderTasks: CaseTaskModel[];
+  executionTimeline: ActivityEvent[];
+}
+
+export interface CaseRepository {
+  listCases(): Promise<CaseSummary[]>;
+  loadWorkspace(caseId: string): Promise<CaseWorkspaceModel>;
+  refreshTasks(caseId: string): Promise<{ caseTasks: CaseTaskModel[]; folderTasks: CaseTaskModel[] }>;
+}
