@@ -31,7 +31,8 @@ function redactSensitiveText(value: string): string {
   return value
     .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [REDACTED]')
     .replace(/([?&](?:code|state|access[_-]?token|refresh[_-]?token|id[_-]?token)=)[^&\s]+/gi, '$1[REDACTED]')
-    .replace(/\b((?:access|refresh|id)[_-]?token=)[^&\s]+/gi, '$1[REDACTED]');
+    .replace(/\b((?:access|refresh|id)[_-]?token=)[^&\s]+/gi, '$1[REDACTED]')
+    .replace(/\b(raw[_-]?payload)\s*[:=]\s*(?:\{[^}\r\n]*\}|\[[^\]\r\n]*\]|"[^"\r\n]*"|'[^'\r\n]*'|[^\s,;]+)/gi, '$1=[REDACTED]');
 }
 
 export function redactActivityData<T>(value: T): T {
@@ -133,14 +134,15 @@ export class ActivityLog {
 export function buildTaskActivityEvents(
   tasks: readonly DeepReadonly<CaseTaskModel>[],
   caseId: string,
+  observedAt = new Date().toISOString(),
 ): ActivityEvent[] {
   return tasks.map((task) => createActivityEvent({
-    id: `task:${task.id}:${task.status}`,
-    timestamp: task.createdAt,
+    id: `task-observation:${task.id}:${task.status}`,
+    timestamp: observedAt,
     source: 'task',
     severity: task.status === 'Unassigned' ? 'warning' : 'info',
-    status: task.status,
-    summary: `Task ${task.id}: ${task.title} is ${task.status}.`,
+    status: `observed:${task.status}`,
+    summary: `Observed current task state: Task ${task.id}, ${task.title}, is ${task.status}.`,
     caseId,
     taskId: task.id,
   }));

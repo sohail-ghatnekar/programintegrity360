@@ -106,7 +106,7 @@ test('integrates the real Task Center and its only Action Center iframe into she
   expect(screen.getByText(/Live task polling is unavailable/i)).toBeInTheDocument();
 });
 
-test('hands the assistant next task to the real Action Center drawer without synthetic completion', async () => {
+test('keeps the demo assistant next task as a non-completable preview', async () => {
   const workspace = createDemoCaseWorkspace();
   vi.mocked(useCaseWorkspace).mockReturnValue({
     cases: [workspace.case],
@@ -125,13 +125,11 @@ test('hands the assistant next task to the real Action Center drawer without syn
   await user.click(screen.getByRole('button', { name: 'What is my next task?' }));
   await user.click(screen.getByRole('button', { name: 'Send message' }));
 
-  expect(screen.getByText('App handoff')).toBeInTheDocument();
+  expect(screen.getByText('Demo task preview')).toBeInTheDocument();
+  expect(screen.getAllByText(/non-completable demo preview/i)).not.toHaveLength(0);
   expect(screen.queryByTitle(`Action Center task ${workspace.caseTasks[0].id}`)).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /complete task/i })).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: `Open task ${workspace.caseTasks[0].id} in Action Center` }));
-
-  expect(screen.getAllByTitle(`Action Center task ${workspace.caseTasks[0].id}`)).toHaveLength(1);
-  expect(screen.getByText(/Live task polling is unavailable/i)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: `Open task ${workspace.caseTasks[0].id} in Action Center` })).not.toBeInTheDocument();
 });
 
 test('refreshes case tasks, stages, and timeline once after Tasks API confirms completion', async () => {

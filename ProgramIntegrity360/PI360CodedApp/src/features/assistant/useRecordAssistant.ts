@@ -9,7 +9,7 @@ import {
 import type { UiPath } from '@uipath/uipath-typescript/core';
 import { getUiPathRuntimeConfig } from '../../config/uipath';
 import { useAuth } from '../../hooks/useAuth';
-import { createActivityEvent } from '../activity/activityLog';
+import { createActivityEvent, redactActivityData } from '../activity/activityLog';
 import type { ActivityEvent, CaseWorkspaceSnapshot } from '../cases/types';
 
 export type AssistantState = 'idle' | 'connecting' | 'live' | 'demo' | 'error';
@@ -21,6 +21,7 @@ export interface RecordAssistantMessage {
   timestamp: string;
   isStreaming?: boolean;
   handoffTaskId?: number;
+  previewTaskId?: number;
 }
 
 export interface CaseGrounding {
@@ -68,6 +69,7 @@ export interface CaseGrounding {
 export interface DemoAssistantResponse {
   content: string;
   handoffTaskId?: number;
+  previewTaskId?: number;
 }
 
 export interface RecordAssistantController {
@@ -154,7 +156,7 @@ export function buildCaseGrounding(workspace: CaseWorkspaceSnapshot): CaseGround
     ...tasks.map((task) => task.correlationId),
   ];
 
-  return {
+  return redactActivityData({
     caseId: workspace.case.id,
     currentStage: currentStage
       ? { key: currentStage.key, label: currentStage.label, status: currentStage.status }
@@ -177,7 +179,7 @@ export function buildCaseGrounding(workspace: CaseWorkspaceSnapshot): CaseGround
     decisions: decisionSummaries,
     tasks,
     correlationIds: [...new Set(correlationIds)],
-  };
+  });
 }
 
 function nextTask(grounding: CaseGrounding) {
@@ -205,8 +207,8 @@ export function createDemoAssistantResponse(
     }
 
     return {
-      content: `**Demo data** I cannot complete Task ${task.id}. Use the app handoff below to open its real Action Center workflow; only the Tasks API confirmation is treated as completion.`,
-      handoffTaskId: task.id,
+      content: `**Demo data** I cannot complete Task ${task.id}. It is shown only as a non-completable demo preview; no Action Center workflow or backend task was opened.`,
+      previewTaskId: task.id,
     };
   }
 
@@ -216,8 +218,8 @@ export function createDemoAssistantResponse(
     }
 
     return {
-      content: `**Demo data** Task ${task.id}, "${task.title}", is the next open selected-case task (${task.status}, ${task.priority}). This is an app handoff to Action Center, not an agent tool call.`,
-      handoffTaskId: task.id,
+      content: `**Demo data** Task ${task.id}, "${task.title}", is the next open selected-case task (${task.status}, ${task.priority}). This is a non-completable demo preview, not a real Action Center task or agent tool call.`,
+      previewTaskId: task.id,
     };
   }
 
@@ -250,16 +252,18 @@ export function createDemoAssistantResponse(
 }
 
 function buildGroundingPrompt(grounding: CaseGrounding): string {
+  const safeGrounding = redactActivityData(grounding);
   return [
     'Selected-case context for this session. Treat this compact redacted JSON as the source of truth.',
     'Do not claim a task tool call or completion unless the app provides an actual backend result.',
     'The deployed agent currently has no app-authorized task tool; task navigation is an app handoff.',
-    JSON.stringify(grounding),
+    JSON.stringify(safeGrounding),
   ].join('\n\n');
 }
 
 function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message.trim() ? error.message : fallback;
+  const message = error instanceof Error && error.message.trim() ? error.message : fallback;
+  return redactActivityData(message);
 }
 
 export function useRecordAssistant(
@@ -310,6 +314,19 @@ export function useRecordAssistant(
     setMessages((current) => current.map((message) => (
       message.id === id ? { ...message, ...updates } : message
     )));
+  }, []);
+
+  const settlePendingMessages = useCallback((fallbackContent: string) => {
+    const pendingIds = new Set(pendingAssistantIds.current.values());
+    if (pendingIds.size > 0) {
+      setMessages((current) => current.map((message) => (
+        pendingIds.has(message.id)
+          ? { ...message, content: message.content || fallbackContent, isStreaming: false }
+          : message
+      )));
+    }
+    pendingAssistantIds.current.clear();
+    setIsSending(false);
   }, []);
 
   const attachSessionHandlers = useCallback((session: SessionStream) => {
@@ -461,8 +478,19 @@ export function useRecordAssistant(
           if (cancelled || generation !== generationRef.current) return;
           if (connectionStatus === 'Connecting') setState('connecting');
           if (connectionError) {
+            const message = errorMessage(connectionError, 'The live assistant connection failed.');
             setState('error');
-            setError(connectionError.message);
+            setError(message);
+            settlePendingMessages('Response interrupted because the live assistant connection failed.');
+            appendActivity({
+              id: `agent-connection-error:${caseId}`,
+              timestamp: nowIso(),
+              source: 'agent',
+              severity: 'error',
+              status: 'connection-error',
+              summary: message,
+              caseId: caseId ?? undefined,
+            });
           }
         });
         const agents = await service.getAll(runtimeConfig.folderId ?? undefined);
@@ -493,17 +521,38 @@ export function useRecordAssistant(
             const nextError = new Error(sessionError.message || sessionError.errorId || 'Agent session failed.');
             if (!started) reject(nextError);
             else {
+              const message = errorMessage(nextError, 'The live assistant session failed.');
+              sessionRef.current = null;
               setState('error');
-              setError(nextError.message);
-              setIsSending(false);
+              setError(message);
+              settlePendingMessages('Response interrupted because the live assistant session failed.');
+              appendActivity({
+                id: `agent-session-error:${caseId}`,
+                timestamp: nowIso(),
+                source: 'agent',
+                severity: 'error',
+                status: 'session-error',
+                summary: message,
+                caseId: caseId ?? undefined,
+              });
             }
           });
           session.onSessionEnd(() => {
             sessionRef.current = null;
-            setIsSending(false);
             if (!cancelled && generation === generationRef.current) {
+              settlePendingMessages('Response interrupted because the live assistant session ended.');
               setState('error');
               setError('The live assistant session ended. Reopen the assistant to start a new session.');
+              appendActivity({
+                id: `agent-disconnected:${caseId}`,
+                timestamp: nowIso(),
+                source: 'agent',
+                severity: 'warning',
+                status: 'disconnected',
+                summary: 'The live conversational-agent session ended.',
+                caseId: caseId ?? undefined,
+              });
+              if (!started) reject(new Error('The live assistant session ended before it started.'));
             }
           });
         });
@@ -525,7 +574,7 @@ export function useRecordAssistant(
         const message = errorMessage(caught, 'Unable to connect to the live record assistant.');
         setState('error');
         setError(message);
-        setIsSending(false);
+        settlePendingMessages('Response interrupted because the live assistant could not connect.');
         appendActivity({
           id: `agent-error:${caseId}`,
           timestamp: nowIso(),
@@ -543,7 +592,7 @@ export function useRecordAssistant(
       cancelled = true;
       endSession();
     };
-  }, [agentName, appendActivity, attachSessionHandlers, caseId, dataSource, endSession, isAuthenticated, open, sdk, sendLiveMessage]);
+  }, [agentName, appendActivity, attachSessionHandlers, caseId, dataSource, endSession, isAuthenticated, open, sdk, sendLiveMessage, settlePendingMessages]);
 
   const useDemoFallback = useCallback(() => {
     endSession();
@@ -584,7 +633,7 @@ export function useRecordAssistant(
           role: 'assistant',
           content: response.content,
           timestamp: nowIso(),
-          handoffTaskId: response.handoffTaskId,
+          previewTaskId: response.previewTaskId,
         },
       ]);
       appendActivity({
@@ -592,19 +641,19 @@ export function useRecordAssistant(
         timestamp: nowIso(),
         source: 'app',
         severity: 'warning',
-        status: response.handoffTaskId ? 'app-handoff-offered' : 'demo-response',
-        summary: response.handoffTaskId
-          ? `Demo assistant offered an app handoff to task ${response.handoffTaskId}.`
+        status: response.previewTaskId ? 'demo-task-preview' : 'demo-response',
+        summary: response.previewTaskId
+          ? `Demo assistant showed a non-completable preview of task ${response.previewTaskId}.`
           : 'Deterministic Demo data response generated.',
         caseId: grounding.caseId,
-        taskId: response.handoffTaskId,
+        taskId: response.previewTaskId,
       });
       return;
     }
 
     if (state !== 'live') return;
     try {
-      const handoffTaskId = createDemoAssistantResponse(normalized, grounding).handoffTaskId;
+      const handoffTaskId = createDemoAssistantResponse(normalized, grounding).previewTaskId;
       if (handoffTaskId) {
         appendActivity({
           id: randomId('app-handoff'),
@@ -622,9 +671,18 @@ export function useRecordAssistant(
       const message = errorMessage(caught, 'Unable to send the assistant message.');
       setState('error');
       setError(message);
-      setIsSending(false);
+      settlePendingMessages('Response interrupted because the assistant message could not be sent.');
+      appendActivity({
+        id: randomId('agent-send-error'),
+        timestamp: nowIso(),
+        source: 'agent',
+        severity: 'error',
+        status: 'send-error',
+        summary: message,
+        caseId: grounding.caseId,
+      });
     }
-  }, [appendActivity, grounding, isSending, sendLiveMessage, state]);
+  }, [appendActivity, grounding, isSending, sendLiveMessage, settlePendingMessages, state]);
 
   return {
     state,

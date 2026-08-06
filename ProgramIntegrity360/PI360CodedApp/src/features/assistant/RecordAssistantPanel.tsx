@@ -215,9 +215,15 @@ function MessageRow({
   workspace: CaseWorkspaceSnapshot | null;
   onOpenTask: RecordAssistantPanelProps['onOpenTask'];
 }) {
-  const task = message.handoffTaskId
-    ? workspace?.caseTasks.find((candidate) => candidate.id === message.handoffTaskId)
+  const taskId = message.handoffTaskId ?? message.previewTaskId;
+  const task = taskId
+    ? workspace?.caseTasks.find((candidate) => candidate.id === taskId)
     : undefined;
+  const isLiveHandoff = Boolean(
+    message.handoffTaskId
+    && workspace?.dataSource === 'live'
+    && task?.dataSource === 'live',
+  );
   const Icon = message.role === 'user' ? CircleUserRound : Bot;
 
   return (
@@ -239,7 +245,7 @@ function MessageRow({
             <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-slate-800">{message.content}</p>
           )}
 
-          {task && (
+          {task && isLiveHandoff && (
             <div className="mt-3 border-l-2 border-amber-400 bg-amber-50 px-2 py-2">
               <Badge variant="warning">App handoff</Badge>
               <p className="mt-1 break-words text-xs font-semibold text-slate-900">Task {task.id}: {task.title}</p>
@@ -254,6 +260,13 @@ function MessageRow({
                 <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
                 Open in Action Center
               </Button>
+            </div>
+          )}
+          {task && !isLiveHandoff && (
+            <div className="mt-3 border-l-2 border-slate-300 bg-slate-50 px-2 py-2">
+              <Badge variant="secondary">Demo task preview</Badge>
+              <p className="mt-1 break-words text-xs font-semibold text-slate-900">Task {task.id}: {task.title}</p>
+              <p className="mt-1 text-xs text-slate-600">Non-completable demo preview. No Action Center task or backend workflow was opened.</p>
             </div>
           )}
         </div>

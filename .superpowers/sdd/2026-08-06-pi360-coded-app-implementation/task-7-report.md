@@ -62,3 +62,21 @@ Implemented the embedded PI360 record assistant and a unified, filtered activity
 - The app configuration targets staging while the locally authenticated CLI status observed during inspection targeted production; this should be reconciled before a live demo.
 - Browser screenshot QA could not run because no managed browser backend was available.
 - The production bundle remains above Vite's 500 kB advisory threshold.
+
+## Review Fixes
+
+Addressed all five findings from `task-7-review.md`:
+
+1. Demo task suggestions now carry preview-only metadata and render as a visibly non-completable `Demo task preview`. The panel and App both enforce that only live-source workspace tasks can open the real Task 6 drawer.
+2. The shared recursive sanitizer now runs over the complete compact grounding object before return and again before JSON serialization. It redacts sensitive keys plus embedded bearer credentials, OAuth/query values, and serialized raw payloads.
+3. SDK connection, session, initialization, and send errors are sanitized before entering UI state or activity events.
+4. Current task states are emitted as `observed:*` snapshots at the workspace observation timestamp, with explicit observation summaries, rather than as transitions backdated to task creation.
+5. Session errors, session end, connection failure, and send failure settle pending streaming messages. Session errors and disconnects append truthful agent lifecycle activity.
+
+Review-fix TDD evidence:
+
+- RED: 9 focused failures across demo boundaries, outbound redaction, SDK error safety, task observation timing, and session settlement.
+- GREEN: `npm test -- activityLog.test.ts RecordAssistantPanel.test.tsx App.test.tsx --reporter=dot` passed 24/24 tests.
+- Full `npm test -- --reporter=dot`: 13 files, 129 tests passed.
+- `npm run lint`: passed with 0 errors and the same 53 legacy warnings.
+- `npm run build`: passed with only the existing Vite large-chunk advisory.

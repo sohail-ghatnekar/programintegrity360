@@ -54,7 +54,11 @@ function ProgramIntegrityWorkbench() {
 
     return new ActivityLog([
       caseWorkspace.workspace.executionTimeline,
-      buildTaskActivityEvents(caseWorkspace.workspace.caseTasks, caseWorkspace.workspace.case.id),
+      buildTaskActivityEvents(
+        caseWorkspace.workspace.caseTasks,
+        caseWorkspace.workspace.case.id,
+        caseWorkspace.workspace.sourceUpdatedAt,
+      ),
       assistant.activityEvents,
     ]).events;
   }, [assistant.activityEvents, caseWorkspace.workspace]);
@@ -82,7 +86,10 @@ function ProgramIntegrityWorkbench() {
       onClose={() => setAssistantOpen(false)}
       workspace={caseWorkspace.workspace}
       assistant={assistant}
-      onOpenTask={(task) => setTaskSelection({ task, scope: 'case' })}
+      onOpenTask={(task) => {
+        if (caseWorkspace.workspace?.dataSource !== 'live' || task.dataSource !== 'live') return;
+        setTaskSelection({ task, scope: 'case' });
+      }}
     />
   ) : undefined;
 

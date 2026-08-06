@@ -99,6 +99,39 @@ function renderPanel(
   return { ...render(<RecordAssistantPanel {...props} />), props, workspace };
 }
 
+function prepareLiveSession() {
+  agentSdk.sendMessage.mockResolvedValue(undefined);
+  agentSdk.startExchange.mockReturnValue({ sendMessageWithContentPart: agentSdk.sendMessage });
+  agentSdk.startSession.mockReturnValue({
+    onExchangeStart: (handler: typeof agentSdk.exchangeHandler) => {
+      agentSdk.exchangeHandler = handler;
+      return vi.fn();
+    },
+    onSessionStarted: (handler: typeof agentSdk.sessionStartedHandler) => {
+      agentSdk.sessionStartedHandler = handler;
+      return vi.fn();
+    },
+    onErrorStart: (handler: typeof agentSdk.sessionErrorHandler) => {
+      agentSdk.sessionErrorHandler = handler;
+      return vi.fn();
+    },
+    onSessionEnd: (handler: typeof agentSdk.sessionEndHandler) => {
+      agentSdk.sessionEndHandler = handler;
+      return vi.fn();
+    },
+    startExchange: agentSdk.startExchange,
+  });
+  agentSdk.createConversation.mockResolvedValue({
+    startSession: agentSdk.startSession,
+    endSession: agentSdk.endSession,
+  });
+  agentSdk.getAll.mockResolvedValue([{
+    id: 42,
+    name: 'PI360RecordConversationAgent',
+    conversations: { create: agentSdk.createConversation },
+  }]);
+}
+
 describe('assistant discovery and grounding', () => {
   it('discovers the live agent by the configured exact name', () => {
     const expected = { id: 42, name: 'PI360RecordConversationAgent' };
@@ -136,7 +169,39 @@ describe('assistant discovery and grounding', () => {
     expect(serialized.toLowerCase()).not.toContain('oauth');
   });
 
-  it('returns the same labeled demo response and app handoff for the same prompt', () => {
+  it('recursively sanitizes secrets before selected-case grounding can be serialized', () => {
+    const workspace = createDemoCaseWorkspace();
+    const unsafe = {
+      ...workspace,
+      riskSignals: [{
+        ...workspace.riskSignals[0],
+        result: 'Bearer signal-secret',
+        citations: ['https://app.test/callback?code=oauth-secret&access_token=token-secret'],
+      }],
+      evidenceDocuments: [{
+        ...workspace.evidenceDocuments[0],
+        note: 'rawPayload={"memberId":"MBR-9","secret":"payload-secret"}',
+      }],
+      caseTasks: [{
+        ...workspace.caseTasks[0],
+        title: 'Review https://app.test/?refresh_token=refresh-secret',
+        assignee: 'Bearer assignee-secret',
+      }],
+    } as CaseWorkspaceSnapshot;
+
+    const serialized = JSON.stringify(buildCaseGrounding(unsafe));
+
+    expect(serialized).toContain('[REDACTED]');
+    expect(serialized).not.toContain('signal-secret');
+    expect(serialized).not.toContain('oauth-secret');
+    expect(serialized).not.toContain('token-secret');
+    expect(serialized).not.toContain('MBR-9');
+    expect(serialized).not.toContain('payload-secret');
+    expect(serialized).not.toContain('refresh-secret');
+    expect(serialized).not.toContain('assignee-secret');
+  });
+
+  it('returns the same labeled non-completable demo preview for the same prompt', () => {
     const workspace = createDemoCaseWorkspace();
     const grounding = buildCaseGrounding(workspace);
 
@@ -146,8 +211,9 @@ describe('assistant discovery and grounding', () => {
     expect(second).toEqual(first);
     expect(first.content).toContain('Demo data');
     expect(first.content).toContain('Task 1002');
-    expect(first.handoffTaskId).toBe(1002);
-    expect(first.content).toContain('app handoff');
+    expect(first.handoffTaskId).toBeUndefined();
+    expect(first.previewTaskId).toBe(1002);
+    expect(first.content).toContain('non-completable demo preview');
     expect(first.content.toLowerCase()).not.toContain('completed task');
     expect(first.content.toLowerCase()).not.toContain('called a backend');
   });
@@ -159,8 +225,9 @@ describe('assistant discovery and grounding', () => {
 
     expect(response.content).toContain('Demo data');
     expect(response.content).toContain('cannot complete');
-    expect(response.content).toContain('Action Center');
-    expect(response.handoffTaskId).toBe(1002);
+    expect(response.content).toContain('non-completable demo preview');
+    expect(response.handoffTaskId).toBeUndefined();
+    expect(response.previewTaskId).toBe(1002);
   });
 });
 
@@ -191,36 +258,7 @@ describe('selected-case sessions', () => {
     const demoWorkspace = createDemoCaseWorkspace();
     const liveWorkspace = { ...demoWorkspace, dataSource: 'live' as const };
     assistantAuth.current = { isAuthenticated: true, sdk: authSdk };
-    agentSdk.sendMessage.mockResolvedValue(undefined);
-    agentSdk.startExchange.mockReturnValue({ sendMessageWithContentPart: agentSdk.sendMessage });
-    agentSdk.startSession.mockReturnValue({
-      onExchangeStart: (handler: typeof agentSdk.exchangeHandler) => {
-        agentSdk.exchangeHandler = handler;
-        return vi.fn();
-      },
-      onSessionStarted: (handler: typeof agentSdk.sessionStartedHandler) => {
-        agentSdk.sessionStartedHandler = handler;
-        return vi.fn();
-      },
-      onErrorStart: (handler: typeof agentSdk.sessionErrorHandler) => {
-        agentSdk.sessionErrorHandler = handler;
-        return vi.fn();
-      },
-      onSessionEnd: (handler: typeof agentSdk.sessionEndHandler) => {
-        agentSdk.sessionEndHandler = handler;
-        return vi.fn();
-      },
-      startExchange: agentSdk.startExchange,
-    });
-    agentSdk.createConversation.mockResolvedValue({
-      startSession: agentSdk.startSession,
-      endSession: agentSdk.endSession,
-    });
-    agentSdk.getAll.mockResolvedValue([{
-      id: 42,
-      name: 'PI360RecordConversationAgent',
-      conversations: { create: agentSdk.createConversation },
-    }]);
+    prepareLiveSession();
 
     const { result, unmount } = renderHook(() => useRecordAssistant(liveWorkspace, true));
     await act(async () => {
@@ -248,6 +286,62 @@ describe('selected-case sessions', () => {
     act(() => agentSdk.sessionEndHandler?.());
     expect(result.current.state).toBe('error');
     expect(result.current.error).toContain('ended');
+    unmount();
+  });
+
+  it('sanitizes SDK session errors and settles pending streaming messages with error activity', async () => {
+    const liveWorkspace = { ...createDemoCaseWorkspace(), dataSource: 'live' as const };
+    assistantAuth.current = { isAuthenticated: true, sdk: authSdk };
+    prepareLiveSession();
+
+    const { result, unmount } = renderHook(() => useRecordAssistant(liveWorkspace, true));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      agentSdk.sessionStartedHandler?.();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.messages.some((message) => message.isStreaming)).toBe(true);
+
+    act(() => agentSdk.sessionErrorHandler?.({
+      message: 'Bearer sdk-secret failed at https://app.test/callback?code=oauth-secret&rawPayload={"secret":"payload-secret"}',
+    }));
+
+    expect(result.current.state).toBe('error');
+    expect(result.current.error).toContain('[REDACTED]');
+    expect(result.current.error).not.toContain('sdk-secret');
+    expect(result.current.error).not.toContain('oauth-secret');
+    expect(result.current.error).not.toContain('payload-secret');
+    expect(result.current.messages.every((message) => !message.isStreaming)).toBe(true);
+    expect(result.current.activityEvents).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: 'agent', status: 'session-error', severity: 'error' }),
+    ]));
+    unmount();
+  });
+
+  it('settles pending streaming messages and records disconnection when a live session ends', async () => {
+    const liveWorkspace = { ...createDemoCaseWorkspace(), dataSource: 'live' as const };
+    assistantAuth.current = { isAuthenticated: true, sdk: authSdk };
+    prepareLiveSession();
+
+    const { result, unmount } = renderHook(() => useRecordAssistant(liveWorkspace, true));
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      agentSdk.sessionStartedHandler?.();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.messages.some((message) => message.isStreaming)).toBe(true);
+
+    act(() => agentSdk.sessionEndHandler?.());
+
+    expect(result.current.messages.every((message) => !message.isStreaming)).toBe(true);
+    expect(result.current.messages.at(-1)?.content).toContain('interrupted');
+    expect(result.current.activityEvents).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: 'agent', status: 'disconnected', severity: 'warning' }),
+    ]));
     unmount();
   });
 });
@@ -283,7 +377,7 @@ describe('RecordAssistantPanel', () => {
     expect(assistant.sendMessage).toHaveBeenCalledWith('What is my next task? Include the SLA.');
   });
 
-  it('opens the real selected-case task through a labeled app handoff', async () => {
+  it('renders demo task handoffs only as non-completable previews', () => {
     const onOpenTask = vi.fn();
     const assistant = controller({
       messages: [{
@@ -295,6 +389,32 @@ describe('RecordAssistantPanel', () => {
       }],
     });
     renderPanel(assistant, { onOpenTask });
+
+    expect(screen.getByText('Demo task preview')).toBeInTheDocument();
+    expect(screen.getByText(/non-completable demo preview/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open task 1002 in Action Center' })).not.toBeInTheDocument();
+    expect(onOpenTask).not.toHaveBeenCalled();
+  });
+
+  it('opens only a live-source selected-case task through a labeled app handoff', async () => {
+    const onOpenTask = vi.fn();
+    const demoWorkspace = createDemoCaseWorkspace();
+    const liveWorkspace = {
+      ...demoWorkspace,
+      dataSource: 'live' as const,
+      caseTasks: demoWorkspace.caseTasks.map((task) => ({ ...task, dataSource: 'live' as const })),
+    } as CaseWorkspaceSnapshot;
+    const assistant = controller({
+      state: 'live',
+      messages: [{
+        id: 'assistant-live',
+        role: 'assistant',
+        content: 'Task 1002 is next.',
+        timestamp: '2026-08-06T10:00:00Z',
+        handoffTaskId: 1002,
+      }],
+    });
+    renderPanel(assistant, { onOpenTask, workspace: liveWorkspace });
 
     expect(screen.getByText('App handoff')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Open task 1002 in Action Center' }));

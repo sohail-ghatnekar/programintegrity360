@@ -88,6 +88,14 @@ describe('activity data safety', () => {
     expect(safeEvent.summary).toContain('access_token=[REDACTED]');
     expect(safeEvent.summary).not.toContain('secret-');
   });
+
+  it('scrubs serialized raw payloads embedded in text', () => {
+    const safe = redactActivityData('Request failed rawPayload={"memberId":"MBR-1","secret":"private"}');
+
+    expect(safe).toContain('rawPayload=[REDACTED]');
+    expect(safe).not.toContain('MBR-1');
+    expect(safe).not.toContain('private');
+  });
 });
 
 describe('ActivityLog', () => {
@@ -118,17 +126,21 @@ describe('ActivityLog', () => {
       .toEqual(['task-completed']);
   });
 
-  it('derives task events from truthful task state and never synthesizes completion', () => {
+  it('records current task states as observations at observation time instead of backdated transitions', () => {
     const workspace = createDemoCaseWorkspace();
-    const events = buildTaskActivityEvents(workspace.caseTasks, workspace.case.id);
+    const observedAt = '2026-08-06T15:30:00.000Z';
+    const events = buildTaskActivityEvents(workspace.caseTasks, workspace.case.id, observedAt);
 
     expect(events).toHaveLength(workspace.caseTasks.length);
     expect(events.find((item) => item.taskId === 1002)).toMatchObject({
       source: 'task',
-      status: 'Pending',
+      status: 'observed:Pending',
+      timestamp: observedAt,
+      summary: expect.stringContaining('Observed current task state'),
       caseId: workspace.case.id,
     });
-    expect(events.find((item) => item.taskId === 1003)).toMatchObject({ status: 'Unassigned' });
+    expect(events.find((item) => item.taskId === 1003)).toMatchObject({ status: 'observed:Unassigned' });
+    expect(events.every((item) => item.timestamp !== workspace.caseTasks[0].createdAt)).toBe(true);
     expect(events.some((item) => item.status === 'Completed')).toBe(false);
   });
 });
