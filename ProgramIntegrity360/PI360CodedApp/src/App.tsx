@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { AppShell } from './app/AppShell';
 import { getUiPathAuthSetup, getUiPathConfigurationError } from './config/uipath';
 import type { CaseTaskModel, DeepReadonly, DemoRole } from './features/cases/types';
@@ -23,6 +23,7 @@ function App() {
 function ProgramIntegrityWorkbench() {
   const auth = useAuth();
   const caseWorkspace = useCaseWorkspace();
+  const refreshWorkspace = caseWorkspace.refresh;
   const [role, setRole] = useState<DemoRole>('investigator');
   const [taskSelection, setTaskSelection] = useState<{
     task: DeepReadonly<CaseTaskModel>;
@@ -43,6 +44,10 @@ function ProgramIntegrityWorkbench() {
       ? createSdkTaskStatusReader(auth.sdk)
       : undefined
   ), [auth.isAuthenticated, auth.sdk, caseWorkspace.status]);
+  const refreshCaseWorkspace = useCallback(async () => {
+    const result = await refreshWorkspace();
+    if (!result.ok) throw result.error;
+  }, [refreshWorkspace]);
   const selectedTask = useMemo(() => {
     if (!taskSelection || !caseWorkspace.workspace) return taskSelection?.task ?? null;
     const tasks = taskSelection.scope === 'case'
@@ -73,7 +78,7 @@ function ProgramIntegrityWorkbench() {
         role={role}
         onRoleChange={setRole}
         onSelectCase={caseWorkspace.selectCase}
-        onRefresh={caseWorkspace.refresh}
+        onRefresh={refreshCaseWorkspace}
         onUseDemoData={caseWorkspace.useDemoData}
         onLogin={auth.login}
         onLogout={auth.logout}
@@ -87,10 +92,8 @@ function ProgramIntegrityWorkbench() {
           taskScope={taskSelection.scope}
           open
           onClose={() => setTaskSelection(null)}
-          onCompleted={async () => {
-            await caseWorkspace.refresh();
-          }}
-          onRefreshWorkspace={caseWorkspace.refresh}
+          onCompleted={refreshCaseWorkspace}
+          onRefreshWorkspace={refreshCaseWorkspace}
           readTaskStatus={taskStatusReader}
         />
       )}

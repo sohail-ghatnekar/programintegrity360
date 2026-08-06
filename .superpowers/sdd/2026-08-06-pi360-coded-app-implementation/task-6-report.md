@@ -242,3 +242,80 @@ Modified:
 - Confirmed direct-link fallback, one conditional iframe, completed-task no-iframe behavior, folder scope labeling, and stage metadata refresh tests remain green.
 - Confirmed the pre-existing implementation-plan modification remains unrelated and unstaged.
 - Confirmed no cloud, push, publish, deploy, or task-completion operation was performed.
+
+## Fix Round 2
+
+### Integration Gap Addressed
+
+- `useCaseWorkspace.refresh()` now returns `Promise<CaseWorkspaceRefreshResult>`, where the result is the explicit discriminated union `{ ok: true } | { ok: false; error: Error }`.
+- Live and demo repository loaders update hook state first, then return the truthful outcome. Repository errors keep the shell's `error` status and warnings while exposing the original `Error` to callers.
+- Superseded requests and refresh attempts made while authentication is loading return explicit failures instead of being reported as successful reloads.
+- `App` adapts the outcome through one awaited `refreshCaseWorkspace()` wrapper. Failed outcomes are converted to rejections for `AppShell` recovery, automatic task completion sync, and manual Task Drawer retry; each consumer already catches its promise, so no rejected promise is left unhandled.
+- A Tasks API `Completed` result remains terminal in `useTaskPolling`. A failed real repository refresh now displays the workspace sync error and retry command without restoring the iframe or task polling.
+
+### RED / GREEN
+
+Focused RED with the real `useCaseWorkspace` hook and mocked repository/Tasks SDK boundaries:
+
+```text
+npm test -- App.integration.test.tsx
+Test Files 1 failed (1)
+Tests 1 failed (1)
+Failure: the drawer could not find the workspace-refresh failure message because
+useCaseWorkspace.refresh() resolved after the repository reload failed.
+```
+
+Focused GREEN including the real-hook integration, shell recovery, polling, drawer, stage, and App regressions:
+
+```text
+npm test -- App.integration.test.tsx App.test.tsx useTaskPolling.test.ts \
+  TaskCenter.test.tsx liveCaseRepository.test.ts AppShell.test.tsx
+Test Files 6 passed (6)
+Tests 84 passed (84)
+
+npx eslint src/features/cases/useCaseWorkspace.ts src/App.tsx \
+  src/App.integration.test.tsx src/App.test.tsx
+Exit 0
+```
+
+### Final Verification
+
+```text
+npm test
+Test Files 11 passed (11)
+Tests 108 passed (108)
+
+npm run lint
+0 errors, 61 warnings
+
+npm run build
+TypeScript and Vite build passed; 5325 modules transformed.
+dist/assets/index-DdFDszxB.css 169.18 kB, gzip 26.96 kB
+dist/assets/index-14NY_PC3.js 575.77 kB, gzip 174.23 kB
+```
+
+The 61 lint warnings remain pre-existing and outside Task 6 files. Vite retains its chunk-size advisory above 500 kB.
+
+### Files
+
+Modified:
+
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/useCaseWorkspace.ts`
+- `ProgramIntegrity360/PI360CodedApp/src/App.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/App.test.tsx`
+- `.superpowers/sdd/2026-08-06-pi360-coded-app-implementation/task-6-report.md`
+
+Added:
+
+- `ProgramIntegrity360/PI360CodedApp/src/App.integration.test.tsx`
+
+### Self-Review
+
+- Confirmed the integration test renders `App` with the production `useCaseWorkspace` implementation and mocks only authenticated UiPath, repository, and Tasks SDK boundaries.
+- Confirmed the test observes an initial live load, a failed automatic repository reload, a successful manual repository reload, one terminal completion confirmation, and one Tasks API read after an additional 30 seconds.
+- Confirmed retry success changes the drawer sync state to `Workspace refreshed.` while completion remains visible and does not invoke completion polling or automatic sync again.
+- Confirmed shell refresh still uses `AppShell.runRecovery`, which catches the adapted rejection and preserves its existing retry/demo recovery UI.
+- Confirmed initial hook effects consume resolved outcomes and cannot create unhandled rejections.
+- Confirmed task links, iframe uniqueness, case/folder task boundaries, and stage refresh metadata remain covered by the focused regression suite.
+- Confirmed the pre-existing implementation-plan modification remains unrelated and unstaged.
+- Confirmed no cloud, push, publish, deploy, or task-completion operation was performed.

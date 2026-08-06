@@ -109,7 +109,7 @@ test('integrates the real Task Center and its only Action Center iframe into she
 test('refreshes case tasks, stages, and timeline once after Tasks API confirms completion', async () => {
   vi.useFakeTimers();
   const workspace = createDemoCaseWorkspace();
-  const refresh = vi.fn().mockResolvedValue(undefined);
+  const refresh = vi.fn().mockResolvedValue({ ok: true as const });
   authState.current = {
     ...authState.current,
     isAuthenticated: true,
