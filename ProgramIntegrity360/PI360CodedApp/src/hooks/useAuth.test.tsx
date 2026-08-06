@@ -73,6 +73,7 @@ describe('AuthProvider', () => {
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -313,5 +314,36 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('authenticated'));
     expect(firstSdk.completeOAuth).toHaveBeenCalledTimes(1);
     expect(remountedSdk.completeOAuth).not.toHaveBeenCalled();
+  });
+
+  it('keeps an in-flight callback deduplicated after its former timeout and provider remount', async () => {
+    vi.useFakeTimers();
+    history.replaceState({}, '', '/?code=provider-remount-after-timeout&state=xyz');
+    const deferred = createDeferred();
+    const firstSdk = createSdkMock({ authenticated: true, callback: true, completion: deferred.promise });
+    const remountedSdk = createSdkMock({ authenticated: true, callback: true });
+    const firstView = renderAuthProvider(firstSdk);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(firstSdk.completeOAuth).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_001);
+    });
+    firstView.unmount();
+    renderAuthProvider(remountedSdk);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(firstSdk.completeOAuth).toHaveBeenCalledTimes(1);
+    expect(remountedSdk.completeOAuth).not.toHaveBeenCalled();
+
+    await act(async () => {
+      deferred.resolve(true);
+      await deferred.promise;
+    });
   });
 });

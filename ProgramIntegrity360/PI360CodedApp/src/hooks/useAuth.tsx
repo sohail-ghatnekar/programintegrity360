@@ -26,7 +26,7 @@ type AuthProviderProps = {
 
 type CallbackCompletion = {
   result: Promise<boolean>;
-  timeoutId: ReturnType<typeof setTimeout>;
+  timeoutId?: ReturnType<typeof setTimeout>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,14 +69,23 @@ function getCallbackCompletion(key: string, callbackSdk: UiPath): Promise<boolea
   }
 
   const result = Promise.resolve().then(() => callbackSdk.completeOAuth());
-  const timeoutId = setTimeout(() => {
-    const completion = callbackCompletions.get(key);
-    if (completion?.result === result) {
-      callbackCompletions.delete(key);
-    }
-  }, CALLBACK_COMPLETION_TTL_MS);
+  callbackCompletions.set(key, { result });
 
-  callbackCompletions.set(key, { result, timeoutId });
+  const scheduleSettledCompletionExpiry = () => {
+    const completion = callbackCompletions.get(key);
+    if (!completion || completion.result !== result) {
+      return;
+    }
+
+    completion.timeoutId = setTimeout(() => {
+      if (callbackCompletions.get(key)?.result === result) {
+        callbackCompletions.delete(key);
+      }
+    }, CALLBACK_COMPLETION_TTL_MS);
+  };
+
+  // A pending code exchange stays deduplicated; only abandoned settled entries expire.
+  void result.then(scheduleSettledCompletionExpiry, scheduleSettledCompletionExpiry);
   return result;
 }
 
@@ -86,7 +95,9 @@ function dismissCallbackCompletion(key: string) {
     return;
   }
 
-  clearTimeout(completion.timeoutId);
+  if (completion.timeoutId !== undefined) {
+    clearTimeout(completion.timeoutId);
+  }
   callbackCompletions.delete(key);
 }
 

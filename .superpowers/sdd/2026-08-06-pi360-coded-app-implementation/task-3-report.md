@@ -236,3 +236,78 @@ Exit 0 with no output.
 - Confirmed valid callbacks preserve unrelated URL parameters and active callbacks dismiss their shared entry only after callback URL cleanup.
 - The callback-registry hash is a non-secret correlation key and has a bounded 60-second lifetime. It prevents duplicate completion without retaining token values; a hash collision is theoretically possible but exceptionally unlikely for this demo's single callback flow.
 - No UiPath cloud operations or pushes were run.
+
+## Fix Round 3
+
+### Finding Addressed
+
+- The callback registry no longer starts a 60-second expiry timer when `completeOAuth()` begins. A pending exchange remains in the registry indefinitely until its promise settles, so a genuine provider unmount/remount cannot start a second exchange after elapsed time.
+- The bounded cleanup now begins only after the callback promise fulfills or rejects. Active settled paths still dismiss the entry immediately after handling the callback; a settled entry abandoned by an unmounted provider expires after 60 seconds.
+- The registry continues to use a deterministic hash of the client ID and callback URL. It does not retain raw callback data or token values.
+
+### RED / GREEN Evidence
+
+Focused RED command:
+
+```bash
+npm test -- --run src/hooks/useAuth.test.tsx
+```
+
+Exact result: exit 1; `Test Files 1 failed (1)` and `Tests 1 failed | 13 passed (14)`.
+
+The new fake-timer regression failed as expected:
+
+```text
+keeps an in-flight callback deduplicated after its former timeout and provider remount
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+```
+
+The test advanced fake timers by `60_001` ms while the original callback promise remained pending, unmounted the first provider, then rendered a new provider at the same callback URL. Before the fix, the remounted SDK invoked `completeOAuth()` once.
+
+Focused GREEN command:
+
+```bash
+npm test -- --run src/hooks/useAuth.test.tsx
+```
+
+Exact output summary: exit 0; `Test Files 1 passed (1)` and `Tests 14 passed (14)`.
+
+### Final Verification
+
+```bash
+npm test
+```
+
+Exact output summary: exit 0; `Test Files 5 passed (5)` and `Tests 22 passed (22)`.
+
+```bash
+npm run lint
+```
+
+Exact output summary: exit 0; `61 problems (0 errors, 61 warnings)`, with `0 errors and 4 warnings potentially fixable with the --fix option.` The warnings are pre-existing and outside this scoped fix.
+
+```bash
+npm run build
+```
+
+Exact output summary: exit 0; `447 modules transformed`; output includes `dist/assets/index-CO8rdIry.js 770.19 kB | gzip: 223.04 kB`; `built in 1.65s`. Vite emitted its existing advisory for chunks larger than 500 kB.
+
+```bash
+git diff --check
+```
+
+Exit 0 with no output before report update.
+
+### Fix Round 3 Files Changed
+
+- `ProgramIntegrity360/PI360CodedApp/src/hooks/useAuth.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/hooks/useAuth.test.tsx`
+- `.superpowers/sdd/2026-08-06-pi360-coded-app-implementation/task-3-report.md`
+
+### Self-Review And Concern
+
+- Confirmed the timer is scheduled exclusively from the promise settlement handlers and cannot remove a pending entry.
+- Confirmed the fake-timer test performs a real provider unmount/remount after the former timeout and observes exactly one `completeOAuth()` call.
+- Confirmed stale false/rejected callbacks still return before cleanup and active false/rejected callbacks retain their recoverable error cleanup.
+- A `completeOAuth()` promise that never settles intentionally remains deduplicated in memory. Removing it would reintroduce the duplicate code-exchange race; it retains only the promise and hashed callback identity, never a token or raw callback URL.
+- No UiPath cloud operations or pushes were run.
