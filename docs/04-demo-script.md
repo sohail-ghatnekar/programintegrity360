@@ -128,11 +128,13 @@ Do not claim completion if that message is absent.
 
 > "The assistant is grounded in the selected case's stage, evidence, decisions, tasks, and correlation IDs. In demo mode its answer is visibly labeled `Demo data`; in a verified live path the panel is labeled `Live agent`. In both cases, it explains and routes. It does not calculate policy results or take action."
 
-**Click:** In the response, show `App handoff` and click `Open in Action Center` for Task 1002. Close the drawer without completing the task.
+**Demo branch:** In the response, show `Demo task preview` for Task 1002. Point out that it is intentionally non-completable and does not expose an Action Center control.
+
+**Verified live-only branch:** When the source badge reads `Live UiPath` and the assistant returns a real selected-case task, show `App handoff`, click `Open in Action Center`, and close the drawer without completing the task unless the pre-approved completion branch is part of the session.
 
 **Say:**
 
-> "The handoff is intentionally an app navigation, not an agent tool call. The assistant cannot complete Task 1002. A human works the Action Center task, and only a Tasks API `Completed` response can change the app's completion posture."
+> "The live handoff is intentionally app navigation, not an agent tool call. In demo mode we show only a task preview. In live mode, the assistant still cannot complete the task: a human works it in Action Center, and only a Tasks API `Completed` response can change the app's completion posture."
 
 ### 6. Activity And Correlation (7:30-8:45)
 
