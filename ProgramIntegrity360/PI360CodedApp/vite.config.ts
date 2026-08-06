@@ -1,15 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-type UiPathDefaults = {
-  clientId?: string;
-  orgName?: string;
-  tenantName?: string;
-  baseUrl?: string;
-  redirectUri?: string;
-  scope?: string;
+type Pi360RuntimeDefaults = {
   folderPath?: string;
   folderKey?: string;
   folderId?: number;
@@ -17,70 +11,44 @@ type UiPathDefaults = {
   recordAgentName?: string;
 };
 
-function readUiPathJson(rootDir: string): Partial<UiPathDefaults> {
+function readPi360RuntimeDefaults(rootDir: string): Pi360RuntimeDefaults {
   const configPath = path.join(rootDir, 'uipath.json');
-  if (!fs.existsSync(configPath)) return {};
+  if (!fs.existsSync(configPath)) {
+    return {};
+  }
 
   try {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8')) as Partial<UiPathDefaults>;
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8')) as Pi360RuntimeDefaults;
+    return {
+      folderPath: config.folderPath,
+      folderKey: config.folderKey,
+      folderId: config.folderId,
+      caseProcessName: config.caseProcessName,
+      recordAgentName: config.recordAgentName,
+    };
   } catch {
     return {};
   }
 }
 
-function firstNonEmpty(...values: Array<string | undefined>): string | undefined {
-  return values.find((value) => value && value.trim());
-}
-
-export default defineConfig(({ mode }) => {
-  const rootDir = process.cwd();
-  const env = loadEnv(mode, rootDir, '');
-  const fileDefaults = readUiPathJson(rootDir);
-
-  const defaults: UiPathDefaults = {
-    clientId: firstNonEmpty(env.VITE_UIPATH_CLIENT_ID, env.UIPATH_CLIENT_ID, fileDefaults.clientId),
-    orgName: firstNonEmpty(env.VITE_UIPATH_ORG_NAME, fileDefaults.orgName),
-    tenantName: firstNonEmpty(env.VITE_UIPATH_TENANT_NAME, fileDefaults.tenantName),
-    baseUrl: firstNonEmpty(env.VITE_UIPATH_BASE_URL, env.UIPATH_BASE_URL, fileDefaults.baseUrl),
-    redirectUri: firstNonEmpty(env.VITE_UIPATH_REDIRECT_URI, fileDefaults.redirectUri),
-    scope: firstNonEmpty(env.VITE_UIPATH_SCOPE, env.VITE_UIPATH_SCOPES, env.UIPATH_SCOPE, fileDefaults.scope),
-    folderPath: fileDefaults.folderPath,
-    folderKey: fileDefaults.folderKey,
-    folderId: fileDefaults.folderId,
-    caseProcessName: fileDefaults.caseProcessName,
-    recordAgentName: fileDefaults.recordAgentName,
-  };
-
-  const proxy = defaults.orgName && defaults.baseUrl
-    ? {
-        [`/${defaults.orgName}`]: {
-          target: defaults.baseUrl,
-          changeOrigin: true,
-          secure: true,
-        },
-      }
-    : undefined;
-
-  return {
-    base: './',
-    plugins: [react()],
-    define: {
-      global: 'globalThis',
-      __UIPATH_DEFAULTS__: JSON.stringify(defaults),
+export default defineConfig({
+  base: './',
+  plugins: [react()],
+  define: {
+    global: 'globalThis',
+    __PI360_RUNTIME_DEFAULTS__: JSON.stringify(readPi360RuntimeDefaults(process.cwd())),
+  },
+  resolve: {
+    alias: {
+      path: 'path-browserify',
     },
-    resolve: {
-      alias: {
-        path: 'path-browserify',
-      },
-    },
-    optimizeDeps: {
-      include: ['@uipath/uipath-typescript'],
-    },
-    server: {
-      host: 'localhost',
-      port: 5173,
-      strictPort: true,
-      proxy,
-    },
-  };
+  },
+  optimizeDeps: {
+    include: ['@uipath/uipath-typescript'],
+  },
+  server: {
+    host: 'localhost',
+    port: 5173,
+    strictPort: true,
+  },
 });

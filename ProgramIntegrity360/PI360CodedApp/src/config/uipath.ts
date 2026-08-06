@@ -1,12 +1,15 @@
 import type { UiPathSDKConfig } from '@uipath/uipath-typescript/core';
 
-type UiPathDefaults = {
+type UiPathAuthDefaults = {
   clientId?: string;
   orgName?: string;
   tenantName?: string;
   baseUrl?: string;
   redirectUri?: string;
   scope?: string;
+};
+
+type UiPathRuntimeDefaults = {
   folderPath?: string;
   folderKey?: string;
   folderId?: number;
@@ -14,10 +17,19 @@ type UiPathDefaults = {
   recordAgentName?: string;
 };
 
-declare const __UIPATH_DEFAULTS__: UiPathDefaults;
+declare const __PI360_RUNTIME_DEFAULTS__: UiPathRuntimeDefaults;
 
-const runtimeDefaults: UiPathDefaults =
-  typeof __UIPATH_DEFAULTS__ === 'undefined' ? {} : __UIPATH_DEFAULTS__;
+const runtimeDefaults: UiPathRuntimeDefaults =
+  typeof __PI360_RUNTIME_DEFAULTS__ === 'undefined' ? {} : __PI360_RUNTIME_DEFAULTS__;
+
+const metadataNames = {
+  clientId: 'uipath:client-id',
+  scope: 'uipath:scope',
+  orgName: 'uipath:org-name',
+  tenantName: 'uipath:tenant-name',
+  baseUrl: 'uipath:base-url',
+  redirectUri: 'uipath:redirect-uri',
+} as const;
 
 function readValue(...values: Array<string | undefined>): string {
   for (const value of values) {
@@ -30,33 +42,12 @@ function readValue(...values: Array<string | undefined>): string {
   return '';
 }
 
-function getPlatformBaseUrl(overrides: UiPathDefaults): string {
-  return readValue(
-    overrides.baseUrl,
-    import.meta.env.VITE_UIPATH_BASE_URL,
-    runtimeDefaults.baseUrl,
-  );
+function readRuntimeMetadata(name: string): string | undefined {
+  return document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)?.content;
 }
 
-function getAppBaseUrl(platformBaseUrl: string): string {
-  if (import.meta.env.DEV && platformBaseUrl) {
-    return window.location.origin;
-  }
-
-  return platformBaseUrl || window.location.origin;
-}
-
-function getRedirectUri(overrides: UiPathDefaults): string {
-  if (import.meta.env.DEV) {
-    return window.location.origin;
-  }
-
-  return readValue(
-    overrides.redirectUri,
-    import.meta.env.VITE_UIPATH_REDIRECT_URI,
-    runtimeDefaults.redirectUri,
-    window.location.origin,
-  );
+function readLocalEnvironment(value: string | undefined): string | undefined {
+  return import.meta.env.DEV ? value : undefined;
 }
 
 function readNumber(...values: Array<number | undefined>): number | null {
@@ -77,29 +68,37 @@ export type UiPathRuntimeConfig = UiPathAuthSetup & {
   recordAgentName: string;
 };
 
-export function getUiPathAuthSetup(overrides: UiPathDefaults = {}): UiPathAuthSetup {
-  const platformBaseUrl = getPlatformBaseUrl(overrides);
+export function getUiPathAuthSetup(overrides: UiPathAuthDefaults = {}): UiPathAuthSetup {
   const clientId = readValue(
     overrides.clientId,
-    import.meta.env.VITE_UIPATH_CLIENT_ID,
-    runtimeDefaults.clientId,
+    readRuntimeMetadata(metadataNames.clientId),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_CLIENT_ID),
   );
   const orgName = readValue(
     overrides.orgName,
-    import.meta.env.VITE_UIPATH_ORG_NAME,
-    runtimeDefaults.orgName,
+    readRuntimeMetadata(metadataNames.orgName),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_ORG_NAME),
   );
   const tenantName = readValue(
     overrides.tenantName,
-    import.meta.env.VITE_UIPATH_TENANT_NAME,
-    runtimeDefaults.tenantName,
+    readRuntimeMetadata(metadataNames.tenantName),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_TENANT_NAME),
   );
-  const redirectUri = getRedirectUri(overrides);
+  const platformBaseUrl = readValue(
+    overrides.baseUrl,
+    readRuntimeMetadata(metadataNames.baseUrl),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_BASE_URL),
+  );
+  const redirectUri = readValue(
+    overrides.redirectUri,
+    readRuntimeMetadata(metadataNames.redirectUri),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_REDIRECT_URI),
+  );
   const scope = readValue(
     overrides.scope,
-    import.meta.env.VITE_UIPATH_SCOPE,
-    import.meta.env.VITE_UIPATH_SCOPES,
-    runtimeDefaults.scope,
+    readRuntimeMetadata(metadataNames.scope),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_SCOPE),
+    readLocalEnvironment(import.meta.env.VITE_UIPATH_SCOPES),
   );
 
   const missingFields = [
@@ -107,7 +106,7 @@ export function getUiPathAuthSetup(overrides: UiPathDefaults = {}): UiPathAuthSe
     !orgName && 'VITE_UIPATH_ORG_NAME',
     !tenantName && 'VITE_UIPATH_TENANT_NAME',
     !platformBaseUrl && 'VITE_UIPATH_BASE_URL',
-    !import.meta.env.DEV && !redirectUri && 'VITE_UIPATH_REDIRECT_URI',
+    !redirectUri && 'VITE_UIPATH_REDIRECT_URI',
     !scope && 'VITE_UIPATH_SCOPE',
   ].filter(Boolean) as string[];
 
@@ -116,7 +115,7 @@ export function getUiPathAuthSetup(overrides: UiPathDefaults = {}): UiPathAuthSe
       clientId,
       orgName,
       tenantName,
-      baseUrl: getAppBaseUrl(platformBaseUrl),
+      baseUrl: platformBaseUrl,
       redirectUri,
       scope,
     },
@@ -125,7 +124,7 @@ export function getUiPathAuthSetup(overrides: UiPathDefaults = {}): UiPathAuthSe
   };
 }
 
-export function getUiPathRuntimeConfig(overrides: UiPathDefaults = {}): UiPathRuntimeConfig {
+export function getUiPathRuntimeConfig(overrides: UiPathAuthDefaults & UiPathRuntimeDefaults = {}): UiPathRuntimeConfig {
   return {
     ...getUiPathAuthSetup(overrides),
     folderPath: readValue(overrides.folderPath, runtimeDefaults.folderPath),

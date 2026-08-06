@@ -1,7 +1,9 @@
-﻿import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { UiPath, UiPathError } from '@uipath/uipath-typescript/core';
+import { UiPath } from '@uipath/uipath-typescript/core';
 import type { UiPathSDKConfig } from '@uipath/uipath-typescript/core';
+
+const AUTHENTICATED_USER_NAME = 'Authenticated UiPath user';
 
 export interface AuthContextType {
   isAuthenticated: boolean;
@@ -22,63 +24,19 @@ type AuthProviderProps = {
   sdkFactory?: SdkFactory;
 };
 
+type CallbackCompletion = {
+  sdk: UiPath;
+  result: Promise<boolean>;
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  const parts = token.split('.');
-  if (parts.length < 2) {
-    return null;
-  }
-
-  try {
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
-    const json = atob(padded);
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function getCurrentUserProfile(clientId?: string): { email: string | null; name: string | null } {
-  if (!clientId) {
-    return { email: null, name: null };
-  }
-
-  const rawTokenEntry = sessionStorage.getItem(`uipath_sdk_user_token-${clientId}`);
-  if (!rawTokenEntry) {
-    return { email: null, name: null };
-  }
-
-  try {
-    const parsedEntry = JSON.parse(rawTokenEntry) as {
-      token?: string;
-      id_token?: string;
-      access_token?: string;
-    };
-
-    const payload = decodeJwtPayload(parsedEntry.token || parsedEntry.id_token || parsedEntry.access_token || '');
-    const email = payload?.email || payload?.preferred_username || payload?.upn || payload?.unique_name;
-    const firstName = typeof payload?.first_name === 'string' ? payload.first_name.trim() : '';
-    const lastName = typeof payload?.last_name === 'string' ? payload.last_name.trim() : '';
-    const combinedName = [firstName, lastName].filter(Boolean).join(' ').trim();
-    const fallbackName = typeof payload?.name === 'string' ? payload.name : null;
-
-    return {
-      email: typeof email === 'string' ? email : null,
-      name: combinedName || fallbackName,
-    };
-  } catch {
-    return { email: null, name: null };
-  }
-}
+const defaultSdkFactory: SdkFactory = (config) => new UiPath(config);
 
 function clearOAuthSession(clientId?: string) {
-  if (!clientId) {
-    return;
+  if (clientId) {
+    sessionStorage.removeItem(`uipath_sdk_user_token-${clientId}`);
   }
-
-  sessionStorage.removeItem(`uipath_sdk_user_token-${clientId}`);
   sessionStorage.removeItem('uipath_sdk_oauth_context');
   sessionStorage.removeItem('uipath_sdk_code_verifier');
 }
@@ -93,7 +51,7 @@ function removeOAuthCallbackParameters() {
 export const AuthProvider: React.FC<AuthProviderProps> = ({
   children,
   config,
-  sdkFactory = (sdkConfig) => new UiPath(sdkConfig),
+  sdkFactory = defaultSdkFactory,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,59 +59,128 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const [sdk, setSdk] = useState<UiPath>(() => sdkFactory(config));
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
+  const authGenerationRef = useRef(0);
+  const callbackCompletionRef = useRef<CallbackCompletion | null>(null);
+
+  const getCallbackCompletion = (callbackSdk: UiPath): Promise<boolean> => {
+    if (callbackCompletionRef.current?.sdk === callbackSdk) {
+      return callbackCompletionRef.current.result;
+    }
+
+    const result = Promise.resolve().then(() => callbackSdk.completeOAuth());
+    callbackCompletionRef.current = { sdk: callbackSdk, result };
+    return result;
+  };
 
   useEffect(() => {
+    let active = true;
+    const generation = ++authGenerationRef.current;
+    const isCurrent = () => active && generation === authGenerationRef.current;
+
+    const setAuthenticationState = (authenticated: boolean) => {
+      setIsAuthenticated(authenticated);
+      setCurrentUserEmail(null);
+      setCurrentUserName(authenticated ? AUTHENTICATED_USER_NAME : null);
+    };
+
+    const failAuthentication = () => {
+      if (!isCurrent()) {
+        return;
+      }
+
+      setError('Authentication failed');
+      setAuthenticationState(false);
+    };
+
     const initializeAuth = async () => {
       setIsLoading(true);
       setError(null);
 
-      try {
-        if (sdk.isInOAuthCallback()) {
-          const completed = await sdk.completeOAuth();
-          if (!completed) {
-            clearOAuthSession(config.clientId);
-            throw new Error('Invalid OAuth callback');
+      if (sdk.isInOAuthCallback()) {
+        let completed: boolean;
+        try {
+          completed = await getCallbackCompletion(sdk);
+        } catch {
+          clearOAuthSession(config.clientId);
+          failAuthentication();
+          if (isCurrent()) {
+            setIsLoading(false);
           }
-          removeOAuthCallbackParameters();
+          return;
         }
-        setIsAuthenticated(sdk.isAuthenticated());
-        const profile = getCurrentUserProfile(config.clientId);
-        setCurrentUserEmail(profile.email);
-        setCurrentUserName(profile.name);
-      } catch (err) {
-        setError(err instanceof UiPathError ? err.message : 'Authentication failed');
-        setIsAuthenticated(false);
-        setCurrentUserEmail(null);
-        setCurrentUserName(null);
+
+        if (!completed) {
+          clearOAuthSession(config.clientId);
+          failAuthentication();
+          if (isCurrent()) {
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        if (!isCurrent()) {
+          return;
+        }
+
+        removeOAuthCallbackParameters();
+      }
+
+      if (!isCurrent()) {
+        return;
+      }
+
+      try {
+        setAuthenticationState(sdk.isAuthenticated());
+      } catch {
+        failAuthentication();
       } finally {
-        setIsLoading(false);
+        if (isCurrent()) {
+          setIsLoading(false);
+        }
       }
     };
 
     void initializeAuth();
-  }, [sdk]);
+
+    return () => {
+      active = false;
+    };
+  }, [config.clientId, sdk]);
 
   const login = async () => {
+    const generation = ++authGenerationRef.current;
     setIsLoading(true);
     setError(null);
 
     try {
       await sdk.initialize();
-      setIsAuthenticated(sdk.isAuthenticated());
-      const profile = getCurrentUserProfile(config.clientId);
-      setCurrentUserEmail(profile.email);
-      setCurrentUserName(profile.name);
-    } catch (err) {
-      setError(err instanceof UiPathError ? err.message : 'Login failed');
+      if (generation !== authGenerationRef.current) {
+        return;
+      }
+
+      const authenticated = sdk.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      setCurrentUserEmail(null);
+      setCurrentUserName(authenticated ? AUTHENTICATED_USER_NAME : null);
+    } catch {
+      if (generation !== authGenerationRef.current) {
+        return;
+      }
+
+      setError('Login failed');
       setIsAuthenticated(false);
       setCurrentUserEmail(null);
       setCurrentUserName(null);
     } finally {
-      setIsLoading(false);
+      if (generation === authGenerationRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   const logout = () => {
+    authGenerationRef.current += 1;
+    callbackCompletionRef.current = null;
     clearOAuthSession(config.clientId);
 
     setIsAuthenticated(false);

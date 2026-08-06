@@ -1,5 +1,6 @@
+import { StrictMode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { UiPath, UiPathSDKConfig } from '@uipath/uipath-typescript/core';
 import { AuthProvider, useAuth } from './useAuth';
 
@@ -12,9 +13,17 @@ const authConfig: UiPathSDKConfig = {
   scope: 'OR.Users.Read',
 };
 
-function createSdkMock({ authenticated, callback }: { authenticated: boolean; callback: boolean }) {
+function createSdkMock({
+  authenticated,
+  callback,
+  completion = true,
+}: {
+  authenticated: boolean;
+  callback: boolean;
+  completion?: boolean | Promise<boolean>;
+}) {
   return {
-    completeOAuth: vi.fn().mockResolvedValue(true),
+    completeOAuth: vi.fn().mockImplementation(() => Promise.resolve(completion)),
     initialize: vi.fn().mockResolvedValue(undefined),
     isAuthenticated: vi.fn(() => authenticated),
     isInOAuthCallback: vi.fn(() => callback),
@@ -22,16 +31,36 @@ function createSdkMock({ authenticated, callback }: { authenticated: boolean; ca
 }
 
 function AuthState() {
-  const { isAuthenticated } = useAuth();
-  return <div data-testid="auth-state">{isAuthenticated ? 'authenticated' : 'anonymous'}</div>;
+  const { currentUserName, error, isAuthenticated, logout } = useAuth();
+  return (
+    <>
+      <div data-testid="auth-state">{isAuthenticated ? 'authenticated' : 'anonymous'}</div>
+      <div data-testid="auth-name">{currentUserName || 'none'}</div>
+      <div data-testid="auth-error">{error || 'none'}</div>
+      <button type="button" onClick={logout}>Logout</button>
+    </>
+  );
 }
 
-function renderAuthProvider(sdk: UiPath) {
-  return render(
-    <AuthProvider config={authConfig} sdkFactory={() => sdk}>
+function renderAuthProvider(sdk: UiPath, options: { strict?: boolean; sdkFactory?: () => UiPath } = {}) {
+  const content = (
+    <AuthProvider config={authConfig} sdkFactory={options.sdkFactory || (() => sdk)}>
       <AuthState />
-    </AuthProvider>,
+    </AuthProvider>
   );
+
+  return render(
+    options.strict ? <StrictMode>{content}</StrictMode> : content,
+  );
+}
+
+function createDeferred() {
+  let resolve!: (value: boolean) => void;
+  const promise = new Promise<boolean>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+
+  return { promise, resolve };
 }
 
 describe('AuthProvider', () => {
@@ -48,8 +77,9 @@ describe('AuthProvider', () => {
 
   it('does not clear a valid SDK session on a normal refresh', async () => {
     const removeItem = vi.fn();
+    const getItem = vi.fn(() => null);
     vi.stubGlobal('sessionStorage', {
-      getItem: vi.fn(() => null),
+      getItem,
       removeItem,
     });
     const sdk = createSdkMock({ authenticated: true, callback: false });
@@ -59,6 +89,8 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('authenticated'));
 
     expect(sessionStorage.removeItem).not.toHaveBeenCalled();
+    expect(getItem).not.toHaveBeenCalled();
+    expect(screen.getByTestId('auth-name')).toHaveTextContent('Authenticated UiPath user');
   });
 
   it('completes an OAuth callback once and removes code parameters', async () => {
@@ -70,5 +102,95 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(sdk.completeOAuth).toHaveBeenCalledTimes(1));
 
     expect(location.search).toBe('');
+  });
+
+  it('preserves unrelated callback URL parameters', async () => {
+    history.replaceState({}, '', '/?code=abc&state=xyz&returnTo=case-41');
+    const sdk = createSdkMock({ authenticated: true, callback: true });
+
+    renderAuthProvider(sdk);
+
+    await waitFor(() => expect(sdk.completeOAuth).toHaveBeenCalledTimes(1));
+
+    expect(location.search).toBe('?returnTo=case-41');
+  });
+
+  it('clears OAuth storage and keeps a recoverable error after a false callback result', async () => {
+    const removeItem = vi.fn();
+    vi.stubGlobal('sessionStorage', { getItem: vi.fn(() => null), removeItem });
+    const sdk = createSdkMock({ authenticated: false, callback: true, completion: false });
+
+    renderAuthProvider(sdk);
+
+    await waitFor(() => expect(screen.getByTestId('auth-error')).toHaveTextContent('Authentication failed'));
+
+    expect(removeItem).toHaveBeenCalledTimes(3);
+    expect(screen.getByTestId('auth-state')).toHaveTextContent('anonymous');
+  });
+
+  it('clears OAuth storage and keeps a recoverable error after callback rejection', async () => {
+    const removeItem = vi.fn();
+    vi.stubGlobal('sessionStorage', { getItem: vi.fn(() => null), removeItem });
+    const sdk = createSdkMock({
+      authenticated: false,
+      callback: true,
+      completion: Promise.reject(new Error('callback exchange failed')),
+    });
+
+    renderAuthProvider(sdk);
+
+    await waitFor(() => expect(screen.getByTestId('auth-error')).toHaveTextContent('Authentication failed'));
+
+    expect(removeItem).toHaveBeenCalledTimes(3);
+    expect(screen.getByTestId('auth-state')).toHaveTextContent('anonymous');
+  });
+
+  it('does not complete an OAuth callback twice in StrictMode', async () => {
+    history.replaceState({}, '', '/?code=abc&state=xyz');
+    const sdk = createSdkMock({ authenticated: true, callback: true });
+
+    renderAuthProvider(sdk, { strict: true });
+
+    await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('authenticated'));
+
+    expect(sdk.completeOAuth).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not restore authentication after logout while a callback is pending', async () => {
+    history.replaceState({}, '', '/?code=abc&state=xyz');
+    const deferred = createDeferred();
+    const pendingSdk = createSdkMock({ authenticated: true, callback: true, completion: deferred.promise });
+    const loggedOutSdk = createSdkMock({ authenticated: false, callback: false });
+    const sdkFactory = vi.fn()
+      .mockReturnValueOnce(pendingSdk)
+      .mockReturnValue(loggedOutSdk);
+
+    renderAuthProvider(pendingSdk, { sdkFactory });
+
+    await waitFor(() => expect(pendingSdk.completeOAuth).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
+
+    await act(async () => {
+      deferred.resolve(true);
+    });
+
+    await waitFor(() => expect(screen.getByTestId('auth-state')).toHaveTextContent('anonymous'));
+    expect(pendingSdk.isAuthenticated).not.toHaveBeenCalled();
+  });
+
+  it('does not update authentication after unmount while a callback is pending', async () => {
+    history.replaceState({}, '', '/?code=abc&state=xyz');
+    const deferred = createDeferred();
+    const sdk = createSdkMock({ authenticated: true, callback: true, completion: deferred.promise });
+    const view = renderAuthProvider(sdk);
+
+    await waitFor(() => expect(sdk.completeOAuth).toHaveBeenCalledTimes(1));
+    view.unmount();
+
+    await act(async () => {
+      deferred.resolve(true);
+    });
+
+    expect(sdk.isAuthenticated).not.toHaveBeenCalled();
   });
 });
