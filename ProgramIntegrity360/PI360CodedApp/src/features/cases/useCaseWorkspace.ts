@@ -4,14 +4,20 @@ import { getUiPathRuntimeConfig } from '../../config/uipath';
 import type { UiPathRuntimeConfig } from '../../config/uipath';
 import { useOptionalAuth } from '../../hooks/useAuth';
 import { LiveCaseRepository } from '../../services/uipath/liveCaseRepository';
-import type { LiveCaseRepositoryConfig } from '../../services/uipath/liveCaseRepository';
+import type {
+  LiveCaseRepositoryConfig,
+  RepositoryOperationResult,
+} from '../../services/uipath/liveCaseRepository';
 import { DemoCaseRepository } from './demoRepository';
 import type { CaseRepository, CaseSummary, CaseWorkspaceSnapshot, DeepReadonly } from './types';
 
 export type CaseWorkspaceStatus = 'idle' | 'loading' | 'live' | 'demo' | 'error';
 
 type WarningRepository = CaseRepository & {
-  getWarnings?: () => readonly string[];
+  listCasesWithWarnings?: () => Promise<RepositoryOperationResult<readonly DeepReadonly<CaseSummary>[]>>;
+  loadWorkspaceWithWarnings?: (
+    caseId: string,
+  ) => Promise<RepositoryOperationResult<CaseWorkspaceSnapshot>>;
 };
 
 type LiveRepositoryFactory = (
@@ -59,6 +65,25 @@ function repositoryConfig(runtime: UiPathRuntimeConfig): LiveCaseRepositoryConfi
   };
 }
 
+function listCasesWithWarnings(
+  repository: WarningRepository,
+): Promise<RepositoryOperationResult<readonly DeepReadonly<CaseSummary>[]>> {
+  if (repository.listCasesWithWarnings) {
+    return repository.listCasesWithWarnings();
+  }
+  return repository.listCases().then((data) => ({ data, warnings: [] }));
+}
+
+function loadWorkspaceWithWarnings(
+  repository: WarningRepository,
+  caseId: string,
+): Promise<RepositoryOperationResult<CaseWorkspaceSnapshot>> {
+  if (repository.loadWorkspaceWithWarnings) {
+    return repository.loadWorkspaceWithWarnings(caseId);
+  }
+  return repository.loadWorkspace(caseId).then((data) => ({ data, warnings: [] }));
+}
+
 export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
   const auth = useOptionalAuth();
   const runtime = useMemo(
@@ -85,6 +110,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
 
     try {
       const demoCases = await demoRepository.listCases();
+      if (currentRequest !== requestId.current) return;
       const selected = demoCases.find((candidate) => candidate.id === selectedCaseId.current) ?? demoCases[0];
       if (!selected) {
         throw new Error('Demo case repository returned no cases.');
@@ -118,24 +144,25 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
     }
 
     try {
-      const liveCases = await liveRepository.listCases();
+      const casesResult = await listCasesWithWarnings(liveRepository);
+      if (currentRequest !== requestId.current) return;
+      const liveCases = casesResult.data;
       const selected = liveCases.find((candidate) => candidate.id === preferredCaseId) ?? liveCases[0];
       if (!selected) {
         throw new Error(`No instances found for ${liveConfig.caseProcessName || 'the configured case process'}`);
       }
-      const liveWorkspace = await liveRepository.loadWorkspace(selected.id);
+      const workspaceResult = await loadWorkspaceWithWarnings(liveRepository, selected.id);
       if (currentRequest !== requestId.current) return;
 
       selectedCaseId.current = selected.id;
       setCases(liveCases);
-      setWorkspace(liveWorkspace);
-      setWarnings(liveRepository.getWarnings?.() ?? []);
+      setWorkspace(workspaceResult.data);
+      setWarnings([...casesResult.warnings, ...workspaceResult.warnings]);
       setStatus('live');
     } catch (reason) {
       if (currentRequest !== requestId.current) return;
-      const repositoryWarnings = liveRepository.getWarnings?.() ?? [];
       setWorkspace(null);
-      setWarnings([...repositoryWarnings, `Unable to load live UiPath case data: ${errorMessage(reason)}.`]);
+      setWarnings([`Unable to load live UiPath case data: ${errorMessage(reason)}.`]);
       setStatus('error');
     }
   }, [liveConfig.caseProcessName, liveRepository]);

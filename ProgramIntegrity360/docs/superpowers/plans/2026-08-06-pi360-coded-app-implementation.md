@@ -341,6 +341,7 @@ git commit -m "fix: preserve PI360 OAuth sessions"
 - Create: `ProgramIntegrity360/PI360CodedApp/src/services/uipath/liveCaseRepository.test.ts`
 - Create: `ProgramIntegrity360/PI360CodedApp/src/services/uipath/actionCenterUrl.test.ts`
 - Create: `ProgramIntegrity360/PI360CodedApp/src/features/cases/useCaseWorkspace.ts`
+- Modify: `ProgramIntegrity360/PI360CodedApp/uipath.json` (add the installed Cases SDK's required `PIMS` OAuth scope)
 
 **Interfaces:**
 - Produces: `itemsOf<T>()`, `buildActionCenterTaskUrl()`, `LiveCaseRepository`, and `useCaseWorkspace()`.
@@ -355,6 +356,7 @@ Mock the SDK services and verify:
 - Folder tasks call `Tasks.getAll({ folderId: 3295396 })`.
 - Unknown backend stage names map conservatively without dropping data.
 - Partial service failure yields warnings while preserving the case workspace.
+- The configured OAuth scope includes `PIMS`, so authenticated Cases and CaseInstances calls are authorized.
 
 - [ ] **Step 2: Write failing task URL tests**
 

@@ -6,7 +6,7 @@ import type {
   CaseInstanceGetResponse,
   ElementExecutionMetadata,
 } from '@uipath/uipath-typescript/cases';
-import type { UiPath } from '@uipath/uipath-typescript/core';
+import type { PaginationCursor, UiPath } from '@uipath/uipath-typescript/core';
 import { Tasks } from '@uipath/uipath-typescript/tasks';
 import type { TaskGetResponse } from '@uipath/uipath-typescript/tasks';
 import { STAGE_DEFINITIONS } from '../../features/cases/stages';
@@ -30,6 +30,8 @@ import { itemsOf } from './collection';
 
 const EMPTY_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 const NOT_AVAILABLE = 'Not available';
+const SDK_PAGE_SIZE = 100;
+const MAX_CURSOR_PAGES = 100;
 
 export type LiveCaseRepositoryConfig = {
   caseProcessName: string;
@@ -40,12 +42,22 @@ export type LiveCaseRepositoryConfig = {
   tenantName: string;
 };
 
+export type RepositoryOperationResult<T> = {
+  readonly data: T;
+  readonly warnings: readonly string[];
+};
+
 type PartialCaseProcess = Partial<CaseGetAllResponse>;
 type PartialCaseInstance = Partial<CaseInstanceGetResponse>;
 type PartialCaseStage = Partial<CaseGetStageResponse>;
 type PartialTask = Partial<TaskGetResponse>;
 type PartialExecution = Partial<ElementExecutionMetadata>;
 type PartialHistory = Partial<CaseInstanceExecutionHistoryResponse>;
+type CursorResponse<T> = readonly T[] | {
+  readonly items?: readonly T[] | null;
+  readonly hasNextPage?: boolean;
+  readonly nextCursor?: PaginationCursor;
+};
 
 function deepFreeze<T>(value: T): DeepReadonly<T> {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -72,6 +84,60 @@ function canonicalIdentifier(value: unknown): string {
 
 function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : text(reason, 'Unknown service error');
+}
+
+function addWarning(warnings: string[], warning: string): void {
+  if (!warnings.includes(warning)) {
+    warnings.push(warning);
+  }
+}
+
+function operationResult<T>(data: T, warnings: string[]): RepositoryOperationResult<T> {
+  return Object.freeze({
+    data,
+    warnings: Object.freeze([...warnings]),
+  });
+}
+
+async function collectCursorPages<T>(
+  label: string,
+  loadPage: (cursor?: PaginationCursor) => Promise<CursorResponse<T>>,
+  warnings: string[],
+): Promise<T[]> {
+  const items: T[] = [];
+  const seenCursors = new Set<string>();
+  let cursor: PaginationCursor | undefined;
+
+  for (let page = 0; page < MAX_CURSOR_PAGES; page += 1) {
+    let response: CursorResponse<T>;
+    try {
+      response = await loadPage(cursor);
+    } catch (reason) {
+      addWarning(warnings, `Unable to load ${label}: ${errorMessage(reason)}.`);
+      return items;
+    }
+
+    items.push(...itemsOf(response));
+    if (!('hasNextPage' in response) || !response.hasNextPage) {
+      return items;
+    }
+
+    const nextCursor = response.nextCursor;
+    if (!nextCursor?.value) {
+      addWarning(warnings, `Stopped ${label} pagination because the SDK response omitted the next cursor.`);
+      return items;
+    }
+    if (seenCursors.has(nextCursor.value)) {
+      addWarning(warnings, `Stopped ${label} pagination after a repeated cursor; partial data was preserved.`);
+      return items;
+    }
+
+    seenCursors.add(nextCursor.value);
+    cursor = nextCursor;
+  }
+
+  addWarning(warnings, `Stopped ${label} pagination after ${MAX_CURSOR_PAGES} pages; partial data was preserved.`);
+  return items;
 }
 
 function isCompletedInstance(instance: PartialCaseInstance): boolean {
@@ -159,7 +225,11 @@ function sourceUpdatedAtForTask(task: PartialTask): string {
   return timestamp(task.lastModifiedTime, timestamp(task.completedTime, timestamp(task.createdTime)));
 }
 
-function portalTaskUrl(taskId: number, config: LiveCaseRepositoryConfig): string {
+function portalTaskUrl(
+  taskId: number,
+  config: LiveCaseRepositoryConfig,
+  warnings: string[],
+): string {
   try {
     return buildActionCenterTaskUrl({
       portalOrigin: config.portalOrigin,
@@ -167,7 +237,8 @@ function portalTaskUrl(taskId: number, config: LiveCaseRepositoryConfig): string
       tenantName: config.tenantName,
       taskId,
     });
-  } catch {
+  } catch (reason) {
+    addWarning(warnings, `Unable to build Action Center URL for task ${taskId}: ${errorMessage(reason)}.`);
     return '';
   }
 }
@@ -177,6 +248,7 @@ function normalizeTask(
   config: LiveCaseRepositoryConfig,
   stageLabel: string,
   index: number,
+  warnings: string[],
 ): CaseTaskModel {
   const id = Number.isSafeInteger(task.id) ? Number(task.id) : 0;
   const folderId = Number.isSafeInteger(task.folderId)
@@ -196,7 +268,7 @@ function normalizeTask(
     assignee: taskAssignee(task),
     status: taskStatus(task),
     stageLabel: text(stageLabel, 'Unmapped UiPath stage'),
-    actionCenterUrl: portalTaskUrl(id, config),
+    actionCenterUrl: portalTaskUrl(id, config, warnings),
     createdAt: timestamp(task.createdTime),
     sla: taskSla(task),
     gated: type === 'App',
@@ -206,7 +278,10 @@ function normalizeTask(
 function taskStageLookup(stages: PartialCaseStage[]): Map<string, string> {
   const lookup = new Map<string, string>();
   for (const stage of stages) {
-    const stageLabel = text(stage.name, 'Unmapped UiPath stage');
+    const stageName = text(stage.name, 'Unmapped UiPath stage');
+    const stageKey = stageKeyFor(stageName) ?? 'investigation';
+    const stageLabel = STAGE_DEFINITIONS.find((definition) => definition.key === stageKey)?.label
+      ?? 'Investigation and case management';
     const groups = Array.isArray(stage.tasks) ? stage.tasks : [];
     for (const group of groups) {
       const tasks = Array.isArray(group) ? group : [];
@@ -243,6 +318,7 @@ function normalizeStages(
   rawStages: PartialCaseStage[],
   history: PartialHistory,
   instance: PartialCaseInstance,
+  warnings: string[],
 ): CaseStageModel[] {
   const byExecutionName = executionLookup(history);
   const sourceFallback = timestamp(instance.startedTime);
@@ -254,37 +330,68 @@ function normalizeStages(
     status: 'not-started',
   }));
   const mappedKeys = new Set<CaseStageKey>();
-  const unknownStages: CaseStageModel[] = [];
+  const statusRank: Record<StageStatus, number> = {
+    'not-started': 0,
+    completed: 1,
+    waiting: 2,
+    active: 3,
+    faulted: 4,
+  };
 
   rawStages.forEach((stage, index) => {
-    const label = text(stage.name, `Unnamed UiPath stage ${index + 1}`);
-    const matchedKey = stageKeyFor(label);
+    const backendLabel = text(stage.name, `Unnamed UiPath stage ${index + 1}`);
+    const matchedKey = stageKeyFor(backendLabel);
     const key = matchedKey ?? 'investigation';
-    const execution = byExecutionName.get(canonicalIdentifier(label));
+    const definition = STAGE_DEFINITIONS.find((candidate) => candidate.key === key)
+      ?? STAGE_DEFINITIONS[2];
+    const execution = byExecutionName.get(canonicalIdentifier(backendLabel));
+    const status = stageStatus(stage.status ?? execution?.status);
+    const stageId = text(stage.id, `backend-stage-${index + 1}`);
+    const backendStatus = text(stage.status ?? execution?.status, 'Unknown');
+    const taskGroupCount = Array.isArray(stage.tasks) ? stage.tasks.length : 0;
+    const backendDetail = `Backend stage "${backendLabel}" [id: ${stageId}; status: ${backendStatus}; task groups: ${taskGroupCount}].`;
     const model: CaseStageModel = {
       key,
-      label,
-      description: matchedKey
-        ? (STAGE_DEFINITIONS.find((definition) => definition.key === matchedKey)?.description ?? `Live UiPath stage: ${label}.`)
-        : `Live UiPath stage: ${label}.`,
+      label: definition.label,
+      description: `${definition.description} ${backendDetail}`,
       dataSource: 'live',
       sourceId: text(stage.id, `case-stage:${text(instance.instanceId, 'unknown')}:${index}`),
       sourceUpdatedAt: timestamp(execution?.completedTime, timestamp(execution?.startedTime, sourceFallback)),
-      status: stageStatus(stage.status ?? execution?.status),
+      status,
       enteredAt: text(execution?.startedTime, '') || undefined,
       completedAt: text(execution?.completedTime, '') || undefined,
     };
 
-    if (matchedKey && !mappedKeys.has(matchedKey)) {
-      const targetIndex = canonicalStages.findIndex((candidate) => candidate.key === matchedKey);
+    if (!matchedKey) {
+      addWarning(
+        warnings,
+        `Mapped unknown UiPath stage "${backendLabel}" to canonical stage "${definition.label}".`,
+      );
+    }
+
+    if (!mappedKeys.has(key)) {
+      const targetIndex = canonicalStages.findIndex((candidate) => candidate.key === key);
       canonicalStages[targetIndex] = model;
-      mappedKeys.add(matchedKey);
+      mappedKeys.add(key);
     } else {
-      unknownStages.push(model);
+      const targetIndex = canonicalStages.findIndex((candidate) => candidate.key === key);
+      const existing = canonicalStages[targetIndex];
+      addWarning(
+        warnings,
+        `Merged duplicate UiPath stage "${backendLabel}" into canonical stage "${definition.label}".`,
+      );
+      canonicalStages[targetIndex] = {
+        ...existing,
+        description: `${existing.description} ${backendDetail}`,
+        status: statusRank[status] > statusRank[existing.status] ? status : existing.status,
+        sourceUpdatedAt: model.sourceUpdatedAt,
+        enteredAt: existing.enteredAt ?? model.enteredAt,
+        completedAt: existing.completedAt ?? model.completedAt,
+      };
     }
   });
 
-  return [...canonicalStages, ...unknownStages];
+  return canonicalStages;
 }
 
 function normalizeTimeline(history: PartialHistory, instance: PartialCaseInstance): ActivityEvent[] {
@@ -376,7 +483,6 @@ export class LiveCaseRepository implements CaseRepository {
   private readonly cases: Cases;
   private readonly caseInstances: CaseInstances;
   private readonly tasks: Tasks;
-  private warnings: string[] = [];
 
   constructor(
     sdk: UiPath,
@@ -387,97 +493,118 @@ export class LiveCaseRepository implements CaseRepository {
     this.tasks = new Tasks(sdk);
   }
 
-  getWarnings(): readonly string[] {
-    return Object.freeze([...this.warnings]);
+  async listCases(): Promise<readonly DeepReadonly<CaseSummary>[]> {
+    return (await this.listCasesWithWarnings()).data;
   }
 
-  async listCases(): Promise<readonly DeepReadonly<CaseSummary>[]> {
-    this.warnings = [];
-    const { process, instances } = await this.discoverInstances();
-    return deepFreeze(orderInstances(instances).map((instance) => normalizeSummary(instance, process)));
+  async listCasesWithWarnings(): Promise<RepositoryOperationResult<readonly DeepReadonly<CaseSummary>[]>> {
+    const warnings: string[] = [];
+    const { process, instances } = await this.discoverInstances(warnings);
+    const cases = deepFreeze(orderInstances(instances).map((instance) => normalizeSummary(instance, process)));
+    return operationResult(cases, warnings);
   }
 
   async loadWorkspace(caseId: string): Promise<CaseWorkspaceSnapshot> {
-    this.warnings = [];
-    const { process, instances } = await this.discoverInstances();
+    return (await this.loadWorkspaceWithWarnings(caseId)).data;
+  }
+
+  async loadWorkspaceWithWarnings(
+    caseId: string,
+  ): Promise<RepositoryOperationResult<CaseWorkspaceSnapshot>> {
+    const warnings: string[] = [];
+    const { process, instances } = await this.discoverInstances(warnings);
     const instance = instances.find((candidate) => text(candidate.instanceId, '') === caseId);
     if (!instance) {
       throw new Error(`UiPath case instance not found: ${caseId}`);
     }
 
-    const folderKey = text(instance.folderKey, this.config.folderKey.trim());
-    const [stagesResult, caseTasksResult, historyResult, folderTasksResult] = await Promise.allSettled([
-      folderKey
-        ? this.caseInstances.getStages(caseId, folderKey)
-        : Promise.reject(new Error('folder key is unavailable')),
-      this.caseInstances.getActionTasks(caseId),
-      folderKey
-        ? this.caseInstances.getExecutionHistory(caseId, folderKey)
-        : Promise.reject(new Error('folder key is unavailable')),
-      this.config.folderId === null
-        ? Promise.reject(new Error('folder ID is unavailable'))
-        : this.tasks.getAll({ folderId: this.config.folderId }),
+    const folderKey = this.requiredFolderKey();
+    const [stagesResult, historyResult, rawCaseTasks, rawFolderTasks] = await Promise.all([
+      this.settleValue('case stages', this.caseInstances.getStages(caseId, folderKey), [], warnings),
+      this.settleValue<PartialHistory>(
+        'execution history',
+        this.caseInstances.getExecutionHistory(caseId, folderKey),
+        {},
+        warnings,
+      ),
+      this.collectCaseTasks(caseId, warnings),
+      this.collectFolderTasks(warnings),
     ]);
 
-    const rawStages = this.valueOrWarning('case stages', stagesResult, []);
-    const rawCaseTasks = itemsOf(this.valueOrWarning('case tasks', caseTasksResult, { items: [] }));
-    const history = this.valueOrWarning('execution history', historyResult, {}) as PartialHistory;
-    const rawFolderTasks = itemsOf(this.valueOrWarning('folder tasks', folderTasksResult, { items: [] }));
-    const stages = normalizeStages(rawStages as PartialCaseStage[], history, instance);
-    const taskLookup = taskStageLookup(rawStages as PartialCaseStage[]);
+    const rawStages = stagesResult as PartialCaseStage[];
+    const history = historyResult as PartialHistory;
+    const stages = normalizeStages(rawStages, history, instance, warnings);
+    const taskLookup = taskStageLookup(rawStages);
     const summary = normalizeSummary(instance, process);
     const workspace = emptyWorkspace({ ...summary, stage: activeStageLabel(stages) });
 
     workspace.stages = stages;
-    workspace.caseTasks = (rawCaseTasks as PartialTask[]).map((task, index) => (
-      normalizeTask(task, this.config, stageForTask(task, taskLookup), index)
+    workspace.caseTasks = rawCaseTasks.map((task, index) => (
+      normalizeTask(task, this.config, stageForTask(task, taskLookup), index, warnings)
     ));
-    workspace.folderTasks = (rawFolderTasks as PartialTask[]).map((task, index) => (
-      normalizeTask(task, this.config, 'Folder inbox', index)
+    workspace.folderTasks = rawFolderTasks.map((task, index) => (
+      normalizeTask(task, this.config, 'Folder inbox', index, warnings)
     ));
     workspace.executionTimeline = normalizeTimeline(history, instance);
 
-    return deepFreeze(workspace);
+    return operationResult(deepFreeze(workspace), warnings);
   }
 
   async refreshTasks(caseId: string): Promise<TaskRefreshSnapshot> {
-    this.warnings = [];
-    const { instances } = await this.discoverInstances();
+    return (await this.refreshTasksWithWarnings(caseId)).data;
+  }
+
+  async refreshTasksWithWarnings(
+    caseId: string,
+  ): Promise<RepositoryOperationResult<TaskRefreshSnapshot>> {
+    const warnings: string[] = [];
+    const { instances } = await this.discoverInstances(warnings);
     const instance = instances.find((candidate) => text(candidate.instanceId, '') === caseId);
     if (!instance) {
       throw new Error(`UiPath case instance not found: ${caseId}`);
     }
 
-    const [caseTasksResult, folderTasksResult] = await Promise.allSettled([
-      this.caseInstances.getActionTasks(caseId),
-      this.config.folderId === null
-        ? Promise.reject(new Error('folder ID is unavailable'))
-        : this.tasks.getAll({ folderId: this.config.folderId }),
+    const [caseTasks, folderTasks] = await Promise.all([
+      this.collectCaseTasks(caseId, warnings),
+      this.collectFolderTasks(warnings),
     ]);
-    const caseTasks = itemsOf(this.valueOrWarning('case tasks', caseTasksResult, { items: [] }));
-    const folderTasks = itemsOf(this.valueOrWarning('folder tasks', folderTasksResult, { items: [] }));
 
-    return deepFreeze({
-      caseTasks: (caseTasks as PartialTask[]).map((task, index) => (
-        normalizeTask(task, this.config, 'Unmapped UiPath stage', index)
+    return operationResult(deepFreeze({
+      caseTasks: caseTasks.map((task, index) => (
+        normalizeTask(task, this.config, 'Unmapped UiPath stage', index, warnings)
       )),
-      folderTasks: (folderTasks as PartialTask[]).map((task, index) => (
-        normalizeTask(task, this.config, 'Folder inbox', index)
+      folderTasks: folderTasks.map((task, index) => (
+        normalizeTask(task, this.config, 'Folder inbox', index, warnings)
       )),
-    });
+    }), warnings);
   }
 
-  private async discoverInstances(): Promise<{
+  private async discoverInstances(warnings: string[]): Promise<{
     process: PartialCaseProcess;
     instances: PartialCaseInstance[];
   }> {
+    const configuredFolderKey = this.requiredFolderKey();
     const processes = itemsOf<PartialCaseProcess>(await this.cases.getAll());
     const configuredName = canonicalIdentifier(this.config.caseProcessName);
-    const process = processes.find((candidate) => [candidate.name, candidate.packageId, candidate.processKey]
+    const matchingProcesses = processes.filter((candidate) => [candidate.name, candidate.packageId, candidate.processKey]
       .some((value) => canonicalIdentifier(value) === configuredName));
+    const process = matchingProcesses.find((candidate) => text(candidate.folderKey, '') === configuredFolderKey)
+      ?? matchingProcesses.find((candidate) => !text(candidate.folderKey, ''));
 
     if (!process) {
+      if (matchingProcesses.length > 0) {
+        const folders = matchingProcesses.map((candidate) => text(candidate.folderKey, 'missing')).join(', ');
+        throw new Error(
+          `UiPath case process ${this.config.caseProcessName} was not found in configured folder ${configuredFolderKey}; discovered folders: ${folders}.`,
+        );
+      }
       throw new Error(`UiPath case process not found: ${this.config.caseProcessName}`);
+    }
+    if (!text(process.folderKey, '')) {
+      addWarning(
+        warnings,
+        `The selected case process did not include a folder key; instance folder keys were used to enforce configured folder ${configuredFolderKey}.`,
+      );
     }
 
     const processKey = text(process.processKey, '');
@@ -485,16 +612,81 @@ export class LiveCaseRepository implements CaseRepository {
       throw new Error(`UiPath case process has no processKey: ${this.config.caseProcessName}`);
     }
 
-    const response = await this.caseInstances.getAll({ processKey });
-    return { process, instances: itemsOf(response) as PartialCaseInstance[] };
+    const discoveredInstances = await collectCursorPages<PartialCaseInstance>(
+      'case instances',
+      (cursor) => this.caseInstances.getAll(cursor
+        ? { processKey, pageSize: SDK_PAGE_SIZE, cursor }
+        : { processKey, pageSize: SDK_PAGE_SIZE }),
+      warnings,
+    );
+    const instances = discoveredInstances.filter((instance) => {
+      const instanceFolderKey = text(instance.folderKey, '');
+      const instanceId = text(instance.instanceId, 'unknown instance');
+      if (!instanceFolderKey) {
+        addWarning(
+          warnings,
+          `UiPath case instance ${instanceId} did not include a folder key; configured folder ${configuredFolderKey} is used for detail calls.`,
+        );
+        return true;
+      }
+      if (instanceFolderKey !== configuredFolderKey) {
+        addWarning(
+          warnings,
+          `Excluded UiPath case instance ${instanceId} because folder ${instanceFolderKey} conflicts with configured folder ${configuredFolderKey}.`,
+        );
+        return false;
+      }
+      return true;
+    });
+
+    return { process, instances };
   }
 
-  private valueOrWarning<T>(label: string, result: PromiseSettledResult<T>, fallback: T): T {
-    if (result.status === 'fulfilled') {
-      return result.value;
+  private requiredFolderKey(): string {
+    const folderKey = this.config.folderKey.trim();
+    if (!folderKey) {
+      throw new Error('Configured UiPath folder key is required for case discovery.');
+    }
+    return folderKey;
+  }
+
+  private collectCaseTasks(caseId: string, warnings: string[]): Promise<PartialTask[]> {
+    return collectCursorPages<PartialTask>(
+      'case tasks',
+      (cursor) => this.caseInstances.getActionTasks(caseId, cursor
+        ? { pageSize: SDK_PAGE_SIZE, cursor }
+        : { pageSize: SDK_PAGE_SIZE }),
+      warnings,
+    );
+  }
+
+  private collectFolderTasks(warnings: string[]): Promise<PartialTask[]> {
+    if (this.config.folderId === null) {
+      addWarning(warnings, 'Unable to load folder tasks: configured folder ID is unavailable.');
+      return Promise.resolve([]);
     }
 
-    this.warnings.push(`Unable to load ${label}: ${errorMessage(result.reason)}.`);
-    return fallback;
+    const folderId = this.config.folderId;
+    return collectCursorPages<PartialTask>(
+      'folder tasks',
+      (cursor) => this.tasks.getAll(cursor
+        ? { folderId, pageSize: SDK_PAGE_SIZE, cursor }
+        : { folderId, pageSize: SDK_PAGE_SIZE }),
+      warnings,
+    );
+  }
+
+  private async settleValue<T>(
+    label: string,
+    promise: Promise<T>,
+    fallback: T,
+    warnings: string[],
+  ): Promise<T> {
+    try {
+      return await promise;
+    } catch (reason) {
+      addWarning(warnings, `Unable to load ${label}: ${errorMessage(reason)}.`);
+      return fallback;
+    }
   }
 }
