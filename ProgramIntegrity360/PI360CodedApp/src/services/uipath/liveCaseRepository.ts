@@ -9,6 +9,7 @@ import type {
 import type { PaginationCursor, UiPath } from '@uipath/uipath-typescript/core';
 import { Tasks } from '@uipath/uipath-typescript/tasks';
 import type { TaskGetResponse } from '@uipath/uipath-typescript/tasks';
+import { createActivityEvent } from '../../features/activity/activityLog';
 import { STAGE_DEFINITIONS } from '../../features/cases/stages';
 import type {
   ActivityEvent,
@@ -434,17 +435,15 @@ function normalizeTimeline(history: PartialHistory, instance: PartialCaseInstanc
     const sourceUpdatedAt = timestamp(execution?.completedTime, timestamp(execution?.startedTime, timestamp(instance.startedTime)));
     const id = text(execution?.elementId, `execution:${text(instance.instanceId, 'unknown')}:${index}`);
 
-    return {
-      dataSource: 'live',
-      sourceId: `case-execution:${id}`,
-      sourceUpdatedAt,
+    return createActivityEvent({
       id,
       timestamp: sourceUpdatedAt,
-      actorKind: canonicalIdentifier(actor).includes('agent') ? 'Agent' : 'System',
-      actor,
-      type,
-      detail: `${actor} reported ${type}.`,
-    };
+      source: canonicalIdentifier(actor).includes('agent') ? 'agent' : 'maestro',
+      severity: canonicalIdentifier(type).includes('fault') ? 'error' : 'info',
+      status: type,
+      summary: `${actor} reported ${type}.`,
+      caseId: text(instance.instanceId, undefined),
+    });
   });
 }
 

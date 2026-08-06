@@ -129,22 +129,22 @@ const DEMO_CASE_WORKSPACE = deepFreeze<CaseWorkspaceModel>({
   folderTasks: withDemoSource<Omit<CaseTaskModel, keyof SourceMetadata>>([
     { id: 1001, folderId: 987654, type: 'Form', title: 'Validate low-confidence extraction - DOC-SN-0414', priority: 'Medium', status: 'Pending', assignee: 'inv.taylor', sla: 'On time', gated: false, stageLabel: 'Evidence acquisition and validation', actionCenterUrl: 'https://cloud.uipath.com/demo/playground_/tasks/1001', createdAt: '2026-07-23T08:20:00Z' },
   ], 'action-center-task'),
-  executionTimeline: withDemoSource<Omit<ActivityEvent, keyof SourceMetadata>>([
-    { id: 'ACT-0001', timestamp: '2026-07-22 09:12', actorKind: 'System', actor: 'Case intake', type: 'Case created', detail: 'Opened from alert ALERT-CA-2026-7781.' },
-    { id: 'ACT-0002', timestamp: '2026-07-22 10:41', actorKind: 'System', actor: 'deterministic-calc-v1', type: 'Signal computed', detail: 'Computed RS-01 through RS-05.' },
-    { id: 'ACT-0003', timestamp: '2026-07-22 10:45', actorKind: 'Agent', actor: 'Triage Agent', type: 'Agent output', detail: 'Priority explained as High, grounded in RS-01, RS-03, RS-04.' },
-    { id: 'ACT-0004', timestamp: '2026-07-23 08:20', actorKind: 'System', actor: 'IXP', type: 'Doc extracted', detail: 'Six evidence documents extracted; two fields below confidence threshold.' },
-    { id: 'ACT-0005', timestamp: '2026-07-23 09:05', actorKind: 'Human', actor: 'inv.taylor', type: 'Human validated', detail: 'Validated DOC-TS-0416 time_out as 12:00.' },
-    { id: 'ACT-0006', timestamp: '2026-07-23 09:30', actorKind: 'Agent', actor: 'Evidence Correlation Agent', type: 'Agent output', detail: 'Grouped findings into Unsupported billing, Visit integrity, and Credentialing / personnel.' },
-    { id: 'ACT-0007', timestamp: '2026-07-23 09:35', actorKind: 'Agent', actor: 'Investigation Planning Agent', type: 'Agent output', detail: 'Recommended records request and no adverse action pending provider response.' },
-    { id: 'ACT-0008', timestamp: '2026-07-24 11:10', actorKind: 'Human', actor: 'inv.taylor', type: 'Edit', detail: 'Reclassified CLM-0475 method flag as informational.' },
-    { id: 'ACT-0009', timestamp: '2026-07-24 11:20', actorKind: 'Human', actor: 'inv.taylor', type: 'Decision', detail: 'Recorded DEC-0001: proceed to records request.' },
-    { id: 'ACT-0010', timestamp: '2026-07-24 11:25', actorKind: 'System', actor: 'Records request workflow', type: 'Request sent', detail: 'Status moved to Awaiting Provider.' },
-    { id: 'ACT-0011', timestamp: '2026-07-28 14:02', actorKind: 'System', actor: 'Records inbox', type: 'Response received', detail: 'Received DOC-CORR-01 and moved status back to In Review.' },
-    { id: 'ACT-0012', timestamp: '2026-07-28 14:30', actorKind: 'Agent', actor: 'Summary Agent', type: 'Agent output', detail: 'Drafted supervisor-facing summary v2.' },
-    { id: 'ACT-0013', timestamp: '2026-07-29 13:50', actorKind: 'Human', actor: 'sup.morgan', type: 'Approval', detail: 'Approved DEC-0002: refer for audit and open overpayment recovery.' },
-    { id: 'ACT-0014', timestamp: '2026-07-29 14:00', actorKind: 'System', actor: 'Action execution workflow', type: 'Action executed', detail: 'Referral packet created and recovery opened for confirmed unsupported units.' },
-  ], 'activity'),
+  executionTimeline: [
+    { id: 'ACT-0001', timestamp: '2026-07-22 09:12', source: 'maestro', severity: 'info', status: 'Case created', summary: 'Opened from alert ALERT-CA-2026-7781.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0001' },
+    { id: 'ACT-0002', timestamp: '2026-07-22 10:41', source: 'maestro', severity: 'info', status: 'Signal computed', summary: 'Computed RS-01 through RS-05.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0002' },
+    { id: 'ACT-0003', timestamp: '2026-07-22 10:45', source: 'agent', severity: 'info', status: 'Agent output', summary: 'Priority explained as High, grounded in RS-01, RS-03, RS-04.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0003' },
+    { id: 'ACT-0004', timestamp: '2026-07-23 08:20', source: 'maestro', severity: 'info', status: 'Doc extracted', summary: 'Six evidence documents extracted; two fields below confidence threshold.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0004' },
+    { id: 'ACT-0005', timestamp: '2026-07-23 09:05', source: 'user', severity: 'info', status: 'Human validated', summary: 'Validated DOC-TS-0416 time_out as 12:00.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0005' },
+    { id: 'ACT-0006', timestamp: '2026-07-23 09:30', source: 'agent', severity: 'info', status: 'Agent output', summary: 'Grouped findings into Unsupported billing, Visit integrity, and Credentialing / personnel.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0006' },
+    { id: 'ACT-0007', timestamp: '2026-07-23 09:35', source: 'agent', severity: 'info', status: 'Agent output', summary: 'Recommended records request and no adverse action pending provider response.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0007' },
+    { id: 'ACT-0008', timestamp: '2026-07-24 11:10', source: 'user', severity: 'info', status: 'Edit', summary: 'Reclassified CLM-0475 method flag as informational.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0008' },
+    { id: 'ACT-0009', timestamp: '2026-07-24 11:20', source: 'user', severity: 'info', status: 'Decision', summary: 'Recorded DEC-0001: proceed to records request.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0009' },
+    { id: 'ACT-0010', timestamp: '2026-07-24 11:25', source: 'maestro', severity: 'info', status: 'Request sent', summary: 'Status moved to Awaiting Provider.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0010' },
+    { id: 'ACT-0011', timestamp: '2026-07-28 14:02', source: 'maestro', severity: 'info', status: 'Response received', summary: 'Received DOC-CORR-01 and moved status back to In Review.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0011' },
+    { id: 'ACT-0012', timestamp: '2026-07-28 14:30', source: 'agent', severity: 'info', status: 'Agent output', summary: 'Drafted supervisor-facing summary v2.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0012' },
+    { id: 'ACT-0013', timestamp: '2026-07-29 13:50', source: 'user', severity: 'info', status: 'Approval', summary: 'Approved DEC-0002: refer for audit and open overpayment recovery.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0013' },
+    { id: 'ACT-0014', timestamp: '2026-07-29 14:00', source: 'maestro', severity: 'info', status: 'Action executed', summary: 'Referral packet created and recovery opened for confirmed unsupported units.', caseId: 'PI-PCS-2026-0041', correlationId: 'corr-act-0014' },
+  ] satisfies ActivityEvent[],
 });
 
 export function createDemoCaseWorkspace(): CaseWorkspaceSnapshot {

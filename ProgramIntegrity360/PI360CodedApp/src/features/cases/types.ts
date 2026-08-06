@@ -74,13 +74,16 @@ export interface CaseTaskModel extends SourceMetadata {
   gated: boolean;
 }
 
-export interface ActivityEvent extends SourceMetadata {
+export interface ActivityEvent {
   id: string;
   timestamp: string;
-  actorKind: 'Human' | 'System' | 'Agent';
-  actor: string;
-  type: string;
-  detail: string;
+  source: 'maestro' | 'task' | 'agent' | 'user' | 'app';
+  severity: 'info' | 'warning' | 'error';
+  status: string;
+  summary: string;
+  caseId?: string;
+  taskId?: number;
+  correlationId: string;
 }
 
 export interface ProviderModel extends SourceMetadata {

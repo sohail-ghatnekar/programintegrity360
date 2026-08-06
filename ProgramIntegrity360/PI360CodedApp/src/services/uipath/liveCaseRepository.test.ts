@@ -282,7 +282,9 @@ describe('LiveCaseRepository', () => {
     expect(workspace.folderTasks[0]).toMatchObject({ id: 456, type: 'Form' });
     expect(workspace.executionTimeline[0]).toMatchObject({
       id: 'history-1',
-      type: 'Completed',
+      source: 'maestro',
+      status: 'Completed',
+      correlationId: expect.stringMatching(/^corr-/),
     });
   });
 
@@ -509,7 +511,7 @@ describe('LiveCaseRepository', () => {
     expect(investigation?.completedAt).toBeUndefined();
     expect(result.data.caseTasks[0].stageLabel).toBe('Unmapped UiPath stage');
     expect(result.data.executionTimeline).toEqual(expect.arrayContaining([
-      expect.objectContaining({ actor: 'Recovery Hold', sourceId: 'case-execution:unknown-history' }),
+      expect.objectContaining({ id: 'unknown-history', source: 'maestro', summary: 'Recovery Hold reported Running.' }),
     ]));
     expect(result.warnings).toEqual(expect.arrayContaining([
       expect.stringContaining('Unmapped UiPath stage "Recovery Hold" [id: stage-recovery; status: Paused; task groups: 1; task references: 1]'),

@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { AppShell } from './app/AppShell';
 import { getUiPathAuthSetup, getUiPathConfigurationError } from './config/uipath';
+import { ActivityLog, buildTaskActivityEvents } from './features/activity/activityLog';
+import { RecordAssistantPanel } from './features/assistant/RecordAssistantPanel';
+import { useRecordAssistant } from './features/assistant/useRecordAssistant';
 import type { CaseTaskModel, DeepReadonly, DemoRole } from './features/cases/types';
 import { useCaseWorkspace } from './features/cases/useCaseWorkspace';
 import { TaskCenter } from './features/tasks/TaskCenter';
@@ -25,6 +28,7 @@ function ProgramIntegrityWorkbench() {
   const caseWorkspace = useCaseWorkspace();
   const refreshWorkspace = caseWorkspace.refresh;
   const [role, setRole] = useState<DemoRole>('investigator');
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [taskSelection, setTaskSelection] = useState<{
     task: DeepReadonly<CaseTaskModel>;
     scope: TaskScope;
@@ -44,6 +48,16 @@ function ProgramIntegrityWorkbench() {
       ? createSdkTaskStatusReader(auth.sdk)
       : undefined
   ), [auth.isAuthenticated, auth.sdk, caseWorkspace.status]);
+  const assistant = useRecordAssistant(caseWorkspace.workspace, assistantOpen);
+  const activityEvents = useMemo(() => {
+    if (!caseWorkspace.workspace) return [];
+
+    return new ActivityLog([
+      caseWorkspace.workspace.executionTimeline,
+      buildTaskActivityEvents(caseWorkspace.workspace.caseTasks, caseWorkspace.workspace.case.id),
+      assistant.activityEvents,
+    ]).events;
+  }, [assistant.activityEvents, caseWorkspace.workspace]);
   const refreshCaseWorkspace = useCallback(async () => {
     const result = await refreshWorkspace();
     if (!result.ok) throw result.error;
@@ -62,6 +76,15 @@ function ProgramIntegrityWorkbench() {
       onOpenTask={(task, scope) => setTaskSelection({ task, scope })}
     />
   );
+  const assistantPanel = assistantOpen ? (
+    <RecordAssistantPanel
+      isOpen
+      onClose={() => setAssistantOpen(false)}
+      workspace={caseWorkspace.workspace}
+      assistant={assistant}
+      onOpenTask={(task) => setTaskSelection({ task, scope: 'case' })}
+    />
+  ) : undefined;
 
   return (
     <>
@@ -84,6 +107,9 @@ function ProgramIntegrityWorkbench() {
         onLogout={auth.logout}
         authLoading={auth.isLoading}
         authError={auth.error}
+        assistant={assistantPanel}
+        activityEvents={activityEvents}
+        onOpenAssistant={() => setAssistantOpen(true)}
         taskCenter={taskCenter}
       />
       {taskSelection && selectedTask && (

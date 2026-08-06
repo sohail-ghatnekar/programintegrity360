@@ -17,7 +17,7 @@ const dispositionOptions = [
 
 export function DecisionWorkspace({ workspace, role }: DecisionWorkspaceProps) {
   const decisionEvents = workspace.executionTimeline.filter((event) => (
-    event.type === 'Decision' || event.type === 'Approval'
+    event.status === 'Decision' || event.status === 'Approval'
   ));
   const supervisorTask = workspace.caseTasks.find(isOpenSupervisorApprovalTask);
 
@@ -118,11 +118,11 @@ function DecisionHistory({ events }: { events: readonly CaseWorkspaceSnapshot['e
         {events.map((event) => (
           <li key={event.id} className="py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Badge variant={event.type === 'Approval' ? 'success' : 'info'}>{event.type}</Badge>
+              <Badge variant={event.status === 'Approval' ? 'success' : 'info'}>{event.status}</Badge>
               <code className="text-xs text-slate-500">{event.id}</code>
             </div>
-            <p className="mt-2 text-sm text-slate-700">{event.detail}</p>
-            <div className="mt-1 text-xs text-slate-500">{event.actor} · {event.timestamp}</div>
+            <p className="mt-2 text-sm text-slate-700">{event.summary}</p>
+            <div className="mt-1 text-xs text-slate-500">{event.source} · {event.timestamp}</div>
           </li>
         ))}
       </ol>

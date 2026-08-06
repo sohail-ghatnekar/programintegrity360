@@ -6,14 +6,15 @@ import { EvidenceWorkspace } from './EvidenceWorkspace';
 import { RoleWorkQueue } from './RoleWorkQueue';
 import { StageJourney } from './StageJourney';
 import { isOpenSupervisorApprovalTask } from './caseTaskScope';
-import type { CaseWorkspaceSnapshot, DemoRole } from './types';
+import type { ActivityEvent, CaseWorkspaceSnapshot, DemoRole } from './types';
 
 type CaseWorkspaceProps = {
   workspace: CaseWorkspaceSnapshot;
   role: DemoRole;
+  activityEvents?: readonly ActivityEvent[];
 };
 
-export function CaseWorkspace({ workspace, role }: CaseWorkspaceProps) {
+export function CaseWorkspace({ workspace, role, activityEvents = workspace.executionTimeline }: CaseWorkspaceProps) {
   const pendingEvidence = workspace.evidenceDocuments.filter((document) => document.status === 'Needs review').length;
   const flaggedClaims = workspace.claims.filter((claim) => claim.status === 'Flagged').length;
   const supervisorTasks = workspace.caseTasks.filter(isOpenSupervisorApprovalTask).length;
@@ -81,7 +82,7 @@ export function CaseWorkspace({ workspace, role }: CaseWorkspaceProps) {
         <TabsContent value="overview" className="mt-4"><CaseOverview workspace={workspace} role={role} /></TabsContent>
         <TabsContent value="evidence" className="mt-4"><EvidenceWorkspace workspace={workspace} /></TabsContent>
         <TabsContent value="decisions" className="mt-4"><DecisionWorkspace workspace={workspace} role={role} /></TabsContent>
-        <TabsContent value="activity" className="mt-4"><ActivityTimeline events={workspace.executionTimeline} /></TabsContent>
+        <TabsContent value="activity" className="mt-4"><ActivityTimeline events={activityEvents} /></TabsContent>
       </Tabs>
     </section>
   );

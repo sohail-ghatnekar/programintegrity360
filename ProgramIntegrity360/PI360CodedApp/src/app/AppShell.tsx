@@ -32,6 +32,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  PanelRightOpen,
   RefreshCw,
   ShieldCheck,
   TriangleAlert,
@@ -39,7 +40,7 @@ import {
 import logoUrl from '../assets/uipath-logo-png_seeklogo-618304.png';
 import { CaseWorkspace } from '../features/cases/CaseWorkspace';
 import { CommandCenter } from '../features/cases/CommandCenter';
-import type { CaseSummary, CaseWorkspaceSnapshot, DemoRole } from '../features/cases/types';
+import type { ActivityEvent, CaseSummary, CaseWorkspaceSnapshot, DemoRole } from '../features/cases/types';
 import type { CaseWorkspaceStatus } from '../features/cases/useCaseWorkspace';
 
 type ShellView = 'command' | 'workspace' | 'tasks';
@@ -67,6 +68,8 @@ export type AppShellProps = {
   authLoading?: boolean;
   authError?: string | null;
   assistant?: ReactNode;
+  activityEvents?: readonly ActivityEvent[];
+  onOpenAssistant?: () => void;
   taskCenter?: ReactNode;
 };
 
@@ -92,6 +95,8 @@ export function AppShell({
   authLoading = false,
   authError,
   assistant,
+  activityEvents,
+  onOpenAssistant,
   taskCenter,
 }: AppShellProps) {
   const [activeView, setActiveView] = useState<ShellView>('command');
@@ -250,6 +255,17 @@ export function AppShell({
               <TooltipContent>Refresh case data</TooltipContent>
             </Tooltip>
 
+            {onOpenAssistant && !assistant && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Open record assistant" className="shrink-0" onClick={onOpenAssistant}>
+                    <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Open record assistant</TooltipContent>
+              </Tooltip>
+            )}
+
             {identity.isAuthenticated ? (
               <div className="hidden min-w-0 items-center gap-2 border-l border-slate-200 pl-3 md:flex">
                 <CircleUserRound aria-hidden="true" className="h-5 w-5 shrink-0 text-slate-500" />
@@ -327,11 +343,12 @@ export function AppShell({
               onRefresh={refreshCaseData}
               onUseDemoData={useDemoCaseData}
               taskCenter={taskCenter}
+              activityEvents={activityEvents}
             />
           </main>
 
           {assistant && (
-            <aside aria-label="Assistant" className="hidden min-h-[calc(100vh-56px)] min-w-0 border-l border-slate-200 bg-white xl:block">
+            <aside aria-label="Assistant" className="fixed bottom-0 right-0 top-14 z-30 w-[min(320px,100vw)] min-w-0 border-l border-slate-200 bg-white shadow-xl xl:static xl:z-auto xl:min-h-[calc(100vh-56px)] xl:w-auto xl:shadow-none">
               {assistant}
             </aside>
           )}
@@ -341,7 +358,7 @@ export function AppShell({
   );
 }
 
-type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'onRefresh' | 'onUseDemoData' | 'taskCenter'> & {
+type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'onRefresh' | 'onUseDemoData' | 'taskCenter' | 'activityEvents'> & {
   activeView: ShellView;
   selectionIntent: string | null;
   pendingSelection: string | null;
@@ -365,6 +382,7 @@ function ShellContent({
   onRefresh,
   onUseDemoData,
   taskCenter,
+  activityEvents,
 }: ShellContentProps) {
   if (selectionError) {
     return (
@@ -424,7 +442,7 @@ function ShellContent({
     return <EmptyState label="Selected case unavailable" detail={`The workspace for ${selectionIntent} is not available.`} icon={FolderOpen} />;
   }
 
-  return <CaseWorkspace workspace={workspace} role={role} />;
+  return <CaseWorkspace workspace={workspace} role={role} activityEvents={activityEvents} />;
 }
 
 function TerminalDataError({
