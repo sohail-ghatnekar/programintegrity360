@@ -10,6 +10,11 @@ type UiPathDefaults = {
   baseUrl?: string;
   redirectUri?: string;
   scope?: string;
+  folderPath?: string;
+  folderKey?: string;
+  folderId?: number;
+  caseProcessName?: string;
+  recordAgentName?: string;
 };
 
 function readUiPathJson(rootDir: string): Partial<UiPathDefaults> {
@@ -39,6 +44,11 @@ export default defineConfig(({ mode }) => {
     baseUrl: firstNonEmpty(env.VITE_UIPATH_BASE_URL, env.UIPATH_BASE_URL, fileDefaults.baseUrl),
     redirectUri: firstNonEmpty(env.VITE_UIPATH_REDIRECT_URI, fileDefaults.redirectUri),
     scope: firstNonEmpty(env.VITE_UIPATH_SCOPE, env.VITE_UIPATH_SCOPES, env.UIPATH_SCOPE, fileDefaults.scope),
+    folderPath: fileDefaults.folderPath,
+    folderKey: fileDefaults.folderKey,
+    folderId: fileDefaults.folderId,
+    caseProcessName: fileDefaults.caseProcessName,
+    recordAgentName: fileDefaults.recordAgentName,
   };
 
   const proxy = defaults.orgName && defaults.baseUrl

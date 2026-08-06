@@ -4,5 +4,10 @@
   "orgName": "uipathlabs",
   "tenantName": "Playground",
   "baseUrl": "https://staging.api.uipath.com",
-  "redirectUri": "http://localhost:5173"
+  "redirectUri": "http://localhost:5173",
+  "folderPath": "AMER Presales/Public Sector/ProgramIntegrity360 1",
+  "folderKey": "25fea2ac-3f4e-4f6f-a7f6-a3cab1b92be4",
+  "folderId": 3295396,
+  "caseProcessName": "Program Integrity 360 Case",
+  "recordAgentName": "PI360RecordConversationAgent"
 }

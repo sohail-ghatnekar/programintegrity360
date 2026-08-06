@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { UiPath, UiPathError } from '@uipath/uipath-typescript/core';
 import type { UiPathSDKConfig } from '@uipath/uipath-typescript/core';
 
-interface AuthContextType {
+export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   sdk: UiPath;
@@ -13,6 +13,14 @@ interface AuthContextType {
   logout: () => void;
   error: string | null;
 }
+
+type SdkFactory = (config: UiPathSDKConfig) => UiPath;
+
+type AuthProviderProps = {
+  children: ReactNode;
+  config: UiPathSDKConfig;
+  sdkFactory?: SdkFactory;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -75,11 +83,22 @@ function clearOAuthSession(clientId?: string) {
   sessionStorage.removeItem('uipath_sdk_code_verifier');
 }
 
-export const AuthProvider: React.FC<{ children: ReactNode; config: UiPathSDKConfig }> = ({ children, config }) => {
+function removeOAuthCallbackParameters() {
+  const callbackUrl = new URL(window.location.href);
+  callbackUrl.searchParams.delete('code');
+  callbackUrl.searchParams.delete('state');
+  window.history.replaceState(window.history.state, '', `${callbackUrl.pathname}${callbackUrl.search}${callbackUrl.hash}`);
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({
+  children,
+  config,
+  sdkFactory = (sdkConfig) => new UiPath(sdkConfig),
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sdk, setSdk] = useState<UiPath>(() => new UiPath(config));
+  const [sdk, setSdk] = useState<UiPath>(() => sdkFactory(config));
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string | null>(null);
 
@@ -89,20 +108,19 @@ export const AuthProvider: React.FC<{ children: ReactNode; config: UiPathSDKConf
       setError(null);
 
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const hasCode = urlParams.has('code');
-
-        if (sdk.isInOAuthCallback() && hasCode) {
-          await sdk.completeOAuth();
-        } else if (!hasCode) {
-          clearOAuthSession(config.clientId);
+        if (sdk.isInOAuthCallback()) {
+          const completed = await sdk.completeOAuth();
+          if (!completed) {
+            clearOAuthSession(config.clientId);
+            throw new Error('Invalid OAuth callback');
+          }
+          removeOAuthCallbackParameters();
         }
         setIsAuthenticated(sdk.isAuthenticated());
         const profile = getCurrentUserProfile(config.clientId);
         setCurrentUserEmail(profile.email);
         setCurrentUserName(profile.name);
       } catch (err) {
-        console.error('Authentication initialization failed:', err);
         setError(err instanceof UiPathError ? err.message : 'Authentication failed');
         setIsAuthenticated(false);
         setCurrentUserEmail(null);
@@ -120,16 +138,12 @@ export const AuthProvider: React.FC<{ children: ReactNode; config: UiPathSDKConf
     setError(null);
 
     try {
-      if (!sdk.isInOAuthCallback()) {
-        clearOAuthSession(config.clientId);
-      }
       await sdk.initialize();
       setIsAuthenticated(sdk.isAuthenticated());
       const profile = getCurrentUserProfile(config.clientId);
       setCurrentUserEmail(profile.email);
       setCurrentUserName(profile.name);
     } catch (err) {
-      console.error('Login failed:', err);
       setError(err instanceof UiPathError ? err.message : 'Login failed');
       setIsAuthenticated(false);
       setCurrentUserEmail(null);
@@ -146,7 +160,7 @@ export const AuthProvider: React.FC<{ children: ReactNode; config: UiPathSDKConf
     setError(null);
     setCurrentUserEmail(null);
     setCurrentUserName(null);
-    setSdk(new UiPath(config));
+    setSdk(sdkFactory(config));
   };
 
   return (
