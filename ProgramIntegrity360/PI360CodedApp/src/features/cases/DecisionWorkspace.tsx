@@ -18,6 +18,9 @@ export function DecisionWorkspace({ workspace, role }: DecisionWorkspaceProps) {
   const decisionEvents = workspace.executionTimeline.filter((event) => (
     event.type === 'Decision' || event.type === 'Approval'
   ));
+  const supervisorTask = [...workspace.caseTasks, ...workspace.folderTasks]
+    .find((task) => task.gated && task.status !== 'Completed')
+    ?? [...workspace.caseTasks, ...workspace.folderTasks].find((task) => task.gated);
 
   if (role === 'supervisor') {
     return (
@@ -37,17 +40,41 @@ export function DecisionWorkspace({ workspace, role }: DecisionWorkspaceProps) {
             <AlertDescription>Disposition execution remains in the authorized UiPath task workflow.</AlertDescription>
           </Alert>
 
-          <ul className="divide-y divide-slate-200 border-y border-slate-200 bg-white">
-            {dispositionOptions.map(([label, description]) => (
-              <li key={label} className="flex items-start gap-3 px-3 py-3">
-                <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-900">{label}</div>
-                  <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+          {supervisorTask ? (
+            <>
+              <div className="mb-3 border-y border-slate-200 bg-slate-50 px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-slate-900">Supervisor task {supervisorTask.id}</div>
+                  <Badge variant={supervisorTask.status === 'Completed' ? 'success' : 'warning'}>{supervisorTask.status}</Badge>
                 </div>
-              </li>
-            ))}
-          </ul>
+                <p className="mt-1 text-sm text-slate-700">{supervisorTask.title}</p>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  <span>{supervisorTask.stageLabel}</span>
+                  <span>{supervisorTask.sla}</span>
+                  <span>{supervisorTask.assignee === '-' ? 'No assignee' : supervisorTask.assignee}</span>
+                </div>
+              </div>
+              <ul className="divide-y divide-slate-200 border-y border-slate-200 bg-white">
+                {dispositionOptions.map(([label, description]) => (
+                  <li key={label} className="flex items-start gap-3 px-3 py-3">
+                    <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-900">{label}</div>
+                      <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <div
+              role="status"
+              aria-label="No supervisor disposition task"
+              className="border-y border-slate-200 py-6 text-center text-sm text-slate-500"
+            >
+              No supervisor disposition task is available for this case.
+            </div>
+          )}
         </section>
 
         <DecisionHistory events={decisionEvents} />
@@ -84,6 +111,11 @@ function DecisionHistory({ events }: { events: readonly CaseWorkspaceSnapshot['e
     <section aria-labelledby="decision-history-heading" className="border-l-0 border-slate-200 xl:border-l xl:pl-5">
       <h2 id="decision-history-heading" className="text-base font-semibold text-slate-950">Decision history</h2>
       <ol className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
+        {events.length === 0 && (
+          <li role="status" aria-label="No decision history" className="py-6 text-center text-sm text-slate-500">
+            No decisions or approvals have been recorded.
+          </li>
+        )}
         {events.map((event) => (
           <li key={event.id} className="py-3">
             <div className="flex flex-wrap items-center justify-between gap-2">

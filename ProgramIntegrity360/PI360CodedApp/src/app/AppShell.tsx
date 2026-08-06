@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   Alert,
@@ -25,6 +25,8 @@ import {
   BriefcaseBusiness,
   CircleUserRound,
   Database,
+  FolderOpen,
+  Inbox,
   LayoutDashboard,
   LogIn,
   LogOut,
@@ -88,10 +90,28 @@ export function AppShell({
   assistant,
 }: AppShellProps) {
   const [activeView, setActiveView] = useState<ShellView>('command');
+  const [selectionIntent, setSelectionIntent] = useState<string | null>(null);
+  const [pendingSelection, setPendingSelection] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const selectionRequest = useRef(0);
 
-  const openCase = (caseId: string) => {
+  const openCase = async (caseId: string) => {
+    const request = ++selectionRequest.current;
+    setSelectionIntent(caseId);
+    setPendingSelection(caseId);
+    setSelectionError(null);
     setActiveView('workspace');
-    void onSelectCase(caseId);
+    try {
+      await onSelectCase(caseId);
+    } catch {
+      if (request === selectionRequest.current) {
+        setSelectionError(`Unable to open case ${caseId}.`);
+      }
+    } finally {
+      if (request === selectionRequest.current) {
+        setPendingSelection(null);
+      }
+    }
   };
 
   const sourceLabel = status === 'live'
@@ -101,16 +121,23 @@ export function AppShell({
       : status === 'error'
         ? 'Data unavailable'
         : 'Loading data';
+  const compactSourceLabel = status === 'live'
+    ? 'Live'
+    : status === 'demo'
+      ? 'Demo'
+      : status === 'error'
+        ? 'Error'
+        : 'Loading';
   const sourceVariant = status === 'live' ? 'success' : status === 'error' ? 'error' : status === 'demo' ? 'info' : 'secondary';
 
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-slate-50 text-slate-950">
         <header className="sticky top-0 z-40 h-14 border-b border-slate-200 bg-white">
-          <div className="flex h-full min-w-0 items-center gap-2 px-3 lg:px-4">
+          <div data-testid="app-header-row" className="flex h-full max-w-full min-w-0 items-center gap-2 px-3 lg:px-4">
             <Sheet>
               <SheetTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" aria-label="Open navigation" className="lg:hidden">
+                <Button type="button" variant="ghost" size="icon" aria-label="Open navigation" className="shrink-0 lg:hidden">
                   <Menu aria-hidden="true" className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -134,6 +161,16 @@ export function AppShell({
                 </div>
                 <div className="p-3">
                   <MobileNavigation activeView={activeView} onNavigate={setActiveView} />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="mt-1 w-full justify-start gap-2"
+                    aria-label="Refresh case data"
+                    onClick={() => void onRefresh()}
+                  >
+                    <RefreshCw aria-hidden="true" className="h-4 w-4" />
+                    Refresh case data
+                  </Button>
                   <div className="mt-5 border-t border-slate-200 pt-4">
                     <RoleControl role={role} onRoleChange={onRoleChange} />
                     <AuthorityNotice />
@@ -142,19 +179,27 @@ export function AppShell({
               </SheetContent>
             </Sheet>
 
-            <img src={logoUrl} alt="UiPath" className="h-7 w-7 shrink-0 object-contain" />
-            <div className="min-w-0 flex-1">
+            <img src={logoUrl} alt="UiPath" className="hidden h-7 w-7 shrink-0 object-contain min-[360px]:block" />
+            <div className="hidden min-w-0 flex-1 min-[480px]:block">
               <div className="truncate text-sm font-semibold text-slate-950 sm:text-base">Program Integrity 360</div>
             </div>
 
-            <Badge variant={sourceVariant} className="flex shrink-0 gap-1">
+            <Badge aria-label={sourceLabel} variant={sourceVariant} className="ml-auto flex min-w-0 shrink-0 gap-1">
               <Database aria-hidden="true" className="h-3.5 w-3.5" />
-              {sourceLabel}
+              <span className="sm:hidden">{compactSourceLabel}</span>
+              <span className="hidden sm:inline">{sourceLabel}</span>
             </Badge>
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" aria-label="Refresh case data" onClick={() => void onRefresh()}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Refresh case data"
+                  className="hidden shrink-0 min-[400px]:inline-flex"
+                  onClick={() => void onRefresh()}
+                >
                   <RefreshCw aria-hidden="true" className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -203,20 +248,14 @@ export function AppShell({
           </aside>
 
           <main className="min-w-0 px-3 py-4 sm:px-5 lg:px-6">
-            {warnings.length > 0 && (
-              <Alert variant={status === 'error' ? 'destructive' : 'default'} className="mb-4">
+            {warnings.length > 0 && status !== 'error' && (
+              <Alert className="mb-4">
                 <TriangleAlert aria-hidden="true" className="h-4 w-4" />
-                <AlertTitle>{status === 'error' ? 'Case data unavailable' : 'Data source notice'}</AlertTitle>
+                <AlertTitle>Data source notice</AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc space-y-1 pl-4">
                     {warnings.map((warning) => <li key={warning}>{warning}</li>)}
                   </ul>
-                  {status === 'error' && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Button type="button" size="sm" onClick={() => void onRefresh()}>Retry</Button>
-                      <Button type="button" size="sm" variant="outline" onClick={() => void onUseDemoData()}>Use demo data</Button>
-                    </div>
-                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -229,13 +268,20 @@ export function AppShell({
               </Alert>
             )}
 
-            {activeView === 'command' ? (
-              <CommandCenter cases={cases} selectedCaseId={workspace?.case.id} onSelectCase={openCase} />
-            ) : workspace ? (
-              <CaseWorkspace workspace={workspace} role={role} />
-            ) : (
-              <WorkspaceSkeleton />
-            )}
+            <ShellContent
+              activeView={activeView}
+              cases={cases}
+              workspace={workspace}
+              status={status}
+              warnings={warnings}
+              role={role}
+              selectionIntent={selectionIntent}
+              pendingSelection={pendingSelection}
+              selectionError={selectionError}
+              onSelectCase={openCase}
+              onRefresh={onRefresh}
+              onUseDemoData={onUseDemoData}
+            />
           </main>
 
           {assistant && (
@@ -246,6 +292,113 @@ export function AppShell({
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'onRefresh' | 'onUseDemoData'> & {
+  activeView: ShellView;
+  selectionIntent: string | null;
+  pendingSelection: string | null;
+  selectionError: string | null;
+  onSelectCase: (caseId: string) => void | Promise<void>;
+};
+
+function ShellContent({
+  activeView,
+  cases,
+  workspace,
+  status,
+  warnings,
+  role,
+  selectionIntent,
+  pendingSelection,
+  selectionError,
+  onSelectCase,
+  onRefresh,
+  onUseDemoData,
+}: ShellContentProps) {
+  if (status === 'error' || selectionError) {
+    return (
+      <TerminalDataError
+        messages={selectionError ? [selectionError] : warnings}
+        onRefresh={onRefresh}
+        onUseDemoData={onUseDemoData}
+      />
+    );
+  }
+
+  if (pendingSelection) {
+    return <WorkspaceSkeleton label={`Loading case ${pendingSelection}`} />;
+  }
+
+  if (status === 'idle' || status === 'loading') {
+    return activeView === 'command'
+      ? <CommandCenterSkeleton />
+      : <WorkspaceSkeleton label="Loading case workspace" />;
+  }
+
+  if (activeView === 'command') {
+    return cases.length === 0
+      ? <EmptyState label="No cases available" detail="No case records were returned by the current data source." icon={Inbox} />
+      : <CommandCenter cases={cases} selectedCaseId={workspace?.case.id} onSelectCase={onSelectCase} />;
+  }
+
+  if (!workspace) {
+    return <EmptyState label="No case selected" detail="Select a case from Command center to open its workspace." icon={FolderOpen} />;
+  }
+
+  if (selectionIntent && workspace.case.id !== selectionIntent) {
+    return <EmptyState label="Selected case unavailable" detail={`The workspace for ${selectionIntent} is not available.`} icon={FolderOpen} />;
+  }
+
+  return <CaseWorkspace workspace={workspace} role={role} />;
+}
+
+function TerminalDataError({
+  messages,
+  onRefresh,
+  onUseDemoData,
+}: {
+  messages: readonly string[];
+  onRefresh: AppShellProps['onRefresh'];
+  onUseDemoData: AppShellProps['onUseDemoData'];
+}) {
+  return (
+    <Alert variant="destructive">
+      <TriangleAlert aria-hidden="true" className="h-4 w-4" />
+      <AlertTitle>Case data unavailable</AlertTitle>
+      <AlertDescription>
+        <ul className="list-disc space-y-1 pl-4">
+          {(messages.length > 0 ? messages : ['The current data source did not return a usable case workspace.'])
+            .map((message) => <li key={message}>{message}</li>)}
+        </ul>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button type="button" size="sm" onClick={() => void onRefresh()}>Retry</Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => void onUseDemoData()}>Use demo data</Button>
+        </div>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function EmptyState({ label, detail, icon: Icon }: { label: string; detail: string; icon: typeof Inbox }) {
+  return (
+    <section role="status" aria-label={label} className="border-y border-slate-200 bg-white px-4 py-10 text-center">
+      <Icon aria-hidden="true" className="mx-auto h-6 w-6 text-slate-400" />
+      <h1 className="mt-3 text-base font-semibold text-slate-900">{label}</h1>
+      <p className="mt-1 text-sm text-slate-500">{detail}</p>
+    </section>
+  );
+}
+
+function CommandCenterSkeleton() {
+  return (
+    <section role="status" aria-label="Loading command center" className="space-y-4">
+      <span className="sr-only">Loading command center</span>
+      <Skeleton className="h-7 w-48" />
+      <Skeleton className="h-20 w-full" />
+      <Skeleton className="h-64 w-full" />
+    </section>
   );
 }
 
@@ -320,9 +473,10 @@ function AuthorityNotice() {
   );
 }
 
-function WorkspaceSkeleton() {
+function WorkspaceSkeleton({ label }: { label: string }) {
   return (
-    <section aria-label="Loading case workspace" className="space-y-4">
+    <section role="status" aria-label={label} className="space-y-4">
+      <span className="sr-only">{label}</span>
       <Skeleton className="h-7 w-48" />
       <Skeleton className="h-4 w-full max-w-xl" />
       <div className="flex gap-2 overflow-hidden border-y border-slate-200 py-3">

@@ -40,6 +40,15 @@ export function CaseOverview({ workspace, role }: CaseOverviewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {claims.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center">
+                    <div role="status" aria-label="No claims available" className="text-sm text-slate-500">
+                      No claims available for this case.
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
               {claims.map((claim) => (
                 <TableRow key={claim.id}>
                   <TableCell className="font-mono text-xs">{claim.id}</TableCell>

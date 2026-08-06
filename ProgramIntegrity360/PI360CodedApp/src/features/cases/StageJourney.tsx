@@ -55,10 +55,6 @@ function taskProgress(stage: CaseStageModel, tasks: readonly CaseTaskModel[]) {
   const linkedTasks = tasks.filter((task) => task.stageLabel === stage.label);
   const completed = linkedTasks.filter((task) => task.status === 'Completed').length;
 
-  if (stage.status === 'completed') {
-    return { linkedTasks, completed, value: 100 };
-  }
-
   return {
     linkedTasks,
     completed,

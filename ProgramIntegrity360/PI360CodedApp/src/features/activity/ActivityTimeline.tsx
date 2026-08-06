@@ -24,6 +24,11 @@ export function ActivityTimeline({ events }: ActivityTimelineProps) {
       </div>
 
       <ol className="border-t border-slate-200">
+        {events.length === 0 && (
+          <li role="status" aria-label="No activity recorded" className="border-b border-slate-200 py-6 text-center text-sm text-slate-500">
+            No case activity has been recorded.
+          </li>
+        )}
         {events.map((event) => {
           const presentation = actorPresentation[event.actorKind];
           const ActorIcon = presentation.icon;

@@ -54,6 +54,15 @@ export function EvidenceWorkspace({ workspace }: EvidenceWorkspaceProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {workspace.evidenceDocuments.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    <div role="status" aria-label="No evidence documents" className="text-sm text-slate-500">
+                      No evidence documents are available for this case.
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
               {workspace.evidenceDocuments.map((document) => (
                 <TableRow key={document.id}>
                   <TableCell className="font-mono text-xs">{document.id}</TableCell>
@@ -88,18 +97,28 @@ export function EvidenceWorkspace({ workspace }: EvidenceWorkspaceProps) {
           <h2 id="reconciliation-heading" className="text-base font-semibold text-slate-950">Reconciliation exceptions</h2>
           <p className="mt-1 text-sm text-slate-600">Flagged claims requiring investigator resolution.</p>
         </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {flaggedClaims.map((claim) => (
-            <article key={claim.id} className="border border-slate-200 bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <code className="text-xs font-semibold text-slate-700">{claim.id}</code>
-                <Badge variant="error">{claim.improper} unsupported units</Badge>
-              </div>
-              <p className="mt-3 text-sm text-slate-700">{claim.note}</p>
-              <div className="mt-3 text-xs text-slate-500">Source: {claim.source}</div>
-            </article>
-          ))}
-        </div>
+        {flaggedClaims.length === 0 ? (
+          <div
+            role="status"
+            aria-label="No reconciliation exceptions"
+            className="border-y border-slate-200 py-6 text-center text-sm text-slate-500"
+          >
+            No reconciliation exceptions require review.
+          </div>
+        ) : (
+          <div className="grid gap-3 lg:grid-cols-2">
+            {flaggedClaims.map((claim) => (
+              <article key={claim.id} className="border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <code className="text-xs font-semibold text-slate-700">{claim.id}</code>
+                  <Badge variant="error">{claim.improper} unsupported units</Badge>
+                </div>
+                <p className="mt-3 text-sm text-slate-700">{claim.note}</p>
+                <div className="mt-3 text-xs text-slate-500">Source: {claim.source}</div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

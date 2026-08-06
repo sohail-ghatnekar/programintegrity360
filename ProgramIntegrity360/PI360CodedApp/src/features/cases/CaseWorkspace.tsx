@@ -3,6 +3,7 @@ import { ActivityTimeline } from '../activity/ActivityTimeline';
 import { CaseOverview } from './CaseOverview';
 import { DecisionWorkspace } from './DecisionWorkspace';
 import { EvidenceWorkspace } from './EvidenceWorkspace';
+import { RoleWorkQueue } from './RoleWorkQueue';
 import { StageJourney } from './StageJourney';
 import type { CaseWorkspaceSnapshot, DemoRole } from './types';
 
@@ -67,6 +68,7 @@ export function CaseWorkspace({ workspace, role }: CaseWorkspaceProps) {
             )}
           </div>
         </div>
+        <RoleWorkQueue role={role} tasks={allTasks} />
       </section>
 
       <Tabs defaultValue="overview" className="mt-5 min-w-0">

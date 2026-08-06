@@ -133,3 +133,166 @@ The 61 lint warnings are pre-existing and outside Task 5 files. Vite retains its
 1. No browser backend was available for screenshot inspection in this session. Automated component behavior, generated CSS utility presence, production build, and local HTTP serving were verified. Task 8 owns full Playwright desktop/mobile visual verification.
 2. The production JavaScript chunk is 551.90 kB and retains Vite's existing advisory. Code splitting can be evaluated after Task Center and assistant boundaries are implemented.
 3. The existing 61 lint warnings remain outside Task 5 scope.
+
+## Fix Round 1
+
+### Findings Addressed
+
+- Case selection now records an explicit selection intent and pending request. The previous workspace is masked until the selected case resolves, stale request completions are ignored, and a mismatched returned workspace cannot render under the new intent.
+- Loading, terminal error, stable command-center empty, and stable workspace empty states are mutually exclusive and have named status regions.
+- Claims, evidence documents, reconciliation exceptions, decision history, and activity each provide an explicit accessible empty state.
+- Stage lifecycle state and linked-task completion are independent. Visible task counts, `aria-valuetext`, and `aria-valuenow` are calculated from the same task records.
+- A compact read-only role work queue exposes existing case and folder task records by gated role, including status, stage, SLA, and assignee. Supervisor dispositions render only with an actual gated supervisor task record and remain non-actionable in this task.
+- The 320px header now has explicit `min-w-0`/`max-w-full` containment, compact provenance labels, responsive brand/logo visibility, and a header refresh breakpoint. Refresh remains available in the mobile navigation sheet. Global horizontal overflow clipping was removed.
+
+### RED And GREEN
+
+Delayed selection and shell-state RED:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 failed (1)
+Tests 3 failed | 6 passed (9)
+Failures: delayed replacement rendered the prior workspace; loading/error/empty states were not exclusive; stable empty workspace fell through to loading.
+```
+
+Shell-state GREEN:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 9 passed (9)
+```
+
+Empty sections and progress RED:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 failed (1)
+Tests 2 failed | 9 passed (11)
+Failures: completed lifecycle forced aria-valuenow=100 for a pending task; claims had no named empty status.
+```
+
+Empty sections and progress GREEN:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 11 passed (11)
+```
+
+Role records RED:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 failed (1)
+Tests 2 failed | 11 passed (13)
+Failures: no investigator/supervisor work queue regions and no empty supervisor task gate.
+```
+
+Role records GREEN:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 13 passed (13)
+```
+
+Mobile header RED:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 failed (1)
+Tests 1 failed | 13 passed (14)
+Failure: no explicit shrink-safe header contract or compact responsive source controls.
+```
+
+Final focused GREEN:
+
+```text
+npm test -- AppShell.test.tsx
+Test Files 1 passed (1)
+Tests 14 passed (14)
+```
+
+The first full-suite run found an ambiguous exact stage-label query because the new work queue repeated stage labels without context:
+
+```text
+npm test
+Test Files 1 failed | 7 passed (8)
+Tests 1 failed | 68 passed (69)
+```
+
+Queue stage values were labeled `Stage: ...`; the focused suite and full suite then passed.
+
+### Component Structure
+
+- `app/AppShell.tsx`: explicit async selection state machine, exclusive shell-state renderer, named loading/empty/error surfaces, and responsive header/mobile refresh composition.
+- `features/cases/RoleWorkQueue.tsx`: focused read-only role queue over existing immutable task models.
+- `features/cases/CaseWorkspace.tsx`: composes role metrics with the role queue without introducing Task Center actions.
+- `features/cases/DecisionWorkspace.tsx`: binds supervisor disposition context to the current gated task and handles absent supervisor work explicitly.
+- Existing overview, evidence, activity, decision history, and stage components own their local empty/progress semantics.
+
+### Apollo Imports Verified
+
+No guessed Apollo component names were introduced. The new queue uses the previously verified root `Badge` export. Shell changes continue to use the verified `Button`, `Badge`, `Sheet`, `Alert`, `Skeleton`, and `Tooltip` exports. Apollo's official Tailwind CSS remains imported exactly once in `main.tsx`.
+
+### Files
+
+Created:
+
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/RoleWorkQueue.tsx`
+
+Modified:
+
+- `ProgramIntegrity360/PI360CodedApp/src/app/AppShell.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/app/AppShell.test.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/activity/ActivityTimeline.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/CaseOverview.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/CaseWorkspace.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/DecisionWorkspace.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/EvidenceWorkspace.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/features/cases/StageJourney.tsx`
+- `ProgramIntegrity360/PI360CodedApp/src/index.css`
+- `.superpowers/sdd/2026-08-06-pi360-coded-app-implementation/task-5-report.md`
+
+### Final Verification
+
+```text
+npm test
+Test Files 8 passed (8)
+Tests 69 passed (69)
+
+npm run lint
+0 errors, 61 warnings
+
+npm run build
+TypeScript and Vite build passed; 5321 modules transformed.
+dist/assets/index-CINOupNE.css 168.00 kB, gzip 26.72 kB
+dist/assets/index-Gip1Xgdj.js 559.39 kB, gzip 169.45 kB
+
+git diff --check
+Exit 0
+
+curl -I http://127.0.0.1:5174/
+HTTP/1.1 200 OK
+```
+
+The 61 lint warnings remain pre-existing and outside Task 5 files. Vite retains its existing chunk-size advisory above 500 kB.
+
+### Self-Review
+
+- Confirmed request sequencing prevents an older selection from clearing or replacing the latest pending intent.
+- Confirmed terminal errors do not coexist with source-warning, loading, or empty command content.
+- Confirmed all requested live-empty collections expose named status regions without creating card-styled page sections.
+- Confirmed lifecycle badges never alter linked-task progress and visible/ARIA values share one calculation.
+- Confirmed role queues are filtered from existing immutable task arrays and expose no iframe, link, completion, or Task Center claim.
+- Confirmed supervisor disposition context is absent when no gated task exists and identifies task `1003` in the demo workspace.
+- Confirmed the header has local flex containment and no longer relies on body overflow clipping.
+- Confirmed no cloud, publish, deploy, push, or external iframe operation was run.
+
+### Concerns
+
+1. No browser backend was available for screenshot inspection in this session. Component semantics, responsive utility presence, production output, and local HTTP serving were verified; Task 8 still owns full Playwright visual coverage.
+2. The production JavaScript chunk is now 559.39 kB and retains Vite's existing advisory. Task Center and assistant boundaries remain the natural future code-splitting points.
+3. The existing 61 lint warnings remain outside Task 5 scope.
