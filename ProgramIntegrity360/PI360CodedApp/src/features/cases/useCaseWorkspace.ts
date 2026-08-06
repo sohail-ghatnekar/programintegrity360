@@ -133,6 +133,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
 
   const loadLive = useCallback(async (preferredCaseId?: string | null) => {
     const currentRequest = ++requestId.current;
+    let caseWarnings: readonly string[] = [];
     setStatus('loading');
     setWarnings([]);
 
@@ -145,6 +146,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
 
     try {
       const casesResult = await listCasesWithWarnings(liveRepository);
+      caseWarnings = casesResult.warnings;
       if (currentRequest !== requestId.current) return;
       const liveCases = casesResult.data;
       const selected = liveCases.find((candidate) => candidate.id === preferredCaseId) ?? liveCases[0];
@@ -162,7 +164,10 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
     } catch (reason) {
       if (currentRequest !== requestId.current) return;
       setWorkspace(null);
-      setWarnings([`Unable to load live UiPath case data: ${errorMessage(reason)}.`]);
+      setWarnings([
+        ...caseWarnings,
+        `Unable to load live UiPath case data: ${errorMessage(reason)}.`,
+      ]);
       setStatus('error');
     }
   }, [liveConfig.caseProcessName, liveRepository]);

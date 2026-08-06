@@ -188,3 +188,85 @@ All lint warnings remain outside Task 4 files. The existing 770.19 kB bundle-siz
 
 1. The brief-required `/actions_/tasks/{taskId}` route still differs from the installed task skill's newer `/actions_/current-task/tasks/{taskId}` guidance. This remains a Task 6 live-browser verification item.
 2. The Cases SDK still does not supply PI360 provider, claim, evidence, or risk-signal records; those live sections continue to use explicit unavailable/empty values.
+
+## Fix Round 2
+
+This section supersedes the open Task 4 folder-scope, unknown-stage, and first-page error findings from the prior review rounds.
+
+### Findings Addressed
+
+- Process selection now requires an exact `folderKey` match. Matching processes with missing or conflicting folder identities fail before CaseInstances discovery, with the discovered folder identities included in the error.
+- Instance selection now excludes both missing and conflicting `folderKey` values. Only instances whose response folder key exactly matches the configured folder can be listed, loaded, or refreshed.
+- First-page CaseInstances failures are rethrown unchanged, so PIMS authorization failures and outages reach the hook as their root cause. Failures after at least one page preserve verified items and emit an explicit partial-data truncation warning.
+- Unknown backend stages no longer map to Investigation or any canonical stage. Their ID, name, status, task-group count, and task-reference count are retained in operation warnings; matching execution history remains visible as unmapped source activity.
+- Tasks referenced only by unknown stages retain `Unmapped UiPath stage` instead of receiving a canonical stage label.
+- Duplicate known stages merge only into their matched canonical key. Status, source ID, update time, and execution timestamps use deterministic status/time/source-ID precedence independent of response order.
+- Hook catch paths retain warnings already returned by case discovery when workspace loading subsequently fails.
+- Added direct tests for first-page failure, later-page partial preservation, missing cursor, repeated cursor, the 100-page cap, unknown-stage non-influence, duplicate order independence, and hook root-cause/warning behavior.
+
+### RED Evidence
+
+Initial focused RED after adding folder, first-page, unknown-stage, guard, and catch-path tests:
+
+```text
+npm test -- liveCaseRepository.test.ts
+Test Files 1 failed (1)
+Tests 5 failed | 21 passed (26)
+```
+
+The five failures proved that missing process and instance folder identity was accepted, a page-one 403 became an empty result, Recovery Hold changed Investigation state, and hook catch discarded discovery warnings. The new missing-cursor and 100-page tests passed because those guards existed but previously lacked direct test evidence.
+
+A second RED isolated order-dependent duplicate-stage metadata:
+
+```text
+npm test -- liveCaseRepository.test.ts
+Test Files 1 failed (1)
+Tests 1 failed | 26 passed (27)
+```
+
+The faulted duplicate won status but did not win `sourceId` when it appeared second.
+
+### GREEN Evidence
+
+```text
+npm test -- liveCaseRepository.test.ts
+Test Files 1 passed (1)
+Tests 29 passed (29)
+
+npx tsc --noEmit --target ES2022 --module ESNext --moduleResolution bundler \
+  --lib ES2022,DOM,DOM.Iterable --types vite/client --jsx react-jsx --strict \
+  --skipLibCheck --allowImportingTsExtensions --verbatimModuleSyntax \
+  src/services/uipath/collection.ts \
+  src/services/uipath/actionCenterUrl.ts \
+  src/services/uipath/liveCaseRepository.ts \
+  src/features/cases/useCaseWorkspace.ts
+Exit 0
+```
+
+### Final Verification
+
+```text
+npm test
+Test Files 7 passed (7)
+Tests 54 passed (54)
+
+npm run lint
+0 errors, 61 warnings
+
+npm run build
+TypeScript and Vite build passed; 447 modules transformed.
+```
+
+All 61 lint warnings remain outside Task 4 files. The existing 770.19 kB bundle-size advisory remains unchanged. No cloud, publish, deploy, push, or other remote operation was run.
+
+### Self-Review
+
+- Confirmed CaseInstances still receives only installed SDK options: `processKey`, `pageSize`, and `cursor`.
+- Confirmed no process or instance lacking an exact configured folder identity can reach detail calls.
+- Confirmed unknown stage data changes neither canonical status nor canonical source/task metadata.
+- Confirmed later-page failures preserve only already-verified items and first-page failures preserve the original error.
+- Confirmed repository warnings remain operation-local and hook catch paths retain earlier operation warnings.
+
+### Remaining Concerns
+
+No new Task 4 concerns were introduced. The Action Center route and unsupported PI360 domain-record limitations documented above remain follow-up items for their owning tasks.

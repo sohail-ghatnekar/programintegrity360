@@ -103,6 +103,7 @@ async function collectCursorPages<T>(
   label: string,
   loadPage: (cursor?: PaginationCursor) => Promise<CursorResponse<T>>,
   warnings: string[],
+  options: { throwOnFirstPageFailure?: boolean } = {},
 ): Promise<T[]> {
   const items: T[] = [];
   const seenCursors = new Set<string>();
@@ -113,6 +114,16 @@ async function collectCursorPages<T>(
     try {
       response = await loadPage(cursor);
     } catch (reason) {
+      if (page === 0 && options.throwOnFirstPageFailure) {
+        throw reason;
+      }
+      if (page > 0) {
+        addWarning(
+          warnings,
+          `Stopped ${label} pagination after ${page} pages because ${errorMessage(reason)}; partial data was preserved.`,
+        );
+        return items;
+      }
       addWarning(warnings, `Unable to load ${label}: ${errorMessage(reason)}.`);
       return items;
     }
@@ -279,9 +290,10 @@ function taskStageLookup(stages: PartialCaseStage[]): Map<string, string> {
   const lookup = new Map<string, string>();
   for (const stage of stages) {
     const stageName = text(stage.name, 'Unmapped UiPath stage');
-    const stageKey = stageKeyFor(stageName) ?? 'investigation';
+    const stageKey = stageKeyFor(stageName);
+    if (!stageKey) continue;
     const stageLabel = STAGE_DEFINITIONS.find((definition) => definition.key === stageKey)?.label
-      ?? 'Investigation and case management';
+      ?? 'Unmapped UiPath stage';
     const groups = Array.isArray(stage.tasks) ? stage.tasks : [];
     for (const group of groups) {
       const tasks = Array.isArray(group) ? group : [];
@@ -341,14 +353,27 @@ function normalizeStages(
   rawStages.forEach((stage, index) => {
     const backendLabel = text(stage.name, `Unnamed UiPath stage ${index + 1}`);
     const matchedKey = stageKeyFor(backendLabel);
-    const key = matchedKey ?? 'investigation';
-    const definition = STAGE_DEFINITIONS.find((candidate) => candidate.key === key)
-      ?? STAGE_DEFINITIONS[2];
     const execution = byExecutionName.get(canonicalIdentifier(backendLabel));
-    const status = stageStatus(stage.status ?? execution?.status);
     const stageId = text(stage.id, `backend-stage-${index + 1}`);
     const backendStatus = text(stage.status ?? execution?.status, 'Unknown');
-    const taskGroupCount = Array.isArray(stage.tasks) ? stage.tasks.length : 0;
+    const taskGroups = Array.isArray(stage.tasks) ? stage.tasks : [];
+    const taskGroupCount = taskGroups.length;
+    const taskReferenceCount = taskGroups.reduce((count, group) => (
+      count + (Array.isArray(group) ? group.length : 0)
+    ), 0);
+
+    if (!matchedKey) {
+      addWarning(
+        warnings,
+        `Unmapped UiPath stage "${backendLabel}" [id: ${stageId}; status: ${backendStatus}; task groups: ${taskGroupCount}; task references: ${taskReferenceCount}] was preserved only as source evidence and did not alter canonical stages.`,
+      );
+      return;
+    }
+
+    const key = matchedKey;
+    const definition = STAGE_DEFINITIONS.find((candidate) => candidate.key === key);
+    if (!definition) return;
+    const status = stageStatus(stage.status ?? execution?.status);
     const backendDetail = `Backend stage "${backendLabel}" [id: ${stageId}; status: ${backendStatus}; task groups: ${taskGroupCount}].`;
     const model: CaseStageModel = {
       key,
@@ -362,13 +387,6 @@ function normalizeStages(
       completedAt: text(execution?.completedTime, '') || undefined,
     };
 
-    if (!matchedKey) {
-      addWarning(
-        warnings,
-        `Mapped unknown UiPath stage "${backendLabel}" to canonical stage "${definition.label}".`,
-      );
-    }
-
     if (!mappedKeys.has(key)) {
       const targetIndex = canonicalStages.findIndex((candidate) => candidate.key === key);
       canonicalStages[targetIndex] = model;
@@ -380,13 +398,23 @@ function normalizeStages(
         warnings,
         `Merged duplicate UiPath stage "${backendLabel}" into canonical stage "${definition.label}".`,
       );
+      const existingUpdatedAt = Date.parse(existing.sourceUpdatedAt);
+      const modelUpdatedAt = Date.parse(model.sourceUpdatedAt);
+      const modelHasPrecedence = statusRank[model.status] > statusRank[existing.status]
+        || (statusRank[model.status] === statusRank[existing.status]
+          && (modelUpdatedAt > existingUpdatedAt
+            || (modelUpdatedAt === existingUpdatedAt
+              && model.sourceId.localeCompare(existing.sourceId) < 0)));
+      const preferred = modelHasPrecedence ? model : existing;
+      const secondary = modelHasPrecedence ? existing : model;
       canonicalStages[targetIndex] = {
         ...existing,
         description: `${existing.description} ${backendDetail}`,
-        status: statusRank[status] > statusRank[existing.status] ? status : existing.status,
-        sourceUpdatedAt: model.sourceUpdatedAt,
-        enteredAt: existing.enteredAt ?? model.enteredAt,
-        completedAt: existing.completedAt ?? model.completedAt,
+        sourceId: preferred.sourceId,
+        sourceUpdatedAt: preferred.sourceUpdatedAt,
+        status: preferred.status,
+        enteredAt: preferred.enteredAt ?? secondary.enteredAt,
+        completedAt: preferred.completedAt ?? secondary.completedAt,
       };
     }
   });
@@ -588,23 +616,17 @@ export class LiveCaseRepository implements CaseRepository {
     const configuredName = canonicalIdentifier(this.config.caseProcessName);
     const matchingProcesses = processes.filter((candidate) => [candidate.name, candidate.packageId, candidate.processKey]
       .some((value) => canonicalIdentifier(value) === configuredName));
-    const process = matchingProcesses.find((candidate) => text(candidate.folderKey, '') === configuredFolderKey)
-      ?? matchingProcesses.find((candidate) => !text(candidate.folderKey, ''));
+    const process = matchingProcesses.find((candidate) => text(candidate.folderKey, '') === configuredFolderKey);
 
     if (!process) {
       if (matchingProcesses.length > 0) {
         const folders = matchingProcesses.map((candidate) => text(candidate.folderKey, 'missing')).join(', ');
+        const missingIdentity = matchingProcesses.some((candidate) => !text(candidate.folderKey, ''));
         throw new Error(
-          `UiPath case process ${this.config.caseProcessName} was not found in configured folder ${configuredFolderKey}; discovered folders: ${folders}.`,
+          `UiPath case process ${this.config.caseProcessName} was not found in configured folder ${configuredFolderKey}; discovered folders: ${folders}.${missingIdentity ? ' A matching process folder identity is missing and cannot be trusted.' : ''}`,
         );
       }
       throw new Error(`UiPath case process not found: ${this.config.caseProcessName}`);
-    }
-    if (!text(process.folderKey, '')) {
-      addWarning(
-        warnings,
-        `The selected case process did not include a folder key; instance folder keys were used to enforce configured folder ${configuredFolderKey}.`,
-      );
     }
 
     const processKey = text(process.processKey, '');
@@ -618,6 +640,7 @@ export class LiveCaseRepository implements CaseRepository {
         ? { processKey, pageSize: SDK_PAGE_SIZE, cursor }
         : { processKey, pageSize: SDK_PAGE_SIZE }),
       warnings,
+      { throwOnFirstPageFailure: true },
     );
     const instances = discoveredInstances.filter((instance) => {
       const instanceFolderKey = text(instance.folderKey, '');
@@ -625,9 +648,9 @@ export class LiveCaseRepository implements CaseRepository {
       if (!instanceFolderKey) {
         addWarning(
           warnings,
-          `UiPath case instance ${instanceId} did not include a folder key; configured folder ${configuredFolderKey} is used for detail calls.`,
+          `Excluded UiPath case instance ${instanceId} because its folder identity is missing and cannot be verified against configured folder ${configuredFolderKey}.`,
         );
-        return true;
+        return false;
       }
       if (instanceFolderKey !== configuredFolderKey) {
         addWarning(

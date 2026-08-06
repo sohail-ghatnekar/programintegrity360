@@ -216,6 +216,30 @@ describe('LiveCaseRepository', () => {
     });
   });
 
+  it('rejects matching processes whose folder identity conflicts with configuration', async () => {
+    sdkMocks.casesGetAll.mockResolvedValue([
+      { ...targetProcess, folderKey: 'wrong-folder' },
+    ]);
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    await expect(repository.listCasesWithWarnings()).rejects.toThrow(
+      'discovered folders: wrong-folder',
+    );
+    expect(sdkMocks.instancesGetAll).not.toHaveBeenCalled();
+  });
+
+  it('rejects matching processes whose folder identity is missing', async () => {
+    sdkMocks.casesGetAll.mockResolvedValue([
+      { ...targetProcess, folderKey: undefined },
+    ]);
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    await expect(repository.listCasesWithWarnings()).rejects.toThrow(
+      'folder identity is missing',
+    );
+    expect(sdkMocks.instancesGetAll).not.toHaveBeenCalled();
+  });
+
   it('rejects conflicting instance folders and reports the excluded instance', async () => {
     sdkMocks.instancesGetAll.mockResolvedValue({
       items: [
@@ -262,20 +286,48 @@ describe('LiveCaseRepository', () => {
     });
   });
 
-  it('uses the configured folder key for detail calls when the instance omits folder identity', async () => {
+  it('rejects instances whose folder identity is missing', async () => {
     sdkMocks.instancesGetAll.mockResolvedValue({
-      items: [{ ...activeInstance, folderKey: undefined }],
+      items: [
+        { ...activeInstance, folderKey: undefined },
+        { ...activeInstance, instanceId: 'verified-instance' },
+      ],
       hasNextPage: false,
     });
     const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
 
-    const result = await repository.loadWorkspaceWithWarnings('active-instance');
+    const result = await repository.listCasesWithWarnings();
 
-    expect(sdkMocks.getStages).toHaveBeenCalledWith('active-instance', 'folder-key');
-    expect(sdkMocks.getExecutionHistory).toHaveBeenCalledWith('active-instance', 'folder-key');
+    expect(result.data.map((item) => item.id)).toEqual(['verified-instance']);
     expect(result.warnings).toEqual(expect.arrayContaining([
-      expect.stringContaining('did not include a folder key'),
+      expect.stringContaining('Excluded UiPath case instance active-instance'),
+      expect.stringContaining('folder identity is missing'),
     ]));
+  });
+
+  it('propagates a first-page case instance discovery failure', async () => {
+    sdkMocks.instancesGetAll.mockRejectedValue(new Error('PIMS access denied (403)'));
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    await expect(repository.listCasesWithWarnings()).rejects.toThrow('PIMS access denied (403)');
+  });
+
+  it('preserves verified instances when a later discovery page fails', async () => {
+    sdkMocks.instancesGetAll
+      .mockResolvedValueOnce({
+        items: [activeInstance],
+        hasNextPage: true,
+        nextCursor: { value: 'instances-page-2' },
+      })
+      .mockRejectedValueOnce(new Error('PIMS page two unavailable'));
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    const result = await repository.listCasesWithWarnings();
+
+    expect(result.data.map((item) => item.id)).toEqual(['active-instance']);
+    expect(result.warnings).toEqual([
+      expect.stringContaining('PIMS page two unavailable; partial data was preserved'),
+    ]);
   });
 
   it('exhausts instance, case-task, and folder-task cursor pages', async () => {
@@ -355,12 +407,61 @@ describe('LiveCaseRepository', () => {
     ]);
   });
 
-  it('returns six unique canonical stages while preserving unknown and duplicate backend details', async () => {
+  it('stops pagination when the SDK omits the next cursor', async () => {
+    sdkMocks.instancesGetAll.mockResolvedValue({
+      items: [activeInstance],
+      hasNextPage: true,
+    });
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    const result = await repository.listCasesWithWarnings();
+
+    expect(sdkMocks.instancesGetAll).toHaveBeenCalledOnce();
+    expect(result.data.map((item) => item.id)).toEqual(['active-instance']);
+    expect(result.warnings).toEqual([
+      expect.stringContaining('omitted the next cursor'),
+    ]);
+  });
+
+  it('stops pagination after the 100-page guard', async () => {
+    sdkMocks.instancesGetAll.mockImplementation((options?: { cursor?: { value: string } }) => {
+      const page = options?.cursor ? Number(options.cursor.value.replace('page-', '')) : 0;
+      return Promise.resolve({
+        items: page === 0 ? [activeInstance] : [],
+        hasNextPage: true,
+        nextCursor: { value: `page-${page + 1}` },
+      });
+    });
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    const result = await repository.listCasesWithWarnings();
+
+    expect(sdkMocks.instancesGetAll).toHaveBeenCalledTimes(100);
+    expect(result.data.map((item) => item.id)).toEqual(['active-instance']);
+    expect(result.warnings).toEqual([
+      expect.stringContaining('after 100 pages'),
+    ]);
+  });
+
+  it('returns six unique canonical stages without allowing unknown stages to influence them', async () => {
     sdkMocks.getStages.mockResolvedValue([
       { id: 'stage-intake', name: 'Alert intake and triage', status: 'Completed', tasks: [] },
       { id: 'stage-intake-duplicate', name: 'Alert intake and triage', status: 'Faulted', tasks: [] },
-      { id: 'stage-recovery', name: 'Recovery Hold', status: 'Paused', tasks: [] },
+      {
+        id: 'stage-recovery',
+        name: 'Recovery Hold',
+        status: 'Paused',
+        tasks: [[{ id: '123', name: 'Supervisor approval' }]],
+      },
     ]);
+    sdkMocks.getExecutionHistory.mockResolvedValue({
+      elementExecutions: [{
+        elementId: 'unknown-history',
+        elementName: 'Recovery Hold',
+        status: 'Running',
+        startedTime: '2026-08-04T11:00:00Z',
+      }],
+    });
     const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
 
     const result = await repository.loadWorkspaceWithWarnings('active-instance');
@@ -382,14 +483,53 @@ describe('LiveCaseRepository', () => {
     });
     expect(intake?.description).toContain('stage-intake-duplicate');
     expect(investigation).toMatchObject({
-      status: 'waiting',
+      status: 'not-started',
+      description: 'Investigator review and correlation.',
+      sourceId: 'case-stage:active-instance:investigation',
     });
-    expect(investigation?.description).toContain('Recovery Hold');
-    expect(investigation?.description).toContain('Paused');
+    expect(investigation?.enteredAt).toBeUndefined();
+    expect(investigation?.completedAt).toBeUndefined();
+    expect(result.data.caseTasks[0].stageLabel).toBe('Unmapped UiPath stage');
+    expect(result.data.executionTimeline).toEqual(expect.arrayContaining([
+      expect.objectContaining({ actor: 'Recovery Hold', sourceId: 'case-execution:unknown-history' }),
+    ]));
     expect(result.warnings).toEqual(expect.arrayContaining([
-      expect.stringContaining('unknown UiPath stage "Recovery Hold"'),
+      expect.stringContaining('Unmapped UiPath stage "Recovery Hold" [id: stage-recovery; status: Paused; task groups: 1; task references: 1]'),
       expect.stringContaining('duplicate UiPath stage "Alert intake and triage"'),
     ]));
+  });
+
+  it('uses deterministic precedence when duplicate known stages arrive in different orders', async () => {
+    const completed = {
+      id: 'stage-intake-completed',
+      name: 'Alert intake and triage',
+      status: 'Completed',
+      tasks: [],
+    };
+    const faulted = {
+      id: 'stage-intake-faulted',
+      name: 'Alert intake and triage',
+      status: 'Faulted',
+      tasks: [],
+    };
+    sdkMocks.getStages
+      .mockResolvedValueOnce([completed, faulted])
+      .mockResolvedValueOnce([faulted, completed]);
+    const repository = new LiveCaseRepository({} as UiPath, repositoryConfig);
+
+    const first = await repository.loadWorkspaceWithWarnings('active-instance');
+    const second = await repository.loadWorkspaceWithWarnings('active-instance');
+    const firstIntake = first.data.stages.find((stage) => stage.key === 'intake');
+    const secondIntake = second.data.stages.find((stage) => stage.key === 'intake');
+
+    expect(firstIntake).toMatchObject({
+      status: 'faulted',
+      sourceId: 'stage-intake-faulted',
+    });
+    expect(secondIntake).toMatchObject({
+      status: 'faulted',
+      sourceId: 'stage-intake-faulted',
+    });
   });
 
   it('preserves a usable workspace and records warnings when optional services fail', async () => {
@@ -543,6 +683,52 @@ describe('useCaseWorkspace', () => {
       'Instance folder identity was unavailable.',
       'Folder tasks are temporarily unavailable.',
     ]);
+  });
+
+  it('retains case discovery warnings when workspace loading fails', async () => {
+    authState.current = { isAuthenticated: true, isLoading: false, sdk: {} as UiPath };
+    const workspace = liveWorkspace();
+    const liveRepository = {
+      listCases: vi.fn().mockResolvedValue([workspace.case]),
+      loadWorkspace: vi.fn(),
+      refreshTasks: vi.fn(),
+      listCasesWithWarnings: vi.fn().mockResolvedValue({
+        data: [workspace.case],
+        warnings: ['Instance discovery stopped after a later-page outage.'],
+      }),
+      loadWorkspaceWithWarnings: vi.fn().mockRejectedValue(new Error('Case details denied (403)')),
+    };
+
+    const options = hookOptions(liveRepository);
+    const { result } = renderHook(() => useCaseWorkspace(options));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.warnings).toEqual([
+      'Instance discovery stopped after a later-page outage.',
+      'Unable to load live UiPath case data: Case details denied (403).',
+    ]);
+  });
+
+  it('surfaces the first-page PIMS discovery error without reporting an empty repository', async () => {
+    authState.current = { isAuthenticated: true, isLoading: false, sdk: {} as UiPath };
+    sdkMocks.instancesGetAll.mockRejectedValue(new Error('PIMS access denied (403)'));
+    const configuredOptions = hookOptions({
+      listCases: vi.fn(),
+      loadWorkspace: vi.fn(),
+      refreshTasks: vi.fn(),
+    });
+    const options = {
+      demoRepository: configuredOptions.demoRepository,
+      runtimeConfig: configuredOptions.runtimeConfig,
+    };
+
+    const { result } = renderHook(() => useCaseWorkspace(options));
+
+    await waitFor(() => expect(result.current.status).toBe('error'));
+    expect(result.current.warnings).toEqual([
+      'Unable to load live UiPath case data: PIMS access denied (403).',
+    ]);
+    expect(result.current.warnings.join(' ')).not.toContain('No instances found');
   });
 
   it('shows an authenticated failure until retry succeeds', async () => {
