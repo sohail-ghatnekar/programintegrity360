@@ -8,13 +8,28 @@
       "type": "CaseManagement",
       "input": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "caseInput": { "type": "object", "additionalProperties": true },
+          "claimInput": { "type": "object", "additionalProperties": true },
+          "memberInput": { "type": "object", "additionalProperties": true },
+          "providerInput": { "type": "object", "additionalProperties": true },
+          "serviceEventInput": { "type": "object", "additionalProperties": true },
+          "documentInput": { "type": "object", "additionalProperties": true }
+        },
+        "required": [
+          "caseInput",
+          "claimInput",
+          "memberInput",
+          "providerInput",
+          "serviceEventInput",
+          "documentInput"
+        ]
       },
       "output": {
         "type": "object",
         "properties": {}
       },
-      "displayName": "Trigger 1"
+      "displayName": "Medicaid claim intake"
     }
   ]
 }

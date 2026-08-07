@@ -2,8 +2,8 @@
   "docVersion": "1.0.0",
   "resource": {
     "name": "PI360EvidenceSnapshotAutomation_1",
-    "kind": "Process",
-    "type": "Process",
+    "kind": "process",
+    "type": "process",
     "apiVersion": "orchestrator.uipath.com/v1",
     "isOverridable": true,
     "dependencies": [

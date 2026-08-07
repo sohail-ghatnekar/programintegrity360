@@ -2,8 +2,8 @@
   "docVersion": "1.0.0",
   "resource": {
     "name": "PI360CaseManagerAgent_1",
-    "kind": "Process",
-    "type": "Agent",
+    "kind": "process",
+    "type": "agent",
     "apiVersion": "orchestrator.uipath.com/v1",
     "isOverridable": true,
     "dependencies": [
