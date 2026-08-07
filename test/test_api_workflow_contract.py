@@ -9,6 +9,9 @@ WORKFLOW_PATH = (
 ENTRY_POINTS_PATH = (
     ROOT / "ProgramIntegrity360" / "PI360ClaimDetailsApi" / "entry-points.json"
 )
+LIFECYCLE_WORKFLOW_PATH = (
+    ROOT / "ProgramIntegrity360" / "PI360ApiWorkflows" / "Main.json"
+)
 
 
 def load_json(path: Path):
@@ -58,3 +61,26 @@ def test_api_entry_point_exposes_case_type_and_claim_totals():
     assert "caseType" in entry_point["input"]["properties"]
     assert "claimCount" in entry_point["output"]["properties"]
     assert "totalBilled" in entry_point["output"]["properties"]
+
+
+def test_case_lifecycle_api_supports_every_simplified_case_stage_contract():
+    raw = LIFECYCLE_WORKFLOW_PATH.read_text()
+    for workflow_name in (
+        "IntakeClaimByCaseType",
+        "GetClaimDetailsByCaseType",
+        "ExtractServiceEvidence",
+        "ValidateEvidenceByCaseType",
+        "RequestHospitalRecord",
+        "IntakeHospitalRecord",
+        "ExtractInstitutionalEncounter",
+        "PrepareSupervisorPacket",
+        "CloseCaseAndEmitMetrics",
+        "SendClosureSummaryEmail",
+    ):
+        assert workflow_name in raw
+
+    assert "PI360 Service Evidence Extractor" in raw
+    assert "PI360 Institutional Encounter Extractor" in raw
+    assert "Observation" in raw
+    assert "locationConflictMinutes: 360" in raw
+    assert "responseTimer: 'P3D'" in raw

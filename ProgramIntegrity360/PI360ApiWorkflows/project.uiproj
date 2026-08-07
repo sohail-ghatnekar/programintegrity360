@@ -1,6 +1,6 @@
 {
   "Name": "PI360ApiWorkflows",
   "ProjectType": "Api",
-  "Description": "Program Integrity 360 API workflow contract simulator for intake, evidence lookups, provider records requests, and approved recovery handoff.",
+  "Description": "Simplified Program Integrity 360 API contracts for CaseType intake, IXP evidence stages, provider records, supervisor review, and closure communication.",
   "MainFile": "Main.json"
 }

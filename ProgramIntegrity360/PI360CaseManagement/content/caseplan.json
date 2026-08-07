@@ -2,7 +2,7 @@
     "id": "case-PI360CaseX",
     "version": "23.0.0",
     "name": "Program Integrity 360 Case",
-    "description": "State Medicaid program-integrity case lifecycle for Medicaid PCS and State Medicaid Hospice. CaseType selects the evidence path; deterministic rules identify review indicators and Agentic Caseworker recommendations route all material findings to human review. The case never makes a fraud, intent, coverage, or repayment determination.",
+    "description": "State Medicaid program-integrity case lifecycle for CaseType values MedicaidPCS and StateMedicaidHospice. CaseType selects the evidence path; deterministic rules identify review indicators and Agentic Caseworker recommendations route all material findings to human review. The case never makes a fraud, intent, coverage, or repayment determination.",
     "metadata": {
         "caseIdentifier": "PI-PCS",
         "caseAppEnabled": true,
@@ -238,6 +238,22 @@
                                         "var": "vINT1wf",
                                         "elementId": "Stage_Aintk1-tINT1case",
                                         "value": "IntakeClaimByCaseType"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vINT1type",
+                                        "var": "vINT1type",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vINT1case",
+                                        "var": "vINT1case",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
                                     }
                                 ]
                             }
@@ -368,16 +384,32 @@
                                 "rules": [[{"id": "rCLM2pull", "rule": "current-stage-entered"}]]
                             }],
                             "data": {
-                                "name": "PI360ApiWorkflows",
+                                "name": "PI360ClaimDetailsApi",
                                 "folderPath": "solution_folder",
                                 "inputs": [
                                     {
-                                        "name": "workflowName",
+                                        "name": "caseType",
                                         "type": "string",
-                                        "id": "vCLM2wf",
-                                        "var": "vCLM2wf",
+                                        "id": "vCLM2type",
+                                        "var": "vCLM2type",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "GetClaimDetailsByCaseType"
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCLM2case",
+                                        "var": "vCLM2case",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "claimThreshold",
+                                        "type": "double",
+                                        "id": "vCLM2thrs",
+                                        "var": "vCLM2thrs",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "2500"
                                     }
                                 ]
                             }
@@ -419,6 +451,22 @@
                                         "var": "vIXP3wf",
                                         "elementId": "Stage_Evcol2-tIXP3ext",
                                         "value": "ExtractServiceEvidence"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vIXP3type",
+                                        "var": "vIXP3type",
+                                        "elementId": "Stage_Evcol2-tIXP3ext",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vIXP3case",
+                                        "var": "vIXP3case",
+                                        "elementId": "Stage_Evcol2-tIXP3ext",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
                                     }
                                 ]
                             }
@@ -460,6 +508,38 @@
                                         "var": "vQAC3wf",
                                         "elementId": "Stage_Evcol2-tQAC3rec",
                                         "value": "ValidateEvidenceByCaseType"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vQAC3type",
+                                        "var": "vQAC3type",
+                                        "elementId": "Stage_Evcol2-tQAC3rec",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vQAC3case",
+                                        "var": "vQAC3case",
+                                        "elementId": "Stage_Evcol2-tQAC3rec",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "claimTotalBilled",
+                                        "type": "double",
+                                        "id": "vQAC3bill",
+                                        "var": "vQAC3bill",
+                                        "elementId": "Stage_Evcol2-tQAC3rec",
+                                        "value": "=js:Number(vars.claimInput?.totalBilled ?? vars.claimInput?.total_billed ?? 0)"
+                                    },
+                                    {
+                                        "name": "hospitalRecordAvailable",
+                                        "type": "boolean",
+                                        "id": "vQAC3hosp",
+                                        "var": "vQAC3hosp",
+                                        "elementId": "Stage_Evcol2-tQAC3rec",
+                                        "value": "=js:Boolean(vars.documentInput?.hospitalRecordAvailable ?? vars.documentInput?.hospital_record_available ?? false)"
                                     }
                                 ]
                             }
@@ -929,6 +1009,30 @@
                                         "value": "RequestHospitalRecord"
                                     },
                                     {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vREQ6type",
+                                        "var": "vREQ6type",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vREQ6case",
+                                        "var": "vREQ6case",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "providerId",
+                                        "type": "string",
+                                        "id": "vREQ6prov",
+                                        "var": "vREQ6prov",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=js:vars.providerInput?.providerId ?? vars.providerInput?.provider_id"
+                                    },
+                                    {
                                         "name": "investigatorProceed",
                                         "type": "boolean",
                                         "id": "vREQ6gate",
@@ -1007,6 +1111,22 @@
                                         "var": "vRSP6wf",
                                         "elementId": "Stage_Prreq6-tRSP6in",
                                         "value": "IntakeHospitalRecord"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vRSP6type",
+                                        "var": "vRSP6type",
+                                        "elementId": "Stage_Prreq6-tRSP6in",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vRSP6case",
+                                        "var": "vRSP6case",
+                                        "elementId": "Stage_Prreq6-tRSP6in",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
                                     }
                                 ]
                             }
@@ -1048,6 +1168,22 @@
                                         "var": "vREF6wf",
                                         "elementId": "Stage_Prreq6-tREF6corr",
                                         "value": "ExtractInstitutionalEncounter"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vREF6type",
+                                        "var": "vREF6type",
+                                        "elementId": "Stage_Prreq6-tREF6corr",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vREF6case",
+                                        "var": "vREF6case",
+                                        "elementId": "Stage_Prreq6-tREF6corr",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
                                     }
                                 ]
                             }
@@ -1157,6 +1293,22 @@
                                         "var": "vPKT7wf",
                                         "elementId": "Stage_Supv7a-tPKT7prep",
                                         "value": "PrepareSupervisorPacket"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vPKT7type",
+                                        "var": "vPKT7type",
+                                        "elementId": "Stage_Supv7a-tPKT7prep",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vPKT7case",
+                                        "var": "vPKT7case",
+                                        "elementId": "Stage_Supv7a-tPKT7prep",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
                                     }
                                 ]
                             }
@@ -1304,6 +1456,30 @@
                                         "var": "vCLS9wf",
                                         "elementId": "Stage_Clos9a-tCLS9case",
                                         "value": "CloseCaseAndEmitMetrics"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vCLS9type",
+                                        "var": "vCLS9type",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCLS9id",
+                                        "var": "vCLS9id",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "supervisorApproved",
+                                        "type": "boolean",
+                                        "id": "vCLS9sup",
+                                        "var": "vCLS9sup",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=js:String(vars.supervisorDecision ?? '').toLowerCase().includes('approve')"
                                     }
                                 ]
                             }
@@ -1345,6 +1521,30 @@
                                         "var": "vAUD9wf",
                                         "elementId": "Stage_Clos9a-tAUD9final",
                                         "value": "SendClosureSummaryEmail"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vAUD9type",
+                                        "var": "vAUD9type",
+                                        "elementId": "Stage_Clos9a-tAUD9final",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vAUD9case",
+                                        "var": "vAUD9case",
+                                        "elementId": "Stage_Clos9a-tAUD9final",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "supervisorApproved",
+                                        "type": "boolean",
+                                        "id": "vAUD9sup",
+                                        "var": "vAUD9sup",
+                                        "elementId": "Stage_Clos9a-tAUD9final",
+                                        "value": "=js:String(vars.supervisorDecision ?? '').toLowerCase().includes('approve')"
                                     }
                                 ]
                             }
