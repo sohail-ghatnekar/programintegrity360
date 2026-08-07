@@ -2,63 +2,148 @@
   "version": "1.0",
   "id": "smoke-test",
   "name": "Quick Rules Smoke Test",
-  "description": "Basic deterministic checks for Program Integrity quick-rule routing.",
+  "description": "Deterministic PCS and state Medicaid hospice routing checks.",
   "evaluatorRefs": [
     "JsonSimilarityEvaluator"
   ],
   "evaluations": [
     {
-      "id": "test-1-provider-wait",
-      "name": "Provider response still pending",
+      "id": "pcs-supervisor-gate",
+      "name": "PCS adverse action requires supervisor",
       "inputs": {
         "case_id": "PI-PCS-2026-0041",
+        "case_type": "MedicaidPCS",
         "current_stage": "Investigation",
-        "risk_score": 72,
-        "unsupported_units": 12,
+        "risk_score": 86,
+        "unsupported_units": 24,
         "missing_evidence_count": 0,
-        "provider_response_needed": true,
-        "provider_response_received": false,
+        "provider_response_needed": false,
+        "provider_response_received": true,
         "supervisor_approved": false,
-        "proposed_action": "wait for provider response"
+        "proposed_action": "refer for audit and overpayment recovery"
       },
       "evaluationCriterias": {
         "JsonSimilarityEvaluator": {
           "expectedOutput": {
             "case_id": "PI-PCS-2026-0041",
             "status": "blocked",
-            "recommended_stage": "ProviderResponse",
+            "recommended_stage": "SupervisorEscalation",
             "blockers": [
-              "await_provider_response"
+              "supervisor_approval_required"
             ],
-            "provider_wait_required": true,
-            "evidence_gap": false
+            "supervisor_gate_required": true,
+            "provider_wait_required": false,
+            "evidence_gap": false,
+            "location_conflict_minutes": 0
           }
         }
       }
     },
     {
-      "id": "test-2-clear-investigation",
-      "name": "Clear for case manager review",
+      "id": "hospice-provider-wait",
+      "name": "Hospice threshold starts provider wait",
       "inputs": {
-        "case_id": "PI-PCS-2026-0042",
+        "case_id": "PI-HSP-2026-0042",
+        "case_type": "StateMedicaidHospice",
+        "current_stage": "IntakeTriage",
+        "claim_total_billed": 3250.0,
+        "claim_threshold": 2500.0,
+        "unsupported_units": 1,
+        "missing_evidence_count": 0,
+        "provider_response_needed": false,
+        "provider_response_received": false,
+        "supervisor_approved": false,
+        "proposed_action": "continue evidence acquisition"
+      },
+      "evaluationCriterias": {
+        "JsonSimilarityEvaluator": {
+          "expectedOutput": {
+            "case_id": "PI-HSP-2026-0042",
+            "status": "blocked",
+            "recommended_stage": "ProviderResponse",
+            "blockers": [
+              "await_provider_response"
+            ],
+            "provider_wait_required": true,
+            "evidence_gap": false,
+            "location_conflict_minutes": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "hospice-location-conflict",
+      "name": "Hospice home service overlaps encounter by 360 minutes",
+      "inputs": {
+        "case_id": "PI-HSP-2026-0042",
+        "case_type": "StateMedicaidHospice",
         "current_stage": "Evidence",
-        "risk_score": 60,
-        "unsupported_units": 8,
+        "claim_total_billed": 3250.0,
+        "claim_threshold": 2500.0,
+        "unsupported_units": 1,
         "missing_evidence_count": 0,
         "provider_response_needed": false,
         "provider_response_received": true,
+        "claimed_service_start_at": "2026-07-14T09:00:00-05:00",
+        "claimed_service_end_at": "2026-07-14T15:00:00-05:00",
+        "encounter_arrival_at": "2026-07-14T08:20:00-05:00",
+        "encounter_discharge_at": "2026-07-16T10:00:00-05:00",
+        "patient_class": "Observation",
         "supervisor_approved": false,
         "proposed_action": "continue investigation"
       },
       "evaluationCriterias": {
         "JsonSimilarityEvaluator": {
           "expectedOutput": {
-            "case_id": "PI-PCS-2026-0042",
+            "case_id": "PI-HSP-2026-0042",
             "status": "clear_for_case_manager",
             "recommended_stage": "Investigation",
             "blockers": [],
+            "warnings": [
+              "location_time_conflict_detected",
+              "observation_status_not_inpatient"
+            ],
             "provider_wait_required": false,
-            "evidence_gap": false
+            "evidence_gap": false,
+            "location_conflict_minutes": 360
+          }
+        }
+      }
+    },
+    {
+      "id": "hospice-observation-guardrail",
+      "name": "Observation class is not restated as inpatient",
+      "inputs": {
+        "case_id": "PI-HSP-2026-0042",
+        "case_type": "StateMedicaidHospice",
+        "current_stage": "Evidence",
+        "claim_total_billed": 3250.0,
+        "claim_threshold": 2500.0,
+        "unsupported_units": 0,
+        "missing_evidence_count": 0,
+        "provider_response_needed": false,
+        "provider_response_received": true,
+        "claimed_service_start_at": "2026-07-16T13:00:00-05:00",
+        "claimed_service_end_at": "2026-07-16T16:00:00-05:00",
+        "encounter_arrival_at": "2026-07-14T08:20:00-05:00",
+        "encounter_discharge_at": "2026-07-16T10:00:00-05:00",
+        "patient_class": "Observation",
+        "supervisor_approved": false,
+        "proposed_action": "close review"
+      },
+      "evaluationCriterias": {
+        "JsonSimilarityEvaluator": {
+          "expectedOutput": {
+            "case_id": "PI-HSP-2026-0042",
+            "status": "clear_for_case_manager",
+            "recommended_stage": "Investigation",
+            "blockers": [],
+            "warnings": [
+              "observation_status_not_inpatient"
+            ],
+            "provider_wait_required": false,
+            "evidence_gap": false,
+            "location_conflict_minutes": 0
           }
         }
       }

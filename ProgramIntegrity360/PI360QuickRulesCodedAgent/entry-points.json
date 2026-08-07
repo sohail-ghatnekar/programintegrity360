@@ -15,6 +15,11 @@
                         "title": "Case Id",
                         "type": "string"
                     },
+                    "case_type": {
+                        "description": "Required intake type: MedicaidPCS or StateMedicaidHospice.",
+                        "title": "Case Type",
+                        "type": "string"
+                    },
                     "current_stage": {
                         "default": "Investigation",
                         "description": "Current case stage or state when the rules check starts.",
@@ -23,6 +28,12 @@
                     },
                     "risk_score": {
                         "type": "integer"
+                    },
+                    "claim_total_billed": {
+                        "type": "number"
+                    },
+                    "claim_threshold": {
+                        "type": "number"
                     },
                     "unsupported_units": {
                         "type": "integer"
@@ -36,6 +47,21 @@
                     "provider_response_received": {
                         "type": "boolean"
                     },
+                    "claimed_service_start_at": {
+                        "type": "string"
+                    },
+                    "claimed_service_end_at": {
+                        "type": "string"
+                    },
+                    "encounter_arrival_at": {
+                        "type": "string"
+                    },
+                    "encounter_discharge_at": {
+                        "type": "string"
+                    },
+                    "patient_class": {
+                        "type": "string"
+                    },
                     "supervisor_approved": {
                         "type": "boolean"
                     },
@@ -46,7 +72,9 @@
                         "type": "string"
                     }
                 },
-                "required": []
+                "required": [
+                    "case_type"
+                ]
             },
             "output": {
                 "type": "object",
@@ -107,6 +135,12 @@
                         "description": "True when material evidence is missing.",
                         "title": "Evidence Gap",
                         "type": "boolean"
+                    },
+                    "location_conflict_minutes": {
+                        "default": 0,
+                        "description": "Minutes where claimed home service intersects the institutional encounter.",
+                        "title": "Location Conflict Minutes",
+                        "type": "integer"
                     }
                 },
                 "required": [
