@@ -1,0 +1,80 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "content/Workflow.json",
+      "uniqueId": "e49074a1-3489-4730-8eeb-d982f8ddcc92",
+      "displayName": "PI360 Claim Details API",
+      "type": "Api",
+      "input": {
+        "type": "object",
+        "properties": {
+          "caseType": {
+            "type": "string",
+            "description": "MedicaidPCS or StateMedicaidHospice."
+          },
+          "caseId": {
+            "type": "string",
+            "description": "Expected Program Integrity case identifier."
+          },
+          "claimThreshold": {
+            "type": "number",
+            "description": "Hospice intake threshold; defaults to 2500."
+          }
+        },
+        "required": [
+          "caseType"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string"
+          },
+          "caseType": {
+            "type": "string"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "recordsAffected": {
+            "type": "number"
+          },
+          "claimCount": {
+            "type": "number"
+          },
+          "lineCount": {
+            "type": "number"
+          },
+          "totalUnits": {
+            "type": "number"
+          },
+          "totalBilled": {
+            "type": "number"
+          },
+          "claimThreshold": {
+            "type": "number"
+          },
+          "thresholdExceeded": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "sourceEndpoint": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "required": []
+      }
+    }
+  ]
+}

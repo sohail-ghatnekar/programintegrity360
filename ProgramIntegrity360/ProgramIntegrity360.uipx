@@ -77,6 +77,11 @@
             "Type": "Process",
             "ProjectRelativePath": "PI360DecisionPacketAutomation/project.uiproj",
             "Id": "6f19e849-d1e4-4509-a32f-e4a2335996ac"
+        },
+        {
+            "Type": "Api",
+            "ProjectRelativePath": "PI360ClaimDetailsApi/project.uiproj",
+            "Id": "2b115f5e-5658-4c0e-b9b3-8abc0b169713"
         }
     ]
 }
