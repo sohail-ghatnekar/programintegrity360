@@ -11,5 +11,6 @@
 **/*.log
 **/*.nupkg
 **/.playwright-mcp/
+.worktrees/
 ProgramIntegrity360/.solution-packages/
 *.uis
