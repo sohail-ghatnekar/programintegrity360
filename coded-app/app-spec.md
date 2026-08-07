@@ -2,8 +2,8 @@
 
 > **Type:** UiPath **Coded Web App** (React + TypeScript, Vite) built per `/uipath-coded-apps`.
 > **SDK:** `@uipath/uipath-typescript` (subpath imports: `/entities`, `/tasks`, `/buckets`).
-> **Auth:** OAuth 2.0 **Authorization Code + PKCE** via `new UiPath()` + `sdk.initialize()` (web-app flow).
-> **Deploy target:** org `uipathlabs`, tenant `Playground`, base URL `https://staging.api.uipath.com` (see `solution/deploy.md`). This spec is authored on disk only — **no `uip` CLI is run here.**
+> **Auth:** OAuth 2.0 **Authorization Code + PKCE** for public client `57201488-1566-4f9b-a696-1b3773c2af33`; no client secret. The app performs the exact-scope PKCE exchange, then hands the token to the UiPath SDK.
+> **Deploy target:** org `uipathlabs`, tenant `Playground`, folder `AMER Presales/Public Sector/ProgramIntegrity360`, API base `https://api.uipath.com`, hosted URL `https://uipathlabs.uipath.host/pi360-coded-app` (see `solution/deploy.md`).
 >
 > **This is a demo built on synthetic data.** Nothing here is a real person, provider, or claim. Every number, ID, and date in this spec matches `CANON.md` exactly.
 

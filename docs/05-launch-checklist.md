@@ -1,18 +1,18 @@
 # Launch Checklist — Program Integrity 360
 
 A short, repeatable runbook to get the demo into a known-good state and recover fast if something drifts.
-Target environment: **staging.uipath.com / uipathlabs / Playground**. All data is **synthetic**.
+Target environment: **cloud.uipath.com / uipathlabs / Playground / AMER Presales/Public Sector/ProgramIntegrity360**. All data is **synthetic**.
 
 ---
 
 ## T-1 day — provisioning (run once)
-- [ ] `uip login` to staging.uipath.com, org **uipathlabs**, tenant **Playground** (interactive browser).
+- [ ] `uip login` to cloud.uipath.com, org **uipathlabs**, tenant **Playground** (interactive browser).
 - [ ] Deploy the solution per `solution/deploy.md` (`pack → publish → deploy → activate`, name **Program Integrity 360**).
 - [ ] Confirm Data Fabric entities exist (9): ProgramIntegrityCase, Provider, Attendant, Claim, EVVVisit,
       RiskSignal, EvidenceDocument, InvestigationAction, Decision — see `platform/data-fabric-and-plumbing.md`.
 - [ ] Confirm queues (`pi-evidence-collection`, `pi-human-review`, …), bucket `pi-evidence`, and the two
       triggers (`tr-intake-alert`, `tr-records-response`) are present.
-- [ ] Confirm the Coded App **Program Integrity 360** is published and reachable; OAuth-PKCE login works.
+- [ ] Confirm `https://uipathlabs.uipath.host/pi360-coded-app` is reachable and external app `57201488-1566-4f9b-a696-1b3773c2af33` grants all 18 configured user scopes before testing OAuth-PKCE login.
 - [ ] Confirm the 4 agents (Triage, Evidence Correlation, Investigation Planning, Summary) are deployed and
       bound to the case type.
 - [ ] Confirm two demo users exist with correct roles: `inv.taylor` (Investigator), `sup.morgan` (Supervisor).

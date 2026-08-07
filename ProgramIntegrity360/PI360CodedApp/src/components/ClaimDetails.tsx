@@ -5,6 +5,7 @@ import { DocumentViewer } from './ui/DocumentViewer';
 import { ClaimsChatPanel } from './ClaimsChatPanel';
 import { useAuth } from '../hooks/useAuth';
 import { createClaimComment, fetchClaimComments, type ClaimComment } from '../services/commentsEntity';
+import { buildMaestroProcessUrl, portalOriginFromApiBase } from '../services/uipath/cloudLinks';
 
 type UiPathTaskStatus = 'Unassigned' | 'Pending' | 'Completed';
 
@@ -90,18 +91,7 @@ function findTaskLinkFromProcessExecutionHistory(executionHistory: any): string 
 }
 
 function getPortalOrigin(): string {
-  const configuredBaseUrl = import.meta.env.VITE_UIPATH_BASE_URL;
-
-  if (configuredBaseUrl) {
-    try {
-      const parsed = new URL(configuredBaseUrl);
-      return parsed.origin.replace('://staging.api.', '://staging.').replace('://cloud.api.', '://cloud.');
-    } catch {
-      return 'https://staging.uipath.com';
-    }
-  }
-
-  return 'https://staging.uipath.com';
+  return portalOriginFromApiBase(import.meta.env.VITE_UIPATH_BASE_URL);
 }
 
 function buildTaskLink(taskId: number, organizationId: string, tenantName: string): string {
@@ -280,7 +270,7 @@ export const ClaimDetails = ({ selectedClaim, sdk, onBack, onRefresh }: ClaimDet
 
   // Use the live Maestro process key and folder key for deeplinks.
   const PROCESS_KEY = import.meta.env.VITE_MAESTRO_PROCESS_KEY || 'd0d245fb-a685-4784-9320-5de1601d3463';
-  const DEFAULT_FOLDER_KEY = import.meta.env.VITE_MAESTRO_FOLDER_KEY || '88686c50-0dff-4b68-a7d9-77e4ef9db33b';
+  const DEFAULT_FOLDER_KEY = import.meta.env.VITE_MAESTRO_FOLDER_KEY || '5db31dd1-1073-4f9e-b44b-76f5484e03c4';
 
   // Open Maestro process in new tab
   const openMaestroProcess = () => {
@@ -297,7 +287,14 @@ export const ClaimDetails = ({ selectedClaim, sdk, onBack, onRefresh }: ClaimDet
       return;
     }
 
-    const url = `https://staging.uipath.com/uipathlabs/Playground/maestro_/processes/${PROCESS_KEY}/instances/${maestroKey}?folderKey=${folderKey}`;
+    const url = buildMaestroProcessUrl({
+      folderKey,
+      instanceKey: maestroKey,
+      organizationName: 'uipathlabs',
+      portalOrigin: getPortalOrigin(),
+      processKey: PROCESS_KEY,
+      tenantName: 'Playground',
+    });
     window.open(url, '_blank');
   };
 

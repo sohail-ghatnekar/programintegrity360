@@ -1,0 +1,32 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation",
+    "kind": "Package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "fileName": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation.0.5.1.nupkg",
+      "fileReference": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation_0.5.1",
+      "name": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation"
+    },
+    "locks": [],
+    "key": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation:0.5.1",
+    "files": [
+      {
+        "key": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation_0.5.1",
+        "name": "ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation.0.5.1.nupkg",
+        "url": "https://cloud.uipath.com/uipathlabs/Playground/orchestrator_/odata/Processes/UiPath.Server.Configuration.OData.DownloadPackage(key='ProgramIntegrity360.Rpa.PI360DecisionPacketAutomation:0.5.1')?feedId=93949a13-9388-45bb-af90-5783a67e1b33",
+        "kind": "Package",
+        "version": "0.5.1"
+      }
+    ]
+  }
+}

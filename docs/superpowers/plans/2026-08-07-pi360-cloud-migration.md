@@ -202,14 +202,14 @@ Run `uip solution upload ProgramIntegrity360 --output json` and verify every pro
 **Files:**
 - Modify: `ProgramIntegrity360/PI360CodedApp/uipath.json`
 - Generated: `ProgramIntegrity360/PI360CodedApp/dist/`
-- Generated: `ProgramIntegrity360/PI360CodedApp/.uipath/pi360-coded-app.0.5.0.nupkg`
+- Generated: `ProgramIntegrity360/PI360CodedApp/.uipath/pi360-coded-app.0.5.3.nupkg`
 - Generated: `ProgramIntegrity360/PI360CodedApp/.uipath/app.config.json`
 
 **Interfaces:**
 - Consumes: public OAuth client, exact scopes, and destination folder identities
 - Produces: hosted coded web app at the approved redirect URL
 
-- [ ] **Step 1: Run full local verification**
+- [x] **Step 1: Run full local verification**
 
 Run from `ProgramIntegrity360/PI360CodedApp`:
 
@@ -221,17 +221,17 @@ npm run build
 
 Expected: tests, lint, and production build exit zero; `dist/index.html` exists.
 
-- [ ] **Step 2: Pack version 0.5.0**
+- [x] **Step 2: Pack version 0.5.3**
 
-Run `uip codedapp pack dist -n pi360-coded-app --version 0.5.0 --description "Program Integrity 360 investigator and supervisor case workbench" --author "UiPath Public Sector" --content-type webapp`.
+Run `uip codedapp pack dist -n pi360-coded-app --version 0.5.3 --description "Program Integrity 360 investigator and supervisor case workbench" --author "UiPath Public Sector" --content-type webapp`.
 
-- [ ] **Step 3: Publish and deploy non-interactively**
+- [x] **Step 3: Publish and deploy non-interactively**
 
-Run `uip codedapp publish -n pi360-coded-app --version 0.5.0 --output json`, verify `.uipath/app.config.json`, then run `uip codedapp deploy -n pi360-coded-app --folder-key <destination-folder-guid> --org-name uipathlabs --output json`.
+Run `uip codedapp publish -n pi360-coded-app --version 0.5.3 --output json`, verify `.uipath/app.config.json`, then run `uip codedapp deploy -n pi360-coded-app --version 0.5.3 --folder-key <destination-folder-guid> --org-name uipathlabs --output json`.
 
 Expected `appUrl`: `https://uipathlabs.uipath.host/pi360-coded-app`.
 
-- [ ] **Step 4: Verify hosted OAuth metadata**
+- [x] **Step 4: Verify hosted OAuth metadata**
 
 Fetch the hosted `index.html` and verify the platform-injected client ID, production API base, organization, tenant, exact scopes, and deployed redirect URI. Do not print tokens.
 
@@ -275,4 +275,3 @@ Working directory for npm commands: `ProgramIntegrity360/PI360CodedApp`.
 - [ ] **Step 5: Commit migration metadata and configuration**
 
 Stage only migration-owned files and commit with message `chore: migrate PI360 to production cloud`.
-

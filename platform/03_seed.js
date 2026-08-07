@@ -1,10 +1,10 @@
 // Step 1c: seed records from data/*.json. Maps display labels -> choice NumberIds; serializes nested JSON.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
-const DIR = '/private/tmp/claude-502/-Users-sohail-ghatnekar/eb288e80-a012-4b20-9273-d4e15126dbf6/scratchpad/pi360';
-const DATA = '/Users/sohail.ghatnekar/Dev/program-integrity-360/data';
-const CS = JSON.parse(fs.readFileSync(DIR + '/choicesets.json', 'utf8'));
-const ENT = JSON.parse(fs.readFileSync(DIR + '/entities.json', 'utf8'));
+const path = require('path');
+const DATA = path.resolve(__dirname, '..', 'data');
+const CS = JSON.parse(fs.readFileSync(path.join(__dirname, 'cloud-playground-choiceset-ids.json'), 'utf8'));
+const ENT = JSON.parse(fs.readFileSync(path.join(__dirname, 'cloud-playground-entity-ids.json'), 'utf8'));
 
 function uip(args) {
   const raw = execFileSync('uip', [...args, '--output', 'json'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });

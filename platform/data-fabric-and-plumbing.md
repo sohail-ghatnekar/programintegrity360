@@ -2,7 +2,7 @@
 
 > Authored per `/uipath-platform`. The operational substrate under **Program Integrity 360** (case **PI-PCS-2026-0041**): the 9 Data Fabric entities, Orchestrator queues / storage buckets / triggers / jobs, the folder + role model, and the assets/credentials for the mocked legacy systems.
 >
-> **This document specifies `uip df` / `uip or` / `uip resource` operations as on-disk notes. It does NOT run the CLI.** Deploy target: org **`uipathlabs`**, tenant **`Playground`**, base URL `https://staging.api.uipath.com` (see `../solution/deploy.md`). Every ID/number matches `CANON.md`.
+> **This document specifies `uip df` / `uip or` / `uip resource` operations as on-disk notes.** Deploy target: org **`uipathlabs`**, tenant **`Playground`**, folder **`AMER Presales/Public Sector/ProgramIntegrity360`**, API base `https://api.uipath.com` (see `../solution/deploy.md`). Every ID/number matches `CANON.md`.
 >
 > **Positioning.** This layer *stores and moves* data. It computes no risk signals and makes no determination. `deterministic-calc-v1` does the math; the Stage 5 / Stage 7 human gates do the deciding. **Synthetic data only.**
 
@@ -14,15 +14,17 @@ A single **Solution folder** houses everything; a personal/dev folder is used fo
 
 ```
 Playground (tenant)
-└── Program Integrity 360           ← Solution folder (created by solution deploy)
-    ├── Processes        (API workflows, RPA robots, BPMN subprocesses, coded-app deployment target)
-    ├── Queues           (pi-evidence-collection, pi-document-extraction, pi-human-review,
-    │                     pi-recovery-writeback, pi-closure)
-    ├── Storage Buckets  (pi-evidence)
-    ├── Triggers         (tr-intake-alert, tr-records-response, tr-* queue triggers)
-    ├── Assets           (mock-system URLs, IXP thresholds, SLA config, rate)
-    ├── Credentials      (CareMgmt_*, EvvPortal_*, mock-api-key, records-inbox-*)
-    └── Data Fabric      (tenant-scoped — 9 entities, see §1; folder-scoped writes via --folder-key)
+└── AMER Presales
+    └── Public Sector
+        └── ProgramIntegrity360     ← Solution folder (created by solution deploy)
+            ├── Processes        (API workflows, RPA robots, BPMN subprocesses, coded-app deployment target)
+            ├── Queues           (pi-evidence-collection, pi-document-extraction, pi-human-review,
+            │                     pi-recovery-writeback, pi-closure)
+            ├── Storage Buckets  (pi-evidence)
+            ├── Triggers         (tr-intake-alert, tr-records-response, tr-* queue triggers)
+            ├── Assets           (mock-system URLs, IXP thresholds, SLA config, rate)
+            ├── Credentials      (CareMgmt_*, EvvPortal_*, mock-api-key, records-inbox-*)
+            └── Data Fabric      (tenant-scoped — 9 entities, see §1; folder-scoped writes via --folder-key)
 ```
 
 Notes:

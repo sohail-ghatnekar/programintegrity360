@@ -216,6 +216,8 @@ Every mutation writes an `InvestigationAction` row → complete audit trail.
 ## 11. Deployment target (per user request)
 
 - Solution name: **Program Integrity 360**
-- Target cloud: **staging.uipath.com**, organization **uipathlabs**, tenant **Playground**
-- Requires interactive `uip login` (browser) then `uip solution pack/publish/deploy/activate`.
+- Target cloud: **cloud.uipath.com**, organization **uipathlabs**, tenant **Playground**
+- Folder: **AMER Presales/Public Sector/ProgramIntegrity360**
+- Hosted app: **https://uipathlabs.uipath.host/pi360-coded-app**
+- Requires interactive `uip login` (browser) before publish, deploy, or activation operations.
 - See `solution/deploy.md` for the exact command sequence.

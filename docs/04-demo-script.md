@@ -29,7 +29,8 @@ The case workspace keeps evidence, decisions, and activity on one selected recor
 2. Confirm the header source badge before speaking. Use `Demo data` for the deterministic presentation path. For a pre-approved live proof, click `Connect UiPath`, complete OAuth, and proceed only when the badge reads `Live UiPath` and the intended case/task records are visible.
 3. In `Command center`, confirm that `PI-PCS-2026-0041` is present. Its expected demo state is `High`, `In Review`, and `Investigation and case management`.
 4. For the live completion branch, pre-verify a published, non-production test task and its Action Center URL. Do not complete a real operational task during the presentation.
-5. Do not describe the target as deployed. The intended deployment location is `staging.uipath.com`, organization `uipathlabs`, tenant `Playground`, folder `AMER Presales/Public Sector/ProgramIntegrity360 1`, folder key `25fea2ac-3f4e-4f6f-a7f6-a3cab1b92be4`.
+5. The deployed target is `cloud.uipath.com`, organization `uipathlabs`, tenant `Playground`, folder `AMER Presales/Public Sector/ProgramIntegrity360`, folder key `5db31dd1-1073-4f9e-b44b-76f5484e03c4`. Open the coded app at `https://uipathlabs.uipath.host/pi360-coded-app`.
+6. Before using the live branch, verify external app `57201488-1566-4f9b-a696-1b3773c2af33` grants all 18 configured user scopes. Migration validation currently shows the three Data Fabric scopes still need to be added to that external app.
 
 **Deterministic fallback:** If OAuth fails, live discovery fails, or the live artifact is unpublished, use `Use demo data` when offered, verify the `Demo data` badge, and continue the scripted record. In demo mode, no action completes a real task and no simulated completion is shown. Unpublished live case, task, and agent artifacts still require contract verification after publication.
 

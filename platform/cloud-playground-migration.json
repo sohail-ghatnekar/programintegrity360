@@ -1,0 +1,59 @@
+{
+  "environment": {
+    "portalUrl": "https://cloud.uipath.com",
+    "apiUrl": "https://api.uipath.com",
+    "organization": "uipathlabs",
+    "tenant": "Playground"
+  },
+  "parentFolder": {
+    "path": "AMER Presales/Public Sector",
+    "key": "7ea9add1-8aa5-4829-8939-0964c751b123"
+  },
+  "solution": {
+    "packageName": "ProgramIntegrity360",
+    "packageVersion": "0.5.1",
+    "packageSha256": "067a287fa2a3ca93b79efe2eb82b5c19e41b4d11ecabaea262b3098ee5b1aada",
+    "deploymentName": "ProgramIntegrity360-cloud-0.5.1",
+    "folderName": "ProgramIntegrity360",
+    "deploymentKey": "7f49503d-481f-4a01-a625-3433f541d464",
+    "pipelineDeploymentId": "30c60010-f31f-4d6e-d26d-08def493cb98",
+    "configurationKey": "41a6ffce-b53d-46cd-8026-8195521aca9c",
+    "instanceId": "4612844a-c4e9-4830-9c4f-cecbe05b1d40_v7",
+    "folderPath": "AMER Presales/Public Sector/ProgramIntegrity360",
+    "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+    "folderId": 2182825,
+    "activationStatus": "SuccessfulActivate",
+    "studioWebSolutionId": "494be60c-8bb2-4478-3beb-08def46ec69f",
+    "studioWebDesignerUrl": "https://cloud.uipath.com/uipathlabs/studio_/designer/68806a4b-fe40-471c-a67e-1618fd306607?solutionId=494be60c-8bb2-4478-3beb-08def46ec69f",
+    "studioWebProjectCount": 15,
+    "deployedProcessCount": 14
+  },
+  "codedWebApp": {
+    "name": "pi360-coded-app",
+    "version": "0.5.3",
+    "clientId": "57201488-1566-4f9b-a696-1b3773c2af33",
+    "localRedirectUri": "http://localhost:5173",
+    "deployedRedirectUri": "https://uipathlabs.uipath.host/pi360-coded-app",
+    "systemName": "ID278b47bdb4d24033ab498eb94bec6e8b",
+    "packageSha256": "5073818f90acaf2024e0bc17a1300d3401db7c9770305c0ce1aedc814cdafb90",
+    "appUrl": "https://uipathlabs.uipath.host/pi360-coded-app",
+    "deploymentId": "12eb1198-bd15-49e8-a009-d17410ad0477",
+    "deploymentRevision": 4,
+    "oauthValidation": {
+      "status": "BlockedByExternalAppScopeGrant",
+      "missingUserScopes": [
+        "DataFabric.Data.Read",
+        "DataFabric.Data.Write",
+        "DataFabric.Schema.Read"
+      ]
+    }
+  },
+  "dataFabric": {
+    "scope": "tenant",
+    "choiceSetCount": 10,
+    "entityCount": 9,
+    "recordCount": 52,
+    "choiceSetIdsFile": "platform/cloud-playground-choiceset-ids.json",
+    "entityIdsFile": "platform/cloud-playground-entity-ids.json"
+  }
+}

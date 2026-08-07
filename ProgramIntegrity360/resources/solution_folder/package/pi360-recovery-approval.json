@@ -2,7 +2,7 @@
   "docVersion": "1.0.0",
   "resource": {
     "name": "pi360-recovery-approval",
-    "kind": "package",
+    "kind": "Package",
     "apiVersion": "orchestrator.uipath.com/v1",
     "isOverridable": true,
     "dependencies": [],
@@ -23,7 +23,7 @@
       {
         "key": "pi360-recovery-approval_0.2.0",
         "name": "pi360-recovery-approval.0.2.0.nupkg",
-        "url": "https://staging.uipath.com/uipathlabs/Playground/orchestrator_/odata/Processes/UiPath.Server.Configuration.OData.DownloadPackage(key='pi360-recovery-approval:0.2.0')?feedId=ac4ece41-96db-4d47-b3d3-9722f3c5cf81",
+        "url": "https://cloud.uipath.com/uipathlabs/Playground/orchestrator_/odata/Processes/UiPath.Server.Configuration.OData.DownloadPackage(key='pi360-recovery-approval:0.2.0')?feedId=93949a13-9388-45bb-af90-5783a67e1b33",
         "kind": "Package",
         "version": "0.2.0"
       }

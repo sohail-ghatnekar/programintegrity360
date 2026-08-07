@@ -1,8 +1,10 @@
 // Step 1b: create the 9 PI360 entities (tenant level), wired to choice sets. Idempotent by name.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
-const DIR = '/private/tmp/claude-502/-Users-sohail-ghatnekar/eb288e80-a012-4b20-9273-d4e15126dbf6/scratchpad/pi360';
-const CS = JSON.parse(fs.readFileSync(DIR + '/choicesets.json', 'utf8'));
+const path = require('path');
+const CHOICE_SET_IDS = path.join(__dirname, 'cloud-playground-choiceset-ids.json');
+const ENTITY_IDS = path.join(__dirname, 'cloud-playground-entity-ids.json');
+const CS = JSON.parse(fs.readFileSync(CHOICE_SET_IDS, 'utf8'));
 
 function uip(args) {
   const raw = execFileSync('uip', [...args, '--output', 'json'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -81,5 +83,5 @@ for (const [name, disp, fields] of ENTITIES) {
   out[name] = r.Data.Id;
   console.log('created entity', name, r.Data.Id);
 }
-fs.writeFileSync(DIR + '/entities.json', JSON.stringify(out, null, 2));
-console.log('\nWROTE entities.json'); console.log(JSON.stringify(out, null, 2));
+fs.writeFileSync(ENTITY_IDS, JSON.stringify(out, null, 2));
+console.log('\nWROTE', ENTITY_IDS); console.log(JSON.stringify(out, null, 2));

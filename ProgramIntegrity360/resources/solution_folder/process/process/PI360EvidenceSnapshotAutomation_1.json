@@ -1,0 +1,56 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EvidenceSnapshotAutomation_1",
+    "kind": "Process",
+    "type": "Process",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "Package",
+        "name": "PI360EvidenceSnapshotAutomation_1"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Process",
+      "jobPriority": "Medium",
+      "jobRecording": "Disabled",
+      "duration": 40,
+      "frequency": 500,
+      "quality": 100,
+      "remoteControlAccess": "None",
+      "name": "PI360EvidenceSnapshotAutomation_1",
+      "description": "Builds a deterministic evidence-completeness snapshot for case routing.",
+      "package": {
+        "name": "PI360EvidenceSnapshotAutomation_1",
+        "key": "PI360EvidenceSnapshotAutomation:0.5.1"
+      },
+      "packageName": "PI360EvidenceSnapshotAutomation",
+      "packageVersion": "0.5.1",
+      "entryPointUniqueId": "61a0e33e-baba-464a-ac87-8788b4c755d9",
+      "entryPointName": "Main.xaml",
+      "inputArgumentsSchemaV2": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"in_CaseId\": {\n      \"type\": \"string\"\n    },\n    \"in_ClaimsAvailable\": {\n      \"type\": \"boolean\"\n    },\n    \"in_EvvAvailable\": {\n      \"type\": \"boolean\"\n    },\n    \"in_PlanOfCareAvailable\": {\n      \"type\": \"boolean\"\n    },\n    \"in_EnrollmentAvailable\": {\n      \"type\": \"boolean\"\n    },\n    \"in_ProviderPacketAvailable\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": []\n}",
+      "outputArgumentsSchemaV2": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"out_EvidenceReady\": {\n      \"type\": \"boolean\"\n    },\n    \"out_MissingEvidenceCsv\": {\n      \"type\": \"string\"\n    },\n    \"out_AutomationSummary\": {\n      \"type\": \"string\"\n    }\n  }\n}",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180,
+      "entryPoints": "[{\"UniqueId\":\"61a0e33e-baba-464a-ac87-8788b4c755d9\",\"Path\":\"Main.xaml\",\"DisplayName\":null,\"InputArguments\":\"{\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"in_CaseId\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"in_ClaimsAvailable\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    },\\n    \\\"in_EvvAvailable\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    },\\n    \\\"in_PlanOfCareAvailable\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    },\\n    \\\"in_EnrollmentAvailable\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    },\\n    \\\"in_ProviderPacketAvailable\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    }\\n  },\\n  \\\"required\\\": []\\n}\",\"OutputArguments\":\"{\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"out_EvidenceReady\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    },\\n    \\\"out_MissingEvidenceCsv\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"out_AutomationSummary\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    }\\n  }\\n}\",\"Type\":1,\"TargetRuntime\":null,\"ContentRoot\":null,\"DataVariation\":null,\"Id\":3993960}]",
+      "tags": []
+    },
+    "locks": [],
+    "key": "5d41620d-6684-4f11-970d-d2db4f4e426e",
+    "files": []
+  }
+}

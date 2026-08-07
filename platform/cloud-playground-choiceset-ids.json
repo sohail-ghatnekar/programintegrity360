@@ -1,0 +1,150 @@
+{
+  "PI360Priority": {
+    "id": "44aab61b-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "High": 0,
+      "Medium": 1,
+      "Low": 2
+    },
+    "byName": {
+      "high": 0,
+      "medium": 1,
+      "low": 2
+    }
+  },
+  "PI360CaseStage": {
+    "id": "52aab61b-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Alert intake and triage": 0,
+      "Automated evidence collection": 1,
+      "Document extraction and validation": 2,
+      "Evidence correlation and investigation planning": 3,
+      "Investigator human review": 4,
+      "Provider records request and wait state": 5,
+      "Supervisor approval / disposition": 6,
+      "Approved action execution": 7,
+      "Closure and monitoring": 8
+    },
+    "byName": {
+      "alert_intake_triage": 0,
+      "automated_evidence_collection": 1,
+      "document_extraction_validation": 2,
+      "evidence_correlation_planning": 3,
+      "investigator_human_review": 4,
+      "provider_records_request": 5,
+      "supervisor_approval_disposition": 6,
+      "approved_action_execution": 7,
+      "closure_monitoring": 8
+    }
+  },
+  "PI360CaseStatus": {
+    "id": "2c96e129-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Open": 0,
+      "In Review": 1,
+      "Awaiting Provider": 2,
+      "Pending Approval": 3,
+      "Closed": 4
+    },
+    "byName": {
+      "open": 0,
+      "in_review": 1,
+      "awaiting_provider": 2,
+      "pending_approval": 3,
+      "closed": 4
+    }
+  },
+  "PI360CaptureMethod": {
+    "id": "f23ced2f-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Mobile-GPS": 0,
+      "Telephony": 1,
+      "Manual": 2
+    },
+    "byName": {
+      "mobile_gps": 0,
+      "telephony": 1,
+      "manual": 2
+    }
+  },
+  "PI360GpsConfirmed": {
+    "id": "013ded2f-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Yes": 0,
+      "No": 1,
+      "N/A": 2
+    },
+    "byName": {
+      "yes": 0,
+      "no": 1,
+      "na": 2
+    }
+  },
+  "PI360ClaimStatus": {
+    "id": "31c8fb35-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Under Review": 0,
+      "Cleared": 1,
+      "Flagged": 2
+    },
+    "byName": {
+      "under_review": 0,
+      "cleared": 1,
+      "flagged": 2
+    }
+  },
+  "PI360DocType": {
+    "id": "44c5423e-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Timesheet": 0,
+      "Plan of Care": 1,
+      "Service Note": 2,
+      "Personnel Packet": 3,
+      "Correspondence": 4
+    },
+    "byName": {
+      "timesheet": 0,
+      "plan_of_care": 1,
+      "service_note": 2,
+      "personnel_packet": 3,
+      "correspondence": 4
+    }
+  },
+  "PI360ValidationStatus": {
+    "id": "e31c5a44-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Auto-confirmed": 0,
+      "Needs review": 1,
+      "Human-validated": 2
+    },
+    "byName": {
+      "auto_confirmed": 0,
+      "needs_review": 1,
+      "human_validated": 2
+    }
+  },
+  "PI360ActorKind": {
+    "id": "f11c5a44-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Human": 0,
+      "System": 1,
+      "Agent": 2
+    },
+    "byName": {
+      "human": 0,
+      "system": 1,
+      "agent": 2
+    }
+  },
+  "PI360DecisionRole": {
+    "id": "40678c4c-7492-f111-b338-000d3ab4d3b7",
+    "byDisplay": {
+      "Investigator": 0,
+      "Supervisor": 1
+    },
+    "byName": {
+      "investigator": 0,
+      "supervisor": 1
+    }
+  }
+}

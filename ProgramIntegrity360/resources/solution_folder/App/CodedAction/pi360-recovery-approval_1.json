@@ -1,0 +1,38 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "pi360-recovery-approval_1",
+    "kind": "app",
+    "type": "codedAction",
+    "apiVersion": "apps.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "Package",
+        "name": "pi360-recovery-approval"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "pi360-recovery-approval_1",
+      "description": "",
+      "routingName": "action-a05426f8a44747278199ef46a9d",
+      "version": "0.2.0",
+      "package": {
+        "name": "pi360-recovery-approval",
+        "key": "pi360-recovery-approval:0.2.0"
+      },
+      "externalClientId": "",
+      "appSystemName": "IDd9bbba67c6c84843923659852a471f31",
+      "actionSchema": "{\"key\":\"242b135e-4a2a-454c-a410-e08aa7631ecf\",\"version\":1,\"description\":\"Action Schema\",\"id\":\"IDf03b0908bcdf4a949947997fac031847\",\"name\":\"ActionSchema\",\"inOuts\":[{\"name\":\"authorizedAmount\",\"key\":\"603938f3-5c98-4ad3-a2cc-3cf781a20558\",\"required\":false,\"description\":\"Amount authorized by the reviewer.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.Decimal\",\"properties\":[]},{\"name\":\"noticeLanguage\",\"key\":\"15ebc129-8cf1-4bbb-aeb0-76d036800d8d\",\"required\":false,\"description\":\"Reviewer-approved language for the provider notice.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]}],\"inputs\":[{\"name\":\"caseId\",\"key\":\"7554778f-8ad4-4142-bac0-f58fb5f8883b\",\"required\":true,\"description\":\"Program Integrity case identifier.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]},{\"name\":\"providerName\",\"key\":\"c5911bac-10ae-4e93-a533-25bcab21b63f\",\"required\":false,\"description\":\"Provider under review.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]},{\"name\":\"unsupportedUnits\",\"key\":\"cef1f698-c8a9-4a19-b79a-1dc8907a10e5\",\"required\":false,\"description\":\"Human-validated unsupported units in the reviewed sample.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.Int64\",\"properties\":[]},{\"name\":\"unitRate\",\"key\":\"d787bae6-e22e-4d30-aed4-a15f005bef2b\",\"required\":false,\"description\":\"Approved reimbursement rate per unit.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.Decimal\",\"properties\":[]},{\"name\":\"sampleExposure\",\"key\":\"37563c14-a23a-423c-af44-50524077bdfc\",\"required\":false,\"description\":\"Deterministic exposure for the reviewed sample.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.Decimal\",\"properties\":[]},{\"name\":\"projectedExposureLow\",\"key\":\"4c41f268-41eb-4b39-930b-6e4d39b5963f\",\"required\":false,\"description\":\"Low end of the indicative projected exposure range.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.Decimal\",\"properties\":[]},{\"name\":\"projectedExposureHigh\",\"key\":\"11c2a837-f562-48c5-8c07-5d9eb496da95\",\"required\":false,\"description\":\"High end of the indicative projected exposure range.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.Decimal\",\"properties\":[]},{\"name\":\"decisionBrief\",\"key\":\"2e8a0fb8-6711-4781-b892-fa8acc1a7ce6\",\"required\":false,\"description\":\"Deterministic decision brief assembled by the portable RPA workflow.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]},{\"name\":\"policyCitation\",\"key\":\"487020d1-ff4b-4338-9ba2-78017f201134\",\"required\":false,\"description\":\"Policy citation supporting the proposed recovery action.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]}],\"outputs\":[{\"name\":\"authorizationDecision\",\"key\":\"a470293c-6a0c-47ce-8ef3-85f117bd66ba\",\"required\":true,\"description\":\"Final recovery authorization decision.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]},{\"name\":\"recoveryRoute\",\"key\":\"5e209cbb-851e-47a4-9078-cccb4770e904\",\"required\":true,\"description\":\"Approved recovery route or follow-up path.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]},{\"name\":\"authorizationNotes\",\"key\":\"bcf10027-6f8d-4758-b8d0-e450ff8072ac\",\"required\":false,\"description\":\"Authorization rationale written to the case audit record.\",\"version\":0,\"typeNamespace\":\"system\",\"isList\":false,\"collectionDataType\":null,\"type\":\"System.String\",\"properties\":[]}],\"outcomes\":[{\"name\":\"Authorize\",\"key\":\"bee20c1e-8fe3-4188-9ca2-d0cb69815647\",\"required\":false,\"type\":\"System.String\",\"typeNamespace\":\"system\",\"isList\":false,\"properties\":[],\"version\":0},{\"name\":\"Return\",\"key\":\"28dca112-4161-462e-9aa7-0912c1ce7353\",\"required\":false,\"type\":\"System.String\",\"typeNamespace\":\"system\",\"isList\":false,\"properties\":[],\"version\":0},{\"name\":\"Hold\",\"key\":\"427fd39b-cba8-4825-9a95-85f690e5d492\",\"required\":false,\"type\":\"System.String\",\"typeNamespace\":\"system\",\"isList\":false,\"properties\":[],\"version\":0}],\"__isDeleted\":false,\"dateLastModified\":\"2026-08-07T15:05:14.606Z\",\"__tenantId\":\"uipathlabs\",\"__tenantSubId\":\"default\",\"__tenantEnvironmentId\":\"production\"}"
+    },
+    "locks": [],
+    "key": "acbd2686-644b-40d3-bbc5-c1a853ca043b",
+    "files": []
+  }
+}

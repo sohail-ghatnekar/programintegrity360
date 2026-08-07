@@ -91,7 +91,9 @@ always labeling **FACT (cited)** vs **INFERENCE (for human review)**.
 3. Smoke-test with `test/test-plan.md`.
 
 ## Deploy it
-Target: **staging.uipath.com**, org **uipathlabs**, tenant **Playground**. Solution name **Program Integrity 360**.
+Target: **cloud.uipath.com**, org **uipathlabs**, tenant **Playground**, folder
+**AMER Presales/Public Sector/ProgramIntegrity360**. Solution name **Program Integrity 360**.
+Hosted app: **https://uipathlabs.uipath.host/pi360-coded-app**.
 See `solution/deploy.md` for the exact `uip login` + `uip solution pack/publish/deploy/activate` sequence.
 Deployment requires an interactive browser login and pushes to a live tenant, so it is run by a human
 operator, not automatically.

@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { DEFAULT_UIPATH_PORTAL_ORIGIN } from '../../services/uipath/cloudLinks';
+
+const UIPATHLABS_PORTAL_URL = `${DEFAULT_UIPATH_PORTAL_ORIGIN}/uipathlabs/`;
 
 export const LoginInstructions = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -67,12 +70,12 @@ export const LoginInstructions = () => {
                     Log in using Single Sign-On (SSO) to:
                   </p>
                   <a
-                    href="https://staging.uipath.com/uipathlabs/"
+                    href={UIPATHLABS_PORTAL_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 font-medium underline"
                   >
-                    https://staging.uipath.com/uipathlabs/
+                    {UIPATHLABS_PORTAL_URL}
                     <svg
                       className="w-3 h-3 ml-1"
                       fill="none"

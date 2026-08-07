@@ -1,7 +1,8 @@
 // Step 1a: create PI360 choice sets + values (tenant level), then re-read authoritative NumberId maps.
 const { execSync } = require('child_process');
 const fs = require('fs');
-const OUT = '/private/tmp/claude-502/-Users-sohail-ghatnekar/eb288e80-a012-4b20-9273-d4e15126dbf6/scratchpad/pi360/choicesets.json';
+const path = require('path');
+const OUT = path.join(__dirname, 'cloud-playground-choiceset-ids.json');
 
 function uip(args) {
   const cmd = 'uip ' + args + ' --output json';
@@ -16,7 +17,7 @@ function q(s){ return '"' + String(s).replace(/"/g,'\\"') + '"'; }
 const SETS = [
   ['PI360Priority','PI360 Priority','Case priority / signal severity (shared High/Medium/Low)',
     [['high','High'],['medium','Medium'],['low','Low']]],
-  ['PI360CaseStage','PI360 Case Stage','Program Integrity 360 case lifecycle stage',
+  ['PI360CaseStage','PI360 Case Stage',null,
     [['alert_intake_triage','Alert intake and triage'],
      ['automated_evidence_collection','Automated evidence collection'],
      ['document_extraction_validation','Document extraction and validation'],
@@ -26,23 +27,23 @@ const SETS = [
      ['supervisor_approval_disposition','Supervisor approval / disposition'],
      ['approved_action_execution','Approved action execution'],
      ['closure_monitoring','Closure and monitoring']]],
-  ['PI360CaseStatus','PI360 Case Status','Case status',
+  ['PI360CaseStatus','PI360 Case Status',null,
     [['open','Open'],['in_review','In Review'],['awaiting_provider','Awaiting Provider'],
      ['pending_approval','Pending Approval'],['closed','Closed']]],
-  ['PI360CaptureMethod','PI360 EVV Capture Method','How the EVV visit was captured',
+  ['PI360CaptureMethod','PI360 EVV Capture Method',null,
     [['mobile_gps','Mobile-GPS'],['telephony','Telephony'],['manual','Manual']]],
-  ['PI360GpsConfirmed','PI360 GPS Confirmed','Whether GPS confirmed the visit',
+  ['PI360GpsConfirmed','PI360 GPS Confirmed',null,
     [['yes','Yes'],['no','No'],['na','N/A']]],
-  ['PI360ClaimStatus','PI360 Claim Status','Claim review status',
+  ['PI360ClaimStatus','PI360 Claim Status',null,
     [['under_review','Under Review'],['cleared','Cleared'],['flagged','Flagged']]],
-  ['PI360DocType','PI360 Evidence Document Type','Evidence document type',
+  ['PI360DocType','PI360 Evidence Document Type',null,
     [['timesheet','Timesheet'],['plan_of_care','Plan of Care'],['service_note','Service Note'],
      ['personnel_packet','Personnel Packet'],['correspondence','Correspondence']]],
-  ['PI360ValidationStatus','PI360 Validation Status','IXP extraction validation status',
+  ['PI360ValidationStatus','PI360 Validation Status',null,
     [['auto_confirmed','Auto-confirmed'],['needs_review','Needs review'],['human_validated','Human-validated']]],
-  ['PI360ActorKind','PI360 Actor Kind','Who/what performed an action',
+  ['PI360ActorKind','PI360 Actor Kind',null,
     [['human','Human'],['system','System'],['agent','Agent']]],
-  ['PI360DecisionRole','PI360 Decision Role','Role of the human who decided',
+  ['PI360DecisionRole','PI360 Decision Role',null,
     [['investigator','Investigator'],['supervisor','Supervisor']]],
 ];
 
@@ -56,7 +57,8 @@ for (const [name, disp, desc, values] of SETS) {
   let id = byName[name];
   if (id) { console.log('reuse set', name, id); }
   else {
-    const r = uip(`df choice-sets create ${name} --display-name ${q(disp)} --description ${q(desc)}`);
+    const descriptionArg = desc ? ` --description ${q(desc)}` : '';
+    const r = uip(`df choice-sets create ${name} --display-name ${q(disp)}${descriptionArg}`);
     id = r.Data.Id;
     console.log('created set', name, id);
   }

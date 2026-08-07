@@ -1,13 +1,13 @@
 {
-  "scope": "PIMS OR.Execution OR.Execution.Read OR.Tasks OR.Buckets OR.Folders OR.Jobs ConversationalAgents Traces.Api DataFabric.Schema.Read DataFabric.Data.Read DataFabric.Data.Write",
-  "clientId": "273853c1-c3bc-4767-98a6-61ca821bd530",
+  "scope": "OR.Administration.Read OR.Assets.Read OR.Buckets OR.Buckets.Read OR.Buckets.Write OR.Execution.Read OR.Folders.Read OR.Jobs.Read OR.Jobs.Write OR.Queues.Read OR.Tasks OR.Tasks.Read OR.Tasks.Write PIMS DataFabric.Data.Read DataFabric.Data.Write DataFabric.Schema.Read ConversationalAgents",
+  "clientId": "57201488-1566-4f9b-a696-1b3773c2af33",
   "orgName": "uipathlabs",
   "tenantName": "Playground",
-  "baseUrl": "https://staging.api.uipath.com",
+  "baseUrl": "https://api.uipath.com",
   "redirectUri": "http://localhost:5173",
-  "folderPath": "AMER Presales/Public Sector/ProgramIntegrity360 1",
-  "folderKey": "25fea2ac-3f4e-4f6f-a7f6-a3cab1b92be4",
-  "folderId": 3295396,
+  "folderPath": "AMER Presales/Public Sector/ProgramIntegrity360",
+  "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+  "folderId": 2182825,
   "caseProcessName": "Program Integrity 360 Case",
   "recordAgentName": "PI360RecordConversationAgent"
 }

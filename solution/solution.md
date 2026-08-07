@@ -9,7 +9,7 @@
 Everything in this repo ships as a **single deployable solution** named **`Program Integrity 360`**, produced as one **`.uipx`** by `uip solution pack`. One solution = one versioned, atomically deployable unit that bundles every project and declares every shared resource and binding, so a target tenant gets a consistent, activatable case-management application in one shot.
 
 - **Solution name:** `Program Integrity 360`
-- **Target:** cloud `staging.uipath.com`, org `uipathlabs`, tenant `Playground` (see `solution/deploy.md`)
+- **Target:** cloud `cloud.uipath.com`, org `uipathlabs`, tenant `Playground`, folder `AMER Presales/Public Sector/ProgramIntegrity360` (see `solution/deploy.md`)
 - **Artifact:** `Program Integrity 360.uipx`
 
 ## 2. Projects bundled into the solution
