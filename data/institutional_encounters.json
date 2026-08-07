@@ -1,0 +1,21 @@
+[
+  {
+    "encounter_id": "ENC-SYN-20260714-JE",
+    "case_id": "PI-HSP-2026-0042",
+    "member_id": "MBR-071426",
+    "member_name": "Jordan Ellis",
+    "date_of_birth": "1991-02-08",
+    "medical_record_number": "SYN-071426-JE",
+    "facility_name": "Lakeview Regional Medical Center (fictional)",
+    "care_area": "Hospital Medicine - Observation",
+    "patient_class": "Observation",
+    "arrival_at": "2026-07-14T08:20:00-05:00",
+    "discharge_at": "2026-07-16T10:00:00-05:00",
+    "disposition": "Home, self-care",
+    "principal_diagnosis": "Dehydration with volume depletion - resolved",
+    "associated_diagnosis": "Syncope due to orthostatic volume depletion - resolved",
+    "source_document_id": "DOC-HSP-MR-0714",
+    "ixp_model": "PI360 Institutional Encounter Extractor",
+    "validation_status": "Needs review"
+  }
+]

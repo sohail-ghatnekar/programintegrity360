@@ -53,5 +53,33 @@
     "severity": "Medium",
     "computed_by": "deterministic-calc-v1",
     "computed_at": "2026-07-22T10:41:00Z"
+  },
+  {
+    "signal_id": "RS-HSP-01",
+    "case_id": "PI-HSP-2026-0042",
+    "name": "Claimed home service overlaps institutional encounter",
+    "rule_expression": "Intersect the claimed member-home service interval with the institutional encounter interval for the same member and service date.",
+    "inputs": {
+      "claim_line_id": "LINE-0714-01",
+      "place_of_service_code": "12",
+      "claimed_interval": {
+        "start": "2026-07-14T09:00:00-05:00",
+        "end": "2026-07-14T15:00:00-05:00"
+      },
+      "encounter_id": "ENC-SYN-20260714-JE",
+      "patient_class": "Observation",
+      "encounter_interval": {
+        "start": "2026-07-14T08:20:00-05:00",
+        "end": "2026-07-16T10:00:00-05:00"
+      }
+    },
+    "result_value": {
+      "overlap_minutes": 360,
+      "location_conflict": true,
+      "determination": "Review indicator only"
+    },
+    "severity": "High",
+    "computed_by": "deterministic-calc-v2",
+    "computed_at": "2026-07-20T09:05:00-05:00"
   }
 ]

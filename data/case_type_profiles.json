@@ -1,0 +1,30 @@
+{
+  "MedicaidPCS": {
+    "display_name": "Medicaid Personal Care Services",
+    "api_endpoint": "https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS",
+    "claim_threshold": 0,
+    "provider_response_hours": null,
+    "auto_start_provider_request": false,
+    "service_evidence_model": "PI360 Service Evidence Extractor",
+    "institutional_encounter_model": null,
+    "required_evidence": [
+      "Claim detail",
+      "Service timesheet"
+    ]
+  },
+  "StateMedicaidHospice": {
+    "display_name": "State Medicaid Hospice",
+    "api_endpoint": "https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice",
+    "claim_threshold": 2500,
+    "provider_response_hours": 72,
+    "auto_start_provider_request": true,
+    "service_evidence_model": "PI360 Service Evidence Extractor",
+    "institutional_encounter_model": "PI360 Institutional Encounter Extractor",
+    "required_evidence": [
+      "Claim detail",
+      "Service timesheet",
+      "Institutional encounter record",
+      "Applicable policy reference"
+    ]
+  }
+}

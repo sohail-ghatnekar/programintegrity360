@@ -70,5 +70,79 @@
     "validation_status": "Human-validated",
     "validated_by": "inv.taylor",
     "note": "Arrives during Stage 6 wait state; triggers reprocessing. Does not resolve EVV/timesheet mismatch for 04-16."
+  },
+  {
+    "doc_id": "DOC-HSP-TS-0714",
+    "case_id": "PI-HSP-2026-0042",
+    "doc_type": "Timesheet",
+    "source_system": "Orchestrator Storage Bucket: Timesheets",
+    "storage_uri": "buckets/Timesheets/01_personal_care_timesheet.pdf",
+    "extracted_fields": {
+      "document_id": "TS-PCS-2026-0719-10482",
+      "member": "Jordan Ellis",
+      "caregiver": "Taylor Brooks",
+      "service_month": "2026-07",
+      "hospitalized": true,
+      "admitted_date": "2026-07-14",
+      "discharged_date": "2026-07-16",
+      "evv_exception": "Device unavailable - manually entered 07/17/2026",
+      "daily_entries": [
+        {"date": "2026-07-13", "time_in": "09:00", "time_out": "13:00", "units": 16},
+        {"date": "2026-07-14", "time_in": "09:00", "time_out": "15:00", "units": 24},
+        {"date": "2026-07-16", "time_in": "13:00", "time_out": "16:00", "units": 12}
+      ],
+      "total_units": 52
+    },
+    "extraction_confidence": 0.92,
+    "validation_status": "Needs review",
+    "validated_by": null,
+    "ixp_model": "PI360 Service Evidence Extractor",
+    "ixp_model_version": null,
+    "reference_only": false,
+    "note": "The July 14 09:00-15:00 claimed home-service interval is the service side of RS-HSP-01."
+  },
+  {
+    "doc_id": "DOC-HSP-MR-0714",
+    "case_id": "PI-HSP-2026-0042",
+    "doc_type": "Hospital Record",
+    "source_system": "Orchestrator Storage Bucket: Hospital Records",
+    "storage_uri": "buckets/Hospital Records/jordan_ellis_synthetic_medical_record_packet.pdf",
+    "extracted_fields": {
+      "member": "Jordan Ellis",
+      "date_of_birth": "1991-02-08",
+      "medical_record_number": "SYN-071426-JE",
+      "encounter_id": "ENC-SYN-20260714-JE",
+      "facility": "Lakeview Regional Medical Center (fictional)",
+      "patient_class": "Observation",
+      "arrival_at": "2026-07-14T08:20:00-05:00",
+      "discharge_at": "2026-07-16T10:00:00-05:00",
+      "disposition": "Home, self-care"
+    },
+    "extraction_confidence": 0.95,
+    "validation_status": "Needs review",
+    "validated_by": null,
+    "ixp_model": "PI360 Institutional Encounter Extractor",
+    "ixp_model_version": null,
+    "reference_only": false,
+    "note": "The source record identifies observation status, not inpatient status. It supports location/time review but not an autonomous coverage or fraud determination."
+  },
+  {
+    "doc_id": "DOC-HSP-POL-PCS47",
+    "case_id": "PI-HSP-2026-0042",
+    "doc_type": "Policy Reference",
+    "source_system": "Orchestrator Storage Bucket: Policy Docs",
+    "storage_uri": "buckets/Policy Docs/03_personal_care_services_policy.pdf",
+    "extracted_fields": {
+      "policy_id": "PCS-4.7",
+      "effective_date": "2026-01-01",
+      "review_instruction": "Compare claim units, timesheet, EVV, and institutional encounter intervals; send conflicting evidence to human review."
+    },
+    "extraction_confidence": null,
+    "validation_status": "Human-validated",
+    "validated_by": "policy.admin",
+    "ixp_model": null,
+    "ixp_model_version": null,
+    "reference_only": true,
+    "note": "Agent grounding only. The policy's inpatient restriction must not be applied as though the observation encounter were inpatient."
   }
 ]
