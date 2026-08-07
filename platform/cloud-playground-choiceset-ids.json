@@ -96,6 +96,9 @@
   "PI360DocType": {
     "id": "44c5423e-7492-f111-b338-000d3ab4d3b7",
     "byDisplay": {
+      "Hospital Record": 5,
+      "Policy Reference": 6,
+      "Hospice Service Record": 7,
       "Timesheet": 0,
       "Plan of Care": 1,
       "Service Note": 2,
@@ -103,6 +106,9 @@
       "Correspondence": 4
     },
     "byName": {
+      "hospital_record": 5,
+      "policy_reference": 6,
+      "hospice_service_record": 7,
       "timesheet": 0,
       "plan_of_care": 1,
       "service_note": 2,

@@ -39,6 +39,15 @@ def test_hospice_member_fixture_matches_the_claim_and_medical_record():
     assert member["date_of_birth"] == "1991-02-08"
 
 
+def test_hospice_caregiver_is_a_separate_attendant_from_the_pcs_jordan_record():
+    attendants = load_fixture("attendants.json")
+    by_id = {attendant["attendant_id"]: attendant for attendant in attendants}
+
+    assert by_id["ATT-2087"]["name"] == "Jordan Ellis"
+    assert by_id["ATT-HSP-4401"]["name"] == "Taylor Brooks"
+    assert by_id["ATT-HSP-4401"]["role"] == "Hospice Caregiver"
+
+
 def test_hospice_claim_lines_match_the_published_beeceptor_response():
     hospice_claims = load_fixture("hospice_claims.json")
 

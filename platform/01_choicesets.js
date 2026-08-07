@@ -1,4 +1,4 @@
-// Step 1a: create PI360 choice sets + values (tenant level), then re-read authoritative NumberId maps.
+// Step 1a: create or extend PI360 choice sets (tenant level), then re-read authoritative NumberId maps.
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -38,7 +38,9 @@ const SETS = [
     [['under_review','Under Review'],['cleared','Cleared'],['flagged','Flagged']]],
   ['PI360DocType','PI360 Evidence Document Type',null,
     [['timesheet','Timesheet'],['plan_of_care','Plan of Care'],['service_note','Service Note'],
-     ['personnel_packet','Personnel Packet'],['correspondence','Correspondence']]],
+     ['personnel_packet','Personnel Packet'],['correspondence','Correspondence'],
+     ['hospital_record','Hospital Record'],['policy_reference','Policy Reference'],
+     ['hospice_service_record','Hospice Service Record']]],
   ['PI360ValidationStatus','PI360 Validation Status',null,
     [['auto_confirmed','Auto-confirmed'],['needs_review','Needs review'],['human_validated','Human-validated']]],
   ['PI360ActorKind','PI360 Actor Kind',null,

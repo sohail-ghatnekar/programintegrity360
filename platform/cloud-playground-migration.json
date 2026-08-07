@@ -11,6 +11,7 @@
   },
   "solution": {
     "packageName": "ProgramIntegrity360",
+    "targetPackageVersion": "0.6.0",
     "packageVersion": "0.5.1",
     "packageSha256": "067a287fa2a3ca93b79efe2eb82b5c19e41b4d11ecabaea262b3098ee5b1aada",
     "deploymentName": "ProgramIntegrity360-cloud-0.5.1",
@@ -50,10 +51,77 @@
   },
   "dataFabric": {
     "scope": "tenant",
+    "mode": "C-light on nine existing entities because the Playground Data Fabric environment is at its 500-object cap",
     "choiceSetCount": 10,
     "entityCount": 9,
-    "recordCount": 52,
+    "recordCount": 59,
+    "recordCounts": {
+      "PI360ProgramIntegrityCase": 2,
+      "PI360Provider": 1,
+      "PI360Attendant": 2,
+      "PI360Claim": 10,
+      "PI360EvvVisit": 12,
+      "PI360RiskSignal": 6,
+      "PI360EvidenceDocument": 9,
+      "PI360InvestigationAction": 15,
+      "PI360Decision": 2
+    },
+    "documentTypeValuesAdded": [
+      "Hospital Record",
+      "Policy Reference",
+      "Hospice Service Record"
+    ],
+    "newEntityCount": 0,
+    "deletesOrRenames": false,
     "choiceSetIdsFile": "platform/cloud-playground-choiceset-ids.json",
     "entityIdsFile": "platform/cloud-playground-entity-ids.json"
-  }
+  },
+  "beeceptor": {
+    "baseUrl": "https://medicaid-claim-demo.free.beeceptor.com",
+    "MedicaidPCS": "/MedicaidPCS",
+    "StateMedicaidHospice": "/StateMedicaidHospice"
+  },
+  "ixp": {
+    "serviceEvidence": {
+      "projectId": "db86ac99-70f8-80e1-9c2e-42e09362d0cb",
+      "projectName": "pi360_timesheets-46b073f4-ixp",
+      "title": "PI360 Service Evidence Extractor",
+      "modelVersion": 12,
+      "tag": "live",
+      "pinned": true
+    },
+    "institutionalEncounter": {
+      "projectId": "3d9b9c8e-4ac3-80a9-9529-89a013670910",
+      "projectName": "pi360-institutional-encounter-extractor-53d63c92-ixp",
+      "title": "PI360 Institutional Encounter Extractor",
+      "modelVersion": 9,
+      "tag": "live",
+      "pinned": true
+    },
+    "maestroRuntimeBinding": "Swap-ready mock nodes remain until these projects appear in the authenticated Maestro IXP node registry."
+  },
+  "storageBuckets": {
+    "Timesheets": {
+      "key": "ee5b39e1-60de-4ddd-92c3-3bc05d0d74c4",
+      "paths": [
+        "pcs/PI-PCS-2026-0041/incoming/",
+        "pcs/PI-PCS-2026-0041/provider-response/",
+        "hospice/PI-HSP-2026-0042/incoming/"
+      ]
+    },
+    "Hospital Records": {
+      "key": "72623e80-55ba-4cfc-abd1-343af54beae0",
+      "paths": [
+        "hospice/PI-HSP-2026-0042/provider-response/"
+      ]
+    },
+    "Policy Docs": {
+      "key": "27f97497-c423-4204-9a4e-f95bdb37f099",
+      "paths": [
+        "pcs/PI-PCS-2026-0041/incoming/",
+        "reference/policy/"
+      ]
+    }
+  },
+  "lastVerifiedAt": "2026-08-07T23:25:42Z"
 }
