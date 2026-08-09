@@ -1,151 +1,91 @@
-# Data Model — Program Integrity 360 (Data Fabric entities)
+# Data model — Program Integrity 360
 
-All entities live in **UiPath Data Fabric** (managed via `/uipath-platform`). Every write also appends an
-`InvestigationAction` row so the case carries a complete, immutable audit trail. IDs, values, and examples
-must match `CANON.md`.
+The live `uipathlabs/Playground` tenant is at its 500-object Data Fabric cap. Version 0.6.0 uses a C-light additive model on the nine existing PI360 entities. It creates no new entities or choice sets and preserves every existing ID.
 
-Legend: 🔑 primary key · 🔗 foreign key · ⚙️ system/audit field.
+## Record counts
 
----
+| Entity | Rows | Natural key |
+|---|---:|---|
+| `PI360ProgramIntegrityCase` | 2 | `case_id` |
+| `PI360Provider` | 1 | `provider_id` |
+| `PI360Attendant` | 2 | `attendant_id` |
+| `PI360Claim` | 10 | `claim_id` |
+| `PI360EvvVisit` | 12 | `evv_id` |
+| `PI360RiskSignal` | 6 | `signal_id` |
+| `PI360EvidenceDocument` | 9 | `doc_id` |
+| `PI360InvestigationAction` | 15 | `action_id` |
+| `PI360Decision` | 2 | `decision_id` |
 
-## 1. ProgramIntegrityCase
-The case aggregate root; drives the Maestro case lifecycle.
+Total: 59.
 
-| Field | Type | Notes / example |
+## Case
+
+`PI360ProgramIntegrityCase` is the aggregate root. Existing lifecycle, assignment, exposure, and audit fields remain unchanged. Version 0.6.0 adds:
+
+| Field | Type | Hospice example |
 |---|---|---|
-| 🔑 case_id | Text | `PI-PCS-2026-0041` |
-| title | Text | Harbor Home Support Services — PCS billing integrity review |
-| program | Choice | `Medicaid PCS` |
-| trigger_type | Choice | `Claims Analytics Alert` |
-| trigger_ref | Text | `ALERT-CA-2026-7781` |
-| 🔗 provider_id | Text | `PRV-100482` |
-| 🔗 attendant_id | Text | `ATT-2087` |
-| service_period_start | Date | 2026-03-01 |
-| service_period_end | Date | 2026-05-31 |
-| priority | Choice | `High` / Medium / Low |
-| stage | Choice | one of the 9 stages (see docs/02) |
-| status | Choice | Open / In Review / Awaiting Provider / Pending Approval / Closed |
-| risk_signal_count | Number | 5 |
-| potential_exposure_low | Currency | 172.80 (reviewed 4-claim sample) |
-| potential_exposure_period_estimate | Currency | 1600.00 (full 44-visit period projection) |
-| potential_exposure_high | Currency | 42000.00 (provider-wide indicative, pending audit) |
-| exposure_disclaimer | Text | "Indicative range, subject to human validation. Not a determination." |
-| assigned_investigator | Text | e.g. `inv.taylor` |
-| assigned_supervisor | Text | e.g. `sup.morgan` |
-| sla_due | DateTime | intake SLA |
-| ⚙️ created_at / updated_at | DateTime | |
+| `case_type` | String | `StateMedicaidHospice` |
+| `member_id` | String | `MBR-071426` |
+| `member_name` | String | Jordan Ellis |
+| `member_date_of_birth` | Date | 1991-02-08 |
+| `member_medicaid_id` | String | `NMCD-SYN-071426` |
+| `caregiver_name` | String | Taylor Brooks |
+| `claim_total_billed` | Decimal(2) | 3250.00 |
+| `claim_threshold` | Decimal(2) | 2500.00 |
 
-## 2. Provider
-| Field | Type | Example |
+`case_type` is a string because the tenant cap prevents creation of `PI360CaseType`. The application contract still allows only `MedicaidPCS` and `StateMedicaidHospice`.
+
+## Claim
+
+Nine existing PCS rows remain unchanged in identity. One hospice aggregate row, `CLM-HSP-2026-0714-001`, stores 52 units and $3,250. New fields are:
+
+| Field | Type | Purpose |
 |---|---|---|
-| 🔑 provider_id | Text | `PRV-100482` |
-| name | Text | Harbor Home Support Services |
-| medicaid_provider_id | Text | `MPI-4471902` |
-| npi | Text | `1730456789` |
-| address | Text | 2200 Marina Blvd, Suite 210 |
-| enrollment_status | Choice | Active |
-| active_attendant_count | Number | 22 |
-| prior_integrity_history | Text | 1 education letter (2024), no sanctions |
-| watch_list | Boolean | set true at closure |
+| `case_type` | String | CaseType routing value |
+| `program` | String | Normalized Medicaid program |
+| `provider_id` | String | Provider reference |
+| `claim_lines_json` | Multiline text | All three hospice source lines |
+| `flagged_line_id` | String | `LINE-0714-01` |
+| `service_type` | String | In-home hospice personal care |
+| `place_of_service_code` | String | `12` |
+| `place_of_service_description` | String | Member home |
+| `claimed_service_start_at` | DateTime with timezone | July 14 at 09:00 -05:00 |
+| `claimed_service_end_at` | DateTime with timezone | July 14 at 15:00 -05:00 |
+| `unit_minutes` | Decimal | 15 |
+| `source_claim_status` | String | Paid |
 
-## 3. Attendant
-| Field | Type | Example |
+The aggregate avoids violating the existing unique `claim_id` constraint while retaining exact source lines for evidence review.
+
+## Evidence document
+
+Existing extraction fields and validation status remain. Version 0.6.0 adds:
+
+| Field | Type | Purpose |
 |---|---|---|
-| 🔑 attendant_id | Text | `ATT-2087` |
-| name | Text | Jordan Ellis |
-| 🔗 provider_id | Text | `PRV-100482` |
-| role | Choice | Personal Care Attendant |
-| credential_id | Text | `PCA-556210` |
-| credential_expiry | Date | 2026-03-31 |
-| personnel_docs_complete | Boolean | false |
-| missing_docs | Text[] | ["Signed training acknowledgment","Current background-check attestation"] |
+| `ixp_model` | String | Extractor title |
+| `ixp_model_version` | String | Published model version |
+| `reference_only` | Boolean | Separates policy grounding from extraction evidence |
+| `patient_class` | String | `Observation` |
+| `encounter_id` | String | `ENC-SYN-20260714-JE` |
+| `facility_name` | String | Fictional hospital |
+| `care_area` | String | Hospital Medicine - Observation |
+| `encounter_arrival_at` | DateTime with timezone | 2026-07-14T08:20:00-05:00 |
+| `encounter_discharge_at` | DateTime with timezone | 2026-07-16T10:00:00-05:00 |
+| `encounter_disposition` | String | Home, self-care |
 
-## 4. Claim
-| Field | Type | Example |
-|---|---|---|
-| 🔑 claim_id | Text | `CLM-0491` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| 🔗 attendant_id | Text | `ATT-2087` |
-| member_id | Text | `MBR-33915` |
-| date_of_service | Date | 2026-04-14 |
-| units_billed | Number | 24 |
-| unit_rate | Currency | 7.20 |
-| billed_amount | Currency | 172.80 |
-| evv_supported_units | Number | 16 |
-| timesheet_supported_units | Number | 16 |
-| improper_units | Number | 8 (deterministic: billed − min(evv,timesheet)) |
-| status | Choice | Under Review / Cleared / Flagged |
+Institutional fields are normalized onto the hospital evidence row. The full extraction payload remains in `extracted_fields`.
 
-## 5. EVVVisit
-| Field | Type | Example |
-|---|---|---|
-| 🔑 evv_id | Text | `EVV-88231` |
-| 🔗 attendant_id | Text | `ATT-2087` |
-| member_id | Text | `MBR-33915` |
-| service_date | Date | 2026-04-14 |
-| start_time | Text (HH:MM) | 08:00  *(Data Fabric has no native TIME type; stored as HH:MM string, consumed by the deterministic overlap calc)* |
-| end_time | Text (HH:MM) | 12:00 |
-| units | Number | 16 |
-| capture_method | Choice | Mobile-GPS / Telephony / Manual |
-| gps_confirmed | Choice | Yes / No / N/A |
-| overlaps_with | Text | `EVV-88237` (set by RS-01 calc) |
+## Other entities
 
-## 6. RiskSignal
-| Field | Type | Example |
-|---|---|---|
-| 🔑 signal_id | Text | `RS-01` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| name | Text | Overlapping visits |
-| rule_expression | Text | the exact deterministic rule (auditable) |
-| inputs | JSON | the records/values evaluated |
-| result_value | Text | "1 overlap on 2026-04-14 (90 min)" |
-| severity | Choice | High / Medium / Low |
-| computed_by | Text | `deterministic-calc-v1` (never an agent) |
-| computed_at | DateTime | |
+- `PI360Provider`: shared provider enrollment context.
+- `PI360Attendant`: Jordan Ellis for PCS and Taylor Brooks for hospice.
+- `PI360EvvVisit`: PCS EVV evidence.
+- `PI360RiskSignal`: deterministic rule, inputs, output, severity, version, and timestamp. `RS-HSP-01` records the 360-minute location/time conflict.
+- `PI360InvestigationAction`: shared audit stream distinguishing system, agent, and human actions.
+- `PI360Decision`: investigator and supervisor decisions; adverse or financial action remains human-gated.
 
-## 7. EvidenceDocument
-| Field | Type | Example |
-|---|---|---|
-| 🔑 doc_id | Text | `DOC-TS-0416` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| doc_type | Choice | Timesheet / Plan of Care / Service Note / Personnel Packet / Correspondence |
-| source_system | Text | Provider portal / Legacy care-mgmt (RPA) / Records-request inbox |
-| storage_uri | Text | bucket path |
-| extracted_fields | JSON | IXP output |
-| extraction_confidence | Number | 0.0–1.0 |
-| validation_status | Choice | Auto-confirmed / Needs review / Human-validated |
-| validated_by | Text | investigator id, if human-validated |
+`PI360DocType` includes Timesheet, Plan of Care, Service Note, Personnel Packet, Correspondence, Hospital Record, Policy Reference, and Hospice Service Record.
 
-## 8. InvestigationAction  (the audit trail)
-| Field | Type | Example |
-|---|---|---|
-| 🔑 action_id | Text | `ACT-...` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| action_type | Choice | Signal computed / Doc extracted / Human validated / Edit / Request sent / Response received / Approval / Action executed |
-| actor | Text | user id, `system`, or agent name |
-| actor_kind | Choice | Human / System / Agent |
-| timestamp | DateTime | |
-| detail | Text | human-readable description |
-| before_value / after_value | JSON | for edits |
+## Idempotency
 
-## 9. Decision
-| Field | Type | Example |
-|---|---|---|
-| 🔑 decision_id | Text | `DEC-...` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| decision_type | Choice | Proceed to records request / Refer for audit / Open overpayment recovery / Provider education / Close-no-action |
-| recommended_by | Text | Investigation Planning Agent (recommendation only) |
-| decided_by | Text | supervisor id (the human who approves) |
-| decision_role | Choice | Investigator / Supervisor |
-| rationale | Text | narrative + citations |
-| adverse_or_financial | Boolean | true → supervisor approval required |
-| approved | Boolean | |
-| decided_at | DateTime | |
-
----
-
-## Relationships (summary)
-- One **ProgramIntegrityCase** → one Provider, one Attendant, many Claims/EVVVisits/RiskSignals/EvidenceDocuments/InvestigationActions/Decisions.
-- **Claim** ↔ **EVVVisit** matched on (attendant, member, date). Mismatch drives RS-04.
-- **RiskSignal.computed_by** is always `deterministic-calc-v1` — agents never populate it.
-- Every state change → one **InvestigationAction** (immutable append-only).
+`platform/03_seed.js` queries each entity by its natural key, includes the UiPath system `Id` for updates, and inserts only when no match exists. A duplicate natural key stops the script rather than silently choosing a row.

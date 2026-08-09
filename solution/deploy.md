@@ -1,6 +1,6 @@
-# Deploy — Program Integrity 360
+# Deploy — Program Integrity 360 0.6.0
 
-The production Automation Cloud migration was completed on 2026-08-07. All data is synthetic.
+All data and documents are synthetic.
 
 ## Destination
 
@@ -10,61 +10,83 @@ The production Automation Cloud migration was completed on 2026-08-07. All data 
 - Parent folder: `AMER Presales/Public Sector`
 - Solution folder: `AMER Presales/Public Sector/ProgramIntegrity360`
 - Folder key: `5db31dd1-1073-4f9e-b44b-76f5484e03c4`
-- Solution package: `ProgramIntegrity360` `0.5.1`
-- Coded app: `pi360-coded-app` `0.5.3`
-- App URL: `https://uipathlabs.uipath.host/pi360-coded-app`
+- Target package: `ProgramIntegrity360` 0.6.0
+- Rollback package: `ProgramIntegrity360` 0.5.1
+- Baseline pipeline deployment: `30c60010-f31f-4d6e-d26d-08def493cb98`
+- Studio Web solution: `494be60c-8bb2-4478-3beb-08def46ec69f`
+- Hosted coded app: `https://uipathlabs.uipath.host/pi360-coded-app`
 
-The authoritative identifiers and checksums are in `platform/cloud-playground-migration.json`.
+The coded app is not republished in this pass. Its current visual design and deployment remain intact.
 
-## Deployed state
+## Pre-deployment gates
 
-- Solution activation: `SuccessfulActivate`
-- Editable Studio Web source: 15 projects uploaded with no project errors
-- Data Fabric: 10 tenant choice sets, 9 tenant entities, and 52 seed records
-- Coded app deployment revision: 4
-- Source staging environment: retained and not modified
+1. Verify `uip login status --output json` targets `uipathlabs/Playground`.
+2. Run the complete Python, PDF, coded-app, Case, Flow, API workflow, and agent validation suite.
+3. Run `uip solution resources refresh --solution-folder ProgramIntegrity360 --output json` and inspect warnings and stderr.
+4. Run a dry pack before producing the release archive.
+5. Confirm the active 0.5.1 deployment and folder identifiers still match `platform/cloud-playground-migration.json`.
 
-## OAuth gate
+## Pack and publish
 
-The coded app uses authorization-code with PKCE as a public client. It requests exactly the 18 scopes in `ProgramIntegrity360/PI360CodedApp/uipath.json`, does not request `offline_access`, and never uses a client secret.
-
-External app `57201488-1566-4f9b-a696-1b3773c2af33` must grant every configured scope. Live validation currently returns `invalid_scope` because these three grants are missing from the external app registration:
-
-- `DataFabric.Data.Read`
-- `DataFabric.Data.Write`
-- `DataFabric.Schema.Read`
-
-After an external-app administrator adds them, rerun the browser sign-in check at the hosted app URL.
-
-## Rebuild and upgrade the coded app
-
-Run from `ProgramIntegrity360/PI360CodedApp` after an interactive production login:
+From the repository root:
 
 ```bash
-npm test
-npm run lint
-npm run build
-uip codedapp pack dist --name pi360-coded-app --version <next-version> -o .uipath
-uip codedapp publish --name pi360-coded-app --version <next-version> --base-url https://cloud.uipath.com --tenant-name Playground --output json
-uip codedapp deploy --name pi360-coded-app --version <next-version> --client-id 57201488-1566-4f9b-a696-1b3773c2af33 --base-url https://cloud.uipath.com --org-name uipathlabs --tenant-id 15eb07e5-edfb-4fcc-9229-7681ff056ff0 --folder-key 5db31dd1-1073-4f9e-b44b-76f5484e03c4 --output json
+uip solution pack ProgramIntegrity360 --dry-run --version 0.6.0 --output json
+uip solution pack ProgramIntegrity360 ProgramIntegrity360/.solution-packages --name ProgramIntegrity360 --version 0.6.0 --output json
+uip solution publish ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.0.zip --output json
+uip solution packages list --name ProgramIntegrity360 --limit 50 --output json
 ```
 
-The current CLI overwrites `.uipath/app.config.json` during publish. Before an in-place upgrade, confirm that file still contains deployment ID `12eb1198-bd15-49e8-a009-d17410ad0477`; otherwise restore the recorded deployment ID and app URL from the migration ledger before running `deploy`.
+The actual pack filename returned by the CLI is authoritative. Verify package metadata, SHA-256, and version before publication.
 
-## Verification
+## Editable Studio Web source
 
 ```bash
-uip user --output json
-uip solution deploy status 30c60010-f31f-4d6e-d26d-08def493cb98 --output json
-uip or folders list --all --name ProgramIntegrity360 --output json
-uip df entities list --include-folders --native-only --output json
-curl -sS https://uipathlabs.uipath.host/pi360-coded-app
+uip solution upload ProgramIntegrity360 --output json
 ```
 
-Require the active solution instance, the exact folder key, nine `PI360*` entities, HTTP 200, production metadata, the exact client ID, exact scopes, and exact redirect URI.
+Require every per-project error list to be empty and verify the existing Studio Web solution ID. `upload` updates editable source; it does not activate an Orchestrator deployment.
+
+## Existing-folder safety
+
+The installed `uip solution deploy run` command creates a new Orchestrator folder. Do not point it at the existing `ProgramIntegrity360` folder and do not uninstall 0.5.1. For this brownfield upgrade, use UiPath's in-place Automation Solutions upgrade operation against the existing deployment, then verify the returned pipeline deployment ID before activation.
+
+If the tenant does not expose an in-place upgrade operation, stop after publishing 0.6.0 and uploading the editable source. Do not create a parallel folder or replace the rollback deployment without explicit approval.
+
+## Activation verification
+
+After the in-place upgrade reports success, verify:
+
+- Package version 0.6.0 and activation `SuccessfulActivate`.
+- The exact existing solution folder key.
+- Case plan, Maestro Flow, API workflow, agent, and process resources.
+- Both Beeceptor routes.
+- Nine PI360 Data Fabric entities and 59 total records.
+- One PCS case and one hospice case by natural key.
+- All nine bucket PDFs by fresh list operations.
+- Service IXP live model 12 and institutional IXP live model 9.
+- The hospice claim: 52 units, $3,250, place of service 12.
+- The institutional record: patient class `Observation` and the exact arrival/discharge interval.
+
+Record the package checksum, upgrade/deployment identifiers, activation state, and verification time in `platform/cloud-playground-migration.json`.
+
+## Manual-trigger smoke tests
+
+Run only against synthetic test records.
+
+- PCS: `CaseType = MedicaidPCS`; claim endpoint `/MedicaidPCS`; no automatic hospital-record request.
+- Hospice: `CaseType = StateMedicaidHospice`; claim endpoint `/StateMedicaidHospice`; $2,500 threshold; 72-hour provider wait when the hospital packet is unavailable; 360-minute review indicator after the packet is received.
+
+Do not complete a real adverse or financial Action Center task.
+
+## Data and model notes
+
+Playground is at its 500-object Data Fabric cap. The C-light schema extends the nine existing PI360 entities and creates no new entities or choice sets. The two IXP projects are published and tagged live, but the authenticated Maestro registry does not yet expose them; the current Flow nodes remain labeled swap-ready mocks until binding is verifiable.
 
 ## Rollback
 
-For an app-only rollback, redeploy the previously published `pi360-coded-app` version `0.5.2` against the same deployment ID and folder. The production solution package remains `0.5.1` and does not need rollback for an app-only issue.
-
-The previous staging deployment under `AMER Presales/Public Sector/ProgramIntegrity360 1` remains the untouched source fallback. Do not delete or mutate it during production rollback.
+- Keep published package 0.5.1 and its recorded deployment identifiers.
+- Do not delete the 0.5.1 package.
+- Do not uninstall the active solution folder as a rollback technique.
+- If 0.6.0 activation fails, use the supported in-place rollback/version operation for the existing deployment or leave 0.5.1 active.
+- The coded app remains on its current independent deployment and does not require rollback for this solution-only change.
