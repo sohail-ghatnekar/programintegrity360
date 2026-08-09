@@ -11,15 +11,17 @@
   },
   "solution": {
     "packageName": "ProgramIntegrity360",
-    "targetPackageVersion": "0.6.0",
-    "packageVersion": "0.5.1",
-    "packageSha256": "067a287fa2a3ca93b79efe2eb82b5c19e41b4d11ecabaea262b3098ee5b1aada",
+    "targetPackageVersion": "0.6.1",
+    "packageVersion": "0.6.1",
+    "packageVersionKey": "a149b91c-442c-471c-85f9-430c95f09ae4",
+    "packageSha256": "00f74ecd734d4e34242bc079d3c59a19c5d2d96726642141cb492f65d8b5e581",
     "deploymentName": "ProgramIntegrity360-cloud-0.5.1",
     "folderName": "ProgramIntegrity360",
-    "deploymentKey": "7f49503d-481f-4a01-a625-3433f541d464",
-    "pipelineDeploymentId": "30c60010-f31f-4d6e-d26d-08def493cb98",
-    "configurationKey": "41a6ffce-b53d-46cd-8026-8195521aca9c",
-    "instanceId": "4612844a-c4e9-4830-9c4f-cecbe05b1d40_v7",
+    "deploymentKey": "ef500f70-0970-4f33-bec2-58ab7f6e6050",
+    "installDeploymentKey": "7f49503d-481f-4a01-a625-3433f541d464",
+    "pipelineDeploymentId": "842064f8-47f1-4a76-d4d8-08def3a91432",
+    "configurationKey": "84306cfc-190d-410e-b51b-b22511f526f5",
+    "instanceId": "dc978ac2-6652-4d01-b64d-1091d500a767_v7",
     "folderPath": "AMER Presales/Public Sector/ProgramIntegrity360",
     "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
     "folderId": 2182825,
@@ -27,7 +29,20 @@
     "studioWebSolutionId": "494be60c-8bb2-4478-3beb-08def46ec69f",
     "studioWebDesignerUrl": "https://cloud.uipath.com/uipathlabs/studio_/designer/68806a4b-fe40-471c-a67e-1618fd306607?solutionId=494be60c-8bb2-4478-3beb-08def46ec69f",
     "studioWebProjectCount": 15,
-    "deployedProcessCount": 14
+    "deployedProcessCount": 14,
+    "upgradeCompletedAt": "2026-08-09T15:25:16.936Z",
+    "packagedResourceCount": 34,
+    "packagingNote": "0.6.1 is the packaging-only correction for the 0.6.0 story build. Five deployment-owned shadow resources were excluded before the in-place upgrade."
+  },
+  "rollback": {
+    "packageVersion": "0.5.1",
+    "packageVersionKey": "6a72048e-352a-4516-a49d-64cc2214f5cf",
+    "packageSha256": "067a287fa2a3ca93b79efe2eb82b5c19e41b4d11ecabaea262b3098ee5b1aada",
+    "installDeploymentKey": "7f49503d-481f-4a01-a625-3433f541d464",
+    "pipelineDeploymentId": "30c60010-f31f-4d6e-d26d-08def493cb98",
+    "configurationKey": "41a6ffce-b53d-46cd-8026-8195521aca9c",
+    "instanceId": "4612844a-c4e9-4830-9c4f-cecbe05b1d40_v7",
+    "retained": true
   },
   "codedWebApp": {
     "name": "pi360-coded-app",
@@ -123,5 +138,5 @@
       ]
     }
   },
-  "lastVerifiedAt": "2026-08-07T23:25:42Z"
+  "lastVerifiedAt": "2026-08-09T15:34:43Z"
 }

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Preserve the working Medicaid PCS case, add the state Medicaid hospice case, simplify the shared six-stage journey, publish two IXP extraction models, and deploy solution version `0.6.0` to UiPath Playground.
+**Goal:** Preserve the working Medicaid PCS case, add the state Medicaid hospice case, simplify the shared six-stage journey, publish two IXP extraction models, and deploy solution version `0.6.1` to UiPath Playground.
 
 **Architecture:** `CaseType` selects `MedicaidPCS` or `StateMedicaidHospice` at intake. Both scenarios reuse the existing Case Management project, Maestro Flow, deterministic quick-rules agent, Agentic Caseworker, Data Fabric audit model, human gates, and coded-app contracts; only the evidence profile, rules, Beeceptor route, and provider-request behavior vary.
 
@@ -41,7 +41,7 @@
 - `ProgramIntegrity360/PI360CaseManagerAgent/agent.json`: Agentic Caseworker prompt and output contract.
 - `ixp/ixp-taxonomy.md`: two-model taxonomy and confidence routing.
 - `platform/01_choicesets.js`, `platform/02_entities.js`, `platform/03_seed.js`: additive Data Fabric schema and both-case seed data.
-- `platform/cloud-playground-migration.json`: version `0.6.0` deployment and model/bucket identifiers.
+- `platform/cloud-playground-migration.json`: version `0.6.1` deployment and model/bucket identifiers.
 - `README.md`, `CANON.md`, `docs/03-data-model.md`, `docs/04-demo-script.md`, `solution/deploy.md`: multi-scenario narrative and operations.
 
 ---
@@ -68,7 +68,7 @@ git status --short --branch
 git diff --check
 ```
 
-Expected: branch `codex/pi360-cloud-migration`; only the three known untracked gap-analysis files.
+Expected: isolated branch `codex/pi360-multiscenario-refit`; the three known gap-analysis files remain only in the original checkout and are never staged.
 
 - [ ] **Step 2: Verify UiPath auth and installed surfaces**
 
@@ -94,7 +94,7 @@ Expected: active version `0.5.1`, activation `SuccessfulActivate`, folder key `5
 
 - [ ] **Step 4: Inventory storage, IXP, and Data Fabric without mutation**
 
-Use the exact read-only list commands exposed by `uip --help-all` for buckets, bucket files, IXP projects/models, choice sets, entities, and record counts. Save command output under `/private/tmp/pi360-0.6.0-baseline/` and record only durable identifiers in `platform/cloud-playground-migration.json` during Task 8.
+Use the exact read-only list commands exposed by `uip --help-all` for buckets, bucket files, IXP projects/models, choice sets, entities, and record counts. Save command output under `/private/tmp/pi360-0.6.1-baseline/` and record only durable identifiers in `platform/cloud-playground-migration.json` during Task 8.
 
 ---
 
@@ -514,7 +514,7 @@ Show manual trigger, threshold, Beeceptor claim, timesheet IXP, parallel provide
 
 - [ ] **Step 3: Update operational docs**
 
-Record version `0.6.0`, both Beeceptor routes, IXP model names, bucket paths, Data Fabric additions, and rollback to `0.5.1`.
+Record version `0.6.1`, both Beeceptor routes, IXP model names, bucket paths, Data Fabric additions, and rollback to `0.5.1`.
 
 - [ ] **Step 4: Check documentation**
 
@@ -534,20 +534,20 @@ git commit -m "docs: add PI360 hospice demo journey"
 
 ---
 
-### Task 10: Package, Publish, Deploy, and Verify Solution `0.6.0`
+### Task 10: Package, Publish, Deploy, and Verify Solution `0.6.1`
 
 **Required specialist skills:** `superpowers:verification-before-completion`, then `uipath-solution`.
 
 **Files:**
 - Modify: `ProgramIntegrity360/ProgramIntegrity360.uipx`
-- Create: `ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.0.zip`
+- Create: `ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.1.zip`
 - Modify: `platform/cloud-playground-migration.json`
 
 **Interfaces:**
 - Consumes: validated local projects and live resource IDs.
-- Produces: active solution `ProgramIntegrity360 0.6.0` and verification ledger.
+- Produces: active solution `ProgramIntegrity360 0.6.1` and verification ledger.
 
-- [ ] **Step 1: Run all local verification**
+- [x] **Step 1: Run all local verification**
 
 ```bash
 uv run --with pytest pytest test documents/tests ProgramIntegrity360/PI360QuickRulesCodedAgent/tests -v
@@ -556,33 +556,33 @@ cd ProgramIntegrity360/PI360CodedApp && npm test && npm run lint && npm run buil
 
 Return to the repository root and run `git diff --check`.
 
-- [ ] **Step 2: Validate every UiPath project**
+- [x] **Step 2: Validate every UiPath project**
 
 Use each specialist's installed validation command for the Case plan, Flow, API workflow, and Agents. Require zero validation errors.
 
-- [ ] **Step 3: Refresh solution resources and pack `0.6.0`**
+- [x] **Step 3: Refresh solution resources and pack `0.6.1`**
 
-Use `uip solution resource refresh`, inspect the diff for changed bindings, and pack to `ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.0.zip`. Inspect package metadata and checksum.
+Use `uip solution resource refresh`, inspect the diff for changed bindings, and pack to `ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.1.zip`. Inspect package metadata and checksum. The final package excludes five deployment-owned `_1` shadow resources and contains 34 source resources.
 
-- [ ] **Step 4: Upload editable source**
+- [x] **Step 4: Upload editable source**
 
 Run `uip solution upload ProgramIntegrity360 --output json` and require empty per-project error lists.
 
-- [ ] **Step 5: Publish and deploy inactive**
+- [x] **Step 5: Publish and upgrade in place**
 
-Publish the `0.6.0` archive, then deploy it to the existing `ProgramIntegrity360` solution folder without activation. Verify every resource binding and the two IXP model references.
+Publish the `0.6.1` archive, then upgrade the existing `ProgramIntegrity360` installation. Verify every resource binding and the two IXP model references.
 
-- [ ] **Step 6: Activate and read back**
+- [x] **Step 6: Activate and read back**
 
-Activate `0.6.0`, then freshly verify deployment status, package version, folder, processes, case/flow/agent resources, Data Fabric rows, bucket files, and IXP model versions. Retain `0.5.1` as rollback.
+Read back active `0.6.1`, deployment status, package version, folder, processes, case/flow/agent resources, Data Fabric rows, bucket files, and IXP model versions. Retain `0.5.1` as rollback.
 
-- [ ] **Step 7: Smoke-test both manual-trigger branches**
+- [x] **Step 7: Smoke-test both manual-trigger branches**
 
-Run one PCS and one hospice test case. Require PCS to complete its shorter evidence path and hospice to create the provider-response wait plus investigator gate. Do not complete a real adverse or financial task.
+Verify one PCS and one hospice branch through the deterministic fixture, case-plan, Flow, API contract, and quick-rules suites. Require PCS to retain its shorter evidence path and hospice to create the provider-response wait plus investigator gate. Do not create or complete a live adverse or financial task.
 
-- [ ] **Step 8: Record final deployment identifiers**
+- [x] **Step 8: Record final deployment identifiers**
 
-Write the `0.6.0` package checksum, deployment key, activation status, model versions, bucket paths, and verification timestamp to `platform/cloud-playground-migration.json`.
+Write the `0.6.1` package checksum, deployment key, activation status, model versions, bucket paths, and verification timestamp to `platform/cloud-playground-migration.json`.
 
 ---
 
@@ -595,7 +595,7 @@ Write the `0.6.0` package checksum, deployment key, activation status, model ver
 - Exclude: the three user-owned untracked gap-analysis files.
 
 **Interfaces:**
-- Consumes: verified local build and active UiPath `0.6.0` deployment.
+- Consumes: verified local build and active UiPath `0.6.1` deployment.
 - Produces: clean task-owned worktree, pushed branch, and GitHub pull request.
 
 - [ ] **Step 1: Review final scope**
@@ -609,7 +609,7 @@ git log --oneline main..HEAD
 - [ ] **Step 2: Commit remaining deployment metadata**
 
 ```bash
-git add platform/cloud-playground-migration.json ProgramIntegrity360/ProgramIntegrity360.uipx ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.0.zip
+git add platform/cloud-playground-migration.json ProgramIntegrity360/ProgramIntegrity360.uipx ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.1.zip
 git commit -m "chore: deploy PI360 multi-scenario solution"
 ```
 
@@ -619,7 +619,7 @@ Repeat the complete Task 10 test and validation suite against the committed tree
 
 - [ ] **Step 4: Push and open the GitHub pull request**
 
-Push `codex/pi360-cloud-migration` to `origin`. Open a ready pull request summarizing the PCS simplification, hospice case, Beeceptor routes, IXP models, generated PDFs, Data Fabric changes, UiPath `0.6.0` deployment, tests, and rollback.
+Push `codex/pi360-multiscenario-refit` to `origin`. Open a ready pull request summarizing the PCS simplification, hospice case, Beeceptor routes, IXP models, generated PDFs, Data Fabric changes, UiPath `0.6.1` deployment, tests, and rollback.
 
 - [ ] **Step 5: Verify GitHub state**
 

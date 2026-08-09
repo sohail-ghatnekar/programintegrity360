@@ -1,4 +1,4 @@
-# Deploy — Program Integrity 360 0.6.0
+# Deploy — Program Integrity 360 0.6.1
 
 All data and documents are synthetic.
 
@@ -10,9 +10,9 @@ All data and documents are synthetic.
 - Parent folder: `AMER Presales/Public Sector`
 - Solution folder: `AMER Presales/Public Sector/ProgramIntegrity360`
 - Folder key: `5db31dd1-1073-4f9e-b44b-76f5484e03c4`
-- Target package: `ProgramIntegrity360` 0.6.0
+- Active package: `ProgramIntegrity360` 0.6.1
 - Rollback package: `ProgramIntegrity360` 0.5.1
-- Baseline pipeline deployment: `30c60010-f31f-4d6e-d26d-08def493cb98`
+- Upgrade pipeline deployment: `842064f8-47f1-4a76-d4d8-08def3a91432`
 - Studio Web solution: `494be60c-8bb2-4478-3beb-08def46ec69f`
 - Hosted coded app: `https://uipathlabs.uipath.host/pi360-coded-app`
 
@@ -22,18 +22,20 @@ The coded app is not republished in this pass. Its current visual design and dep
 
 1. Verify `uip login status --output json` targets `uipathlabs/Playground`.
 2. Run the complete Python, PDF, coded-app, Case, Flow, API workflow, and agent validation suite.
-3. Run `uip solution resources refresh --solution-folder ProgramIntegrity360 --output json` and inspect warnings and stderr.
+3. Run `uip solution resources refresh --solution-folder ProgramIntegrity360 --output json` and inspect warnings and stderr. Remove any deployment-owned `_1` shadow resources before packaging.
 4. Run a dry pack before producing the release archive.
 5. Confirm the active 0.5.1 deployment and folder identifiers still match `platform/cloud-playground-migration.json`.
+
+If an online pack re-imports deployment-owned shadow resources, do not publish that archive. Package from the clean 34-resource source tree without live resource reconciliation, then verify the archive contains no suffixed resource names or shadow IDs.
 
 ## Pack and publish
 
 From the repository root:
 
 ```bash
-uip solution pack ProgramIntegrity360 --dry-run --version 0.6.0 --output json
-uip solution pack ProgramIntegrity360 ProgramIntegrity360/.solution-packages --name ProgramIntegrity360 --version 0.6.0 --output json
-uip solution publish ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.0.zip --output json
+uip solution pack ProgramIntegrity360 --dry-run --version 0.6.1 --output json
+uip solution pack ProgramIntegrity360 ProgramIntegrity360/.solution-packages --name ProgramIntegrity360 --version 0.6.1 --output json
+uip solution publish ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.1.zip --output json
 uip solution packages list --name ProgramIntegrity360 --limit 50 --output json
 ```
 
@@ -49,15 +51,15 @@ Require every per-project error list to be empty and verify the existing Studio 
 
 ## Existing-folder safety
 
-The installed `uip solution deploy run` command creates a new Orchestrator folder. Do not point it at the existing `ProgramIntegrity360` folder and do not uninstall 0.5.1. For this brownfield upgrade, use UiPath's in-place Automation Solutions upgrade operation against the existing deployment, then verify the returned pipeline deployment ID before activation.
+When the deployment name and package name match an existing installation, `uip solution deploy run` upgrades that installation in place. Use the existing deployment name and parent path, confirm that the returned `InstallDeploymentKey` remains `7f49503d-481f-4a01-a625-3433f541d464`, and do not uninstall the solution folder.
 
-If the tenant does not expose an in-place upgrade operation, stop after publishing 0.6.0 and uploading the editable source. Do not create a parallel folder or replace the rollback deployment without explicit approval.
+The 0.6.1 upgrade returned deployment key `ef500f70-0970-4f33-bec2-58ab7f6e6050` and preserved folder key `5db31dd1-1073-4f9e-b44b-76f5484e03c4`. The server reported `SuccessfulActivate`; no parallel solution folder was created.
 
 ## Activation verification
 
 After the in-place upgrade reports success, verify:
 
-- Package version 0.6.0 and activation `SuccessfulActivate`.
+- Package version 0.6.1 and activation `SuccessfulActivate`.
 - The exact existing solution folder key.
 - Case plan, Maestro Flow, API workflow, agent, and process resources.
 - Both Beeceptor routes.
@@ -88,5 +90,5 @@ Playground is at its 500-object Data Fabric cap. The C-light schema extends the 
 - Keep published package 0.5.1 and its recorded deployment identifiers.
 - Do not delete the 0.5.1 package.
 - Do not uninstall the active solution folder as a rollback technique.
-- If 0.6.0 activation fails, use the supported in-place rollback/version operation for the existing deployment or leave 0.5.1 active.
+- If a later activation fails, use the supported in-place rollback/version operation for the existing deployment. Do not uninstall the solution folder.
 - The coded app remains on its current independent deployment and does not require rollback for this solution-only change.

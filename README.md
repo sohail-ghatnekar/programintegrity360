@@ -33,7 +33,7 @@ Deterministic rules calculate the $2,500 threshold breach and the 360-minute ove
 - Storage buckets: Timesheets, Hospital Records, and Policy Docs in `AMER Presales/Public Sector/ProgramIntegrity360`
 - Hosted coded app: `https://uipathlabs.uipath.host/pi360-coded-app`
 
-The existing coded-app visual design is intentionally preserved. Version 0.6.0 changes the shared case contracts, orchestration, evidence, and live Data Fabric records; the app retains its clearly labeled PCS demo-data fallback.
+The existing coded-app visual design is intentionally preserved. Version 0.6.1 changes the shared case contracts, orchestration, evidence, and live Data Fabric records; the app retains its clearly labeled PCS demo-data fallback.
 
 ## Repository map
 
@@ -56,7 +56,7 @@ The existing coded-app visual design is intentionally preserved. Version 0.6.0 c
 - Organization: `uipathlabs`
 - Tenant: `Playground`
 - Folder: `AMER Presales/Public Sector/ProgramIntegrity360`
-- Target solution version: `0.6.0`
+- Active solution version: `0.6.1`
 - Rollback version: `0.5.1`
 
 See `solution/deploy.md` for deployment and `platform/cloud-playground-migration.json` for durable live identifiers.

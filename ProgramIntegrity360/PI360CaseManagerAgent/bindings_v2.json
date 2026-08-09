@@ -9,11 +9,6 @@
           "defaultValue": "pi360-escalation-action-app",
           "isExpression": false,
           "displayName": "App name"
-        },
-        "folderPath": {
-          "defaultValue": "AMER Presales/Public Sector/ProgramIntegrity360",
-          "isExpression": false,
-          "displayName": "Folder path"
         }
       },
       "metadata": {

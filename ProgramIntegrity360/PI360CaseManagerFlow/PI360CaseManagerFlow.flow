@@ -3448,7 +3448,7 @@
       },
       "extractServiceEvidenceIxp": {
         "position": {
-          "x": 576,
+          "x": 192,
           "y": 0
         },
         "size": {
@@ -3458,7 +3458,7 @@
       },
       "hasInstitutionalRecordForIxp": {
         "position": {
-          "x": 576,
+          "x": 384,
           "y": 0
         },
         "size": {

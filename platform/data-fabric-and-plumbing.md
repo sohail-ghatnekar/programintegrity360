@@ -7,7 +7,7 @@ This document records the live `uipathlabs/Playground` substrate for the Medicai
 - Folder: `AMER Presales/Public Sector/ProgramIntegrity360`
 - Folder key: `5db31dd1-1073-4f9e-b44b-76f5484e03c4`
 - Data Fabric scope: tenant
-- Solution target: `ProgramIntegrity360` 0.6.0
+- Active solution: `ProgramIntegrity360` 0.6.1
 - Rollback package: 0.5.1
 
 Playground reports that its Data Fabric environment is at the 500-object cap. The C-light implementation therefore preserves and extends the nine existing PI360 entities. It creates no new entities or choice sets and performs no deletes or renames.

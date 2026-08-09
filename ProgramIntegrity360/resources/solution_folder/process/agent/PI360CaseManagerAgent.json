@@ -23,7 +23,7 @@
             "isExpression": false
           },
           "folderPath": {
-            "defaultValue": "AMER Presales/Public Sector/ProgramIntegrity360",
+            "defaultValue": "solution_folder",
             "isExpression": false
           }
         },
@@ -31,10 +31,7 @@
           "bindingsVersion": "2.2",
           "solutionsSupport": "true"
         },
-        "resourceKind": "App",
-        "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
-        "resourceName": "pi360-escalation-action-app",
-        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
+        "resourceKind": "App"
       }
     ],
     "folders": [

@@ -16,21 +16,6 @@
     "runtimeDependencies": [
       {
         "bindingType": "process",
-        "bindingKey": "solution_folder.PI360EvidenceSnapshotAutomation",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "PI360EvidenceSnapshotAutomation",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
-        "resourceKind": "Process"
-      },
-      {
-        "bindingType": "process",
         "bindingKey": "solution_folder.PI360CaseManagerAgent",
         "bindingValues": {
           "name": {
@@ -43,21 +28,6 @@
           }
         },
         "bindingMetadata": {},
-        "resourceKind": "Process"
-      },
-      {
-        "bindingType": "process",
-        "bindingKey": "solution_folder.PI360DecisionPacketAutomation",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "PI360DecisionPacketAutomation",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
         "resourceKind": "Process"
       },
       {
@@ -77,32 +47,7 @@
           "bindingsVersion": "2.2",
           "solutionsSupport": "true"
         },
-        "resourceKind": "App",
-        "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
-        "resourceName": "pi360-escalation-action-app",
-        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
-      },
-      {
-        "bindingType": "app",
-        "bindingKey": "solution_folder.pi360-recovery-approval",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "pi360-recovery-approval",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
-        "bindingMetadata": {
-          "bindingsVersion": "2.2",
-          "solutionsSupport": "true"
-        },
-        "resourceKind": "App",
-        "resourceKey": "f03d4cd5-2d9b-4202-b8df-9042004b7325",
-        "resourceName": "pi360-recovery-approval",
-        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
+        "resourceKind": "App"
       }
     ],
     "folders": [

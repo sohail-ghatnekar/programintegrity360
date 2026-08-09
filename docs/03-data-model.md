@@ -1,6 +1,6 @@
 # Data model — Program Integrity 360
 
-The live `uipathlabs/Playground` tenant is at its 500-object Data Fabric cap. Version 0.6.0 uses a C-light additive model on the nine existing PI360 entities. It creates no new entities or choice sets and preserves every existing ID.
+The live `uipathlabs/Playground` tenant is at its 500-object Data Fabric cap. Version 0.6.1 uses a C-light additive model on the nine existing PI360 entities. It creates no new entities or choice sets and preserves every existing ID.
 
 ## Record counts
 
@@ -20,7 +20,7 @@ Total: 59.
 
 ## Case
 
-`PI360ProgramIntegrityCase` is the aggregate root. Existing lifecycle, assignment, exposure, and audit fields remain unchanged. Version 0.6.0 adds:
+`PI360ProgramIntegrityCase` is the aggregate root. Existing lifecycle, assignment, exposure, and audit fields remain unchanged. Version 0.6.1 adds:
 
 | Field | Type | Hospice example |
 |---|---|---|
@@ -58,7 +58,7 @@ The aggregate avoids violating the existing unique `claim_id` constraint while r
 
 ## Evidence document
 
-Existing extraction fields and validation status remain. Version 0.6.0 adds:
+Existing extraction fields and validation status remain. Version 0.6.1 adds:
 
 | Field | Type | Purpose |
 |---|---|---|

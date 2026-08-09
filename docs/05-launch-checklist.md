@@ -4,12 +4,12 @@ Target: `cloud.uipath.com / uipathlabs / Playground / AMER Presales/Public Secto
 
 ## Deployment readiness
 
-- [ ] Confirm the CLI profile targets `uipathlabs/Playground`.
-- [ ] Confirm solution 0.5.1 remains available for rollback.
-- [ ] Validate and publish solution 0.6.0 per `solution/deploy.md`.
-- [ ] Confirm the active folder key is `5db31dd1-1073-4f9e-b44b-76f5484e03c4`.
-- [ ] Confirm the hosted coded app responds at `https://uipathlabs.uipath.host/pi360-coded-app`.
-- [ ] Do not publish a coded-app release in this pass; preserve its visual design and PCS demo-data fallback.
+- [x] Confirm the CLI profile targets `uipathlabs/Playground`.
+- [x] Confirm solution 0.5.1 remains available for rollback.
+- [x] Validate, publish, and activate solution 0.6.1 per `solution/deploy.md`.
+- [x] Confirm the active folder key is `5db31dd1-1073-4f9e-b44b-76f5484e03c4`.
+- [x] Confirm the hosted coded app responds at `https://uipathlabs.uipath.host/pi360-coded-app`.
+- [x] Do not publish a coded-app release in this pass; preserve its visual design and PCS demo-data fallback.
 
 ## External fixtures
 
