@@ -32,6 +32,7 @@ const key=(fieldName)=>({fieldName,type:'STRING',isRequired:true,isUnique:true})
 const ENTITIES = [
   ['PI360ProgramIntegrityCase','Program Integrity Case', [
     key('case_id'), S('case_type'), S('title',{lengthLimit:400}), S('program'), S('trigger_type'), S('trigger_ref'),
+    S('requester_email'), S('maestro_instance_id'),
     S('provider_id'), S('member_id'), S('member_name',{lengthLimit:300}), D('member_date_of_birth'),
     S('member_medicaid_id'), S('attendant_id'), S('caregiver_name',{lengthLimit:300}),
     D('service_period_start'), D('service_period_end'), N('claim_total_billed',2), N('claim_threshold',2),

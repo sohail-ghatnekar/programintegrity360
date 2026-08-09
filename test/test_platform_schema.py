@@ -45,6 +45,8 @@ def test_entities_use_cap_safe_fields_on_the_nine_existing_pi360_entities():
         "patient_class",
         "encounter_arrival_at",
         "encounter_discharge_at",
+        "requester_email",
+        "maestro_instance_id",
     ):
         assert required in source
 

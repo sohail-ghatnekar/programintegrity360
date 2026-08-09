@@ -18,7 +18,7 @@ Playground reports that its Data Fabric environment is at the 500-object cap. Th
 
 | Entity | Rows | C-light use |
 |---|---:|---|
-| `PI360ProgramIntegrityCase` | 2 | Shared case header, `case_type`, member identity, caregiver, threshold, claim total, stage and assignments |
+| `PI360ProgramIntegrityCase` | 2 | Shared case header; `case_id` is the business correlation key; optional `requester_email`; optional `maestro_instance_id` when Maestro exposes a runtime identifier; `case_type`, member identity, caregiver, threshold, claim total, stage and assignments |
 | `PI360Provider` | 1 | Shared Medicaid provider |
 | `PI360Attendant` | 2 | Jordan Ellis for PCS; Taylor Brooks for hospice |
 | `PI360Claim` | 10 | Nine PCS claims plus one hospice claim header with the three claim lines serialized in `claim_lines_json` |
