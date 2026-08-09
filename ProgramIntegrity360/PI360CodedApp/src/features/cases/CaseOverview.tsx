@@ -16,6 +16,7 @@ type CaseOverviewProps = {
 
 export function CaseOverview({ workspace, role }: CaseOverviewProps) {
   const { case: caseSummary, provider, attendant, claims } = workspace;
+  const isHospice = caseSummary.caseType === 'StateMedicaidHospice';
 
   return (
     <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -23,7 +24,11 @@ export function CaseOverview({ workspace, role }: CaseOverviewProps) {
         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 id="claims-heading" className="text-base font-semibold text-slate-950">Claims under review</h2>
-            <p className="mt-1 text-sm text-slate-600">Stored claim, EVV, timesheet, and plan-of-care comparisons.</p>
+            <p className="mt-1 text-sm text-slate-600">
+              {isHospice
+                ? 'Stored claim lines, service record, and institutional evidence comparisons.'
+                : 'Stored claim, EVV, timesheet, and plan-of-care comparisons.'}
+            </p>
           </div>
           <Badge variant="outline">{claims.length} sampled</Badge>
         </div>
@@ -34,7 +39,7 @@ export function CaseOverview({ workspace, role }: CaseOverviewProps) {
                 <TableHead className="w-28">Claim</TableHead>
                 <TableHead className="w-28">Service date</TableHead>
                 <TableHead className="w-20 text-right">Billed</TableHead>
-                <TableHead className="w-20 text-right">EVV</TableHead>
+                <TableHead className="w-20 text-right">{isHospice ? 'Service record' : 'EVV'}</TableHead>
                 <TableHead className="w-24 text-right">Unsupported</TableHead>
                 <TableHead className="min-w-[150px]">Status</TableHead>
               </TableRow>
@@ -76,7 +81,13 @@ export function CaseOverview({ workspace, role }: CaseOverviewProps) {
           ['NPI', provider.npi],
           ['Enrollment', provider.enrollment],
         ]} />
-        <ContextGroup title="Attendant" rows={[
+        {isHospice && (
+          <ContextGroup title="Member" rows={[
+            ['Name', caseSummary.memberName || 'Not available'],
+            ['ID', caseSummary.memberId || 'Not available'],
+          ]} />
+        )}
+        <ContextGroup title={isHospice ? 'Caregiver' : 'Attendant'} rows={[
           ['Name', attendant.name],
           ['ID', attendant.id],
           ['Certification', attendant.certStatus],

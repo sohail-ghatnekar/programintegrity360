@@ -46,22 +46,24 @@
   },
   "codedWebApp": {
     "name": "pi360-coded-app",
-    "version": "0.5.3",
+    "version": "0.5.5",
     "clientId": "57201488-1566-4f9b-a696-1b3773c2af33",
     "localRedirectUri": "http://localhost:5173",
     "deployedRedirectUri": "https://uipathlabs.uipath.host/pi360-coded-app",
     "systemName": "ID278b47bdb4d24033ab498eb94bec6e8b",
-    "packageSha256": "5073818f90acaf2024e0bc17a1300d3401db7c9770305c0ce1aedc814cdafb90",
+    "packageSha256": "8de00b38a4e014f9a91e3f923926f506386933026890e89c41c4a72b445adecb",
     "appUrl": "https://uipathlabs.uipath.host/pi360-coded-app",
     "deploymentId": "12eb1198-bd15-49e8-a009-d17410ad0477",
-    "deploymentRevision": 4,
+    "deploymentRevision": 6,
+    "entitySource": "Data Fabric using the nine PI360 entity IDs in platform/cloud-playground-entity-ids.json",
     "oauthValidation": {
-      "status": "BlockedByExternalAppScopeGrant",
-      "missingUserScopes": [
+      "status": "PendingAuthenticatedVerification",
+      "requiredUserScopes": [
         "DataFabric.Data.Read",
         "DataFabric.Data.Write",
         "DataFabric.Schema.Read"
-      ]
+      ],
+      "identityInspection": "The current Playground user receives Forbidden (403) from uip admin external-apps list, so an org administrator must verify the public client's grants if authenticated Data Fabric reads still fail."
     }
   },
   "dataFabric": {

@@ -11,6 +11,8 @@ import type {
   LiveCaseRepositoryConfig,
   RepositoryOperationResult,
 } from '../../services/uipath/liveCaseRepository';
+import { DataFabricCaseRepository } from '../../services/uipath/dataFabricCaseRepository';
+import type { Pi360EntityIds } from '../../config/uipath';
 import { DemoCaseRepository } from './demoRepository';
 import type { CaseRepository, CaseSummary, CaseWorkspaceSnapshot, DeepReadonly } from './types';
 
@@ -29,8 +31,12 @@ type WarningRepository = CaseRepository & {
 
 type LiveRepositoryFactory = (
   sdk: UiPath,
-  config: LiveCaseRepositoryConfig,
+  config: ConfiguredCaseRepository,
 ) => WarningRepository;
+
+type ConfiguredCaseRepository = LiveCaseRepositoryConfig & {
+  entityIds: Partial<Pi360EntityIds>;
+};
 
 export type UseCaseWorkspaceOptions = {
   runtimeConfig?: UiPathRuntimeConfig;
@@ -39,9 +45,29 @@ export type UseCaseWorkspaceOptions = {
 };
 
 const defaultDemoRepository = new DemoCaseRepository();
-const defaultLiveRepositoryFactory: LiveRepositoryFactory = (sdk, config) => (
-  new LiveCaseRepository(sdk, config)
-);
+const entityKeys: Array<keyof Pi360EntityIds> = [
+  'cases',
+  'providers',
+  'attendants',
+  'claims',
+  'evvVisits',
+  'riskSignals',
+  'evidenceDocuments',
+  'investigationActions',
+  'decisions',
+];
+
+function hasCompleteEntityMapping(entityIds?: Partial<Pi360EntityIds>): entityIds is Pi360EntityIds {
+  if (!entityIds) return false;
+  return entityKeys.every((key) => Boolean(entityIds[key]?.trim()));
+}
+
+const defaultLiveRepositoryFactory: LiveRepositoryFactory = (sdk, config) => {
+  const runtimeRepository = new LiveCaseRepository(sdk, config);
+  return hasCompleteEntityMapping(config.entityIds)
+    ? new DataFabricCaseRepository(sdk, { entityIds: config.entityIds }, runtimeRepository)
+    : runtimeRepository;
+};
 
 function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : 'Unknown UiPath service error';
@@ -75,7 +101,7 @@ function portalOriginFromPlatformBase(platformBaseUrl: string): string {
   }
 }
 
-function repositoryConfig(runtime: UiPathRuntimeConfig): LiveCaseRepositoryConfig {
+function repositoryConfig(runtime: UiPathRuntimeConfig): ConfiguredCaseRepository {
   return {
     caseProcessName: runtime.caseProcessName,
     folderKey: runtime.folderKey,
@@ -83,6 +109,7 @@ function repositoryConfig(runtime: UiPathRuntimeConfig): LiveCaseRepositoryConfi
     portalOrigin: portalOriginFromPlatformBase(runtime.platformBaseUrl),
     organizationName: runtime.config.orgName ?? '',
     tenantName: runtime.config.tenantName ?? '',
+    entityIds: runtime.entityIds ?? {},
   };
 }
 

@@ -9,5 +9,16 @@
   "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
   "folderId": 2182825,
   "caseProcessName": "Program Integrity 360 Case",
-  "recordAgentName": "PI360RecordConversationAgent"
+  "recordAgentName": "PI360RecordConversationAgent",
+  "entityIds": {
+    "cases": "497c2d5c-7492-f111-b338-000d3ab4d3b7",
+    "providers": "6e7c2d5c-7492-f111-b338-000d3ab4d3b7",
+    "attendants": "827c2d5c-7492-f111-b338-000d3ab4d3b7",
+    "claims": "947c2d5c-7492-f111-b338-000d3ab4d3b7",
+    "evvVisits": "b2acb462-7492-f111-b338-000d3ab4d3b7",
+    "riskSignals": "c6acb462-7492-f111-b338-000d3ab4d3b7",
+    "evidenceDocuments": "deacb462-7492-f111-b338-000d3ab4d3b7",
+    "investigationActions": "f2acb462-7492-f111-b338-000d3ab4d3b7",
+    "decisions": "05adb462-7492-f111-b338-000d3ab4d3b7"
+  }
 }

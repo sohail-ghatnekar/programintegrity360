@@ -9,12 +9,25 @@ type UiPathAuthDefaults = {
   scope?: string;
 };
 
+export type Pi360EntityIds = {
+  cases: string;
+  providers: string;
+  attendants: string;
+  claims: string;
+  evvVisits: string;
+  riskSignals: string;
+  evidenceDocuments: string;
+  investigationActions: string;
+  decisions: string;
+};
+
 type UiPathRuntimeDefaults = {
   folderPath?: string;
   folderKey?: string;
   folderId?: number;
   caseProcessName?: string;
   recordAgentName?: string;
+  entityIds?: Partial<Pi360EntityIds>;
 };
 
 declare const __PI360_RUNTIME_DEFAULTS__: UiPathRuntimeDefaults;
@@ -66,7 +79,30 @@ export type UiPathRuntimeConfig = UiPathAuthSetup & {
   folderId: number | null;
   caseProcessName: string;
   recordAgentName: string;
+  entityIds: Partial<Pi360EntityIds>;
 };
+
+function readEntityIds(
+  overrides?: Partial<Pi360EntityIds>,
+  defaults?: Partial<Pi360EntityIds>,
+): Partial<Pi360EntityIds> {
+  const keys: Array<keyof Pi360EntityIds> = [
+    'cases',
+    'providers',
+    'attendants',
+    'claims',
+    'evvVisits',
+    'riskSignals',
+    'evidenceDocuments',
+    'investigationActions',
+    'decisions',
+  ];
+
+  return Object.fromEntries(keys.flatMap((key) => {
+    const value = readValue(overrides?.[key], defaults?.[key]);
+    return value ? [[key, value]] : [];
+  }));
+}
 
 export function getUiPathAuthSetup(overrides: UiPathAuthDefaults = {}): UiPathAuthSetup {
   const clientId = readValue(
@@ -132,6 +168,7 @@ export function getUiPathRuntimeConfig(overrides: UiPathAuthDefaults & UiPathRun
     folderId: readNumber(overrides.folderId, runtimeDefaults.folderId),
     caseProcessName: readValue(overrides.caseProcessName, runtimeDefaults.caseProcessName),
     recordAgentName: readValue(overrides.recordAgentName, runtimeDefaults.recordAgentName),
+    entityIds: readEntityIds(overrides.entityIds, runtimeDefaults.entityIds),
   };
 }
 

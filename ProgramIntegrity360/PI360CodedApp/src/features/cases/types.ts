@@ -24,6 +24,10 @@ export interface SourceMetadata {
 
 export interface CaseSummary extends SourceMetadata {
   id: string;
+  businessCaseId?: string;
+  caseType: string;
+  memberId: string;
+  memberName: string;
   title: string;
   program: string;
   priority: Severity;
