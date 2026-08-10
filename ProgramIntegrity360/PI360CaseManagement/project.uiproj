@@ -1,4 +1,6 @@
 {
+  "ProjectType": "CaseManagement",
   "Name": "PI360CaseManagement",
-  "ProjectType": "CaseManagement"
+  "Description": null,
+  "MainFile": null
 }

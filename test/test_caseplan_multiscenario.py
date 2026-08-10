@@ -28,6 +28,11 @@ def stage_tasks(stage):
     return [task for lane in stage["data"].get("tasks", []) for task in lane]
 
 
+def task_by_id(caseplan, task_id):
+    tasks = [task for stage in stage_nodes(caseplan) for task in stage_tasks(stage)]
+    return next(task for task in tasks if task["id"] == task_id)
+
+
 def test_caseplan_preserves_shared_six_stage_journey_and_six_object_intake():
     caseplan = load_caseplan()
     stages = stage_nodes(caseplan)
@@ -98,3 +103,34 @@ def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
         "send closure summary and next steps" in task["displayName"]
         for task in closure
     )
+
+
+def test_first_intake_task_registers_all_trigger_objects_before_triage():
+    caseplan = load_caseplan()
+    intake = task_by_id(caseplan, "tINT1case")
+    inputs = {item["name"]: item for item in intake["data"]["inputs"]}
+
+    assert {name: item["value"] for name, item in inputs.items()} == {
+        "workflowName": "IntakeClaimByCaseType",
+        "caseType": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type",
+        "caseId": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id",
+        "caseInput": "=vars.caseInput",
+        "claimInput": "=vars.claimInput",
+        "memberInput": "=vars.memberInput",
+        "providerInput": "=vars.providerInput",
+        "serviceEventInput": "=vars.serviceEventInput",
+        "documentInput": "=vars.documentInput",
+    }
+    for name in (
+        "caseInput",
+        "claimInput",
+        "memberInput",
+        "providerInput",
+        "serviceEventInput",
+        "documentInput",
+    ):
+        assert inputs[name]["type"] == "object"
+    assert intake["shouldRunOnlyOnce"] is True
+
+    triage = task_by_id(caseplan, "tTRI1agnt")
+    assert "tINT1case" in json.dumps(triage)
