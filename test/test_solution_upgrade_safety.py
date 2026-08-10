@@ -8,6 +8,7 @@ RESOURCE_ROOT = SOLUTION_ROOT / "resources" / "solution_folder"
 USER_PROFILE_ROOT = SOLUTION_ROOT / "userProfile"
 CASE_MANAGER_RESOURCE_KEY = "64ee0873-ac2c-4393-a970-7f67f9c7a423"
 ESCALATION_APP_RESOURCE_KEY = "54f913fa-10c8-4eec-85ef-58f05e15b6d5"
+PROGRAM_INTEGRITY_FABRIC_RESOURCE_KEY = "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
 
 
 def _all_solution_resources() -> list[dict]:
@@ -65,6 +66,27 @@ def test_concrete_runtime_dependency_keys_resolve_locally():
         "Concrete runtime dependency keys must resolve to resources in the "
         f"upgrade package: {unresolved}"
     )
+
+
+def test_api_workflows_requires_program_integrity_fabric_dependency():
+    path = RESOURCE_ROOT / "process" / "api" / "PI360ApiWorkflows.json"
+    resource = json.loads(path.read_text())["resource"]
+    dependencies = {
+        (
+            dependency.get("resourceKey"),
+            dependency.get("resourceName"),
+            dependency.get("resourceKind"),
+            dependency.get("resourceType"),
+        )
+        for dependency in resource.get("runtimeDependencies", [])
+    }
+
+    assert (
+        PROGRAM_INTEGRITY_FABRIC_RESOURCE_KEY,
+        "Program Integrity Fabric",
+        "Connection",
+        "uipath-uipath-dataservice",
+    ) in dependencies
 
 
 def test_debug_overwrites_reference_local_solution_resources():
