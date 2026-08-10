@@ -247,8 +247,14 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       caseWarnings = casesResult.warnings;
       if (currentRequest !== requestId.current) return refreshSuperseded();
       const liveCases = casesResult.data;
-      const selected = liveCases.find((candidate) => candidate.id === preferredCaseId) ?? liveCases[0];
+      const requestedCaseId = preferredCaseId?.trim() || null;
+      const selected = requestedCaseId
+        ? liveCases.find((candidate) => matchesBusinessCaseId(candidate, requestedCaseId))
+        : liveCases[0];
       if (!selected) {
+        if (requestedCaseId) {
+          throw new Error(`Requested live case was not found: ${requestedCaseId}`);
+        }
         throw new Error(`No instances found for ${liveConfig.caseProcessName || 'the configured case process'}`);
       }
       const workspaceResult = await loadWorkspaceWithWarnings(liveRepository, selected.id);
@@ -321,6 +327,13 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       return rejectStart(new Error('Connect UiPath to start a case.'));
     }
 
+    setStatus((current) => {
+      if (current !== 'loading') return current;
+      if (workspace?.dataSource === 'live') return 'live';
+      if (workspace?.dataSource === 'demo') return 'demo';
+      return 'idle';
+    });
+    setWarnings([]);
     setCaseStartStatus('starting');
     setCaseStartMessage(null);
 
@@ -334,7 +347,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       }
 
       setCaseStartStatus('polling');
-      let lastPollError: unknown;
+      let terminalPollWarnings: readonly string[] = [];
       for (let attempt = 0; attempt < pollPolicy.attempts; attempt += 1) {
         await delay(pollPolicy.intervalMs);
         requireCurrent();
@@ -344,10 +357,13 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
           discovered = await listCasesWithWarnings(liveRepository);
         } catch (reason) {
           requireCurrent();
-          lastPollError = reason;
+          terminalPollWarnings = [
+            `Unable to confirm workspace registration for ${payload.caseId}: ${errorMessage(reason)}.`,
+          ];
           continue;
         }
         requireCurrent();
+        terminalPollWarnings = discovered.warnings;
 
         if (!discovered.data.some((candidate) => matchesBusinessCaseId(candidate, payload.caseId))) {
           continue;
@@ -359,6 +375,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
           throw loaded.error;
         }
 
+        setWarnings((current) => [...new Set([...terminalPollWarnings, ...current])]);
         setCaseStartStatus('registered');
         setCaseStartMessage(`Case ${payload.caseId} is ready.`);
         return {
@@ -369,10 +386,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       }
 
       requireCurrent();
-      if (lastPollError !== undefined) {
-        const warning = `Unable to confirm workspace registration for ${payload.caseId}: ${errorMessage(lastPollError)}.`;
-        setWarnings((current) => [...new Set([...current, warning])]);
-      }
+      setWarnings(terminalPollWarnings);
       setCaseStartStatus('pending');
       setCaseStartMessage(`Process started; workspace registration is pending for ${payload.caseId}.`);
       return {
@@ -384,7 +398,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       if (!isCurrent()) throw caseStartSuperseded();
       return rejectStart(reason);
     }
-  }, [auth?.isAuthenticated, caseStarter, delay, liveRepository, loadLive, pollPolicy]);
+  }, [auth?.isAuthenticated, caseStarter, delay, liveRepository, loadLive, pollPolicy, workspace]);
 
   useEffect(() => {
     mounted.current = true;

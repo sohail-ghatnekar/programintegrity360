@@ -134,6 +134,15 @@ function useGeneratedSuffixes(...suffixBytes: number[][]) {
   });
 }
 
+function useConcurrentGeneratedSuffixes() {
+  vi.restoreAllMocks();
+  vi.spyOn(Date.prototype, 'getUTCFullYear').mockReturnValue(2026);
+  useGeneratedSuffixes(
+    [0, 1, 2, 27, 28, 29],
+    [23, 24, 25, 33, 34, 35],
+  );
+}
+
 describe('useCaseWorkspace case start coordination', () => {
   beforeEach(() => {
     authState.current = {
@@ -174,18 +183,29 @@ describe('useCaseWorkspace case start coordination', () => {
   it('builds the selected payload, starts once, polls until its business ID appears, and opens it once', async () => {
     const repository = createRepository();
     const target = liveWorkspace(CASE_ID);
-    const old = liveWorkspace('PI-PCS-2026-OLD001');
+    const decoy = liveWorkspace('PI-PCS-2026-DECOY1');
+    const targetSummary = {
+      ...target.case,
+      id: 'maestro-instance-42',
+      businessCaseId: ` ${CASE_ID.toLowerCase()} `,
+    };
     const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
     const hookOptions = options(repository, { caseStarter });
     const { result } = await renderReady(repository, hookOptions);
     repository.listCasesWithWarnings
-      .mockResolvedValueOnce({ data: [old.case], warnings: [] })
+      .mockRejectedValueOnce(new Error('stale transient poll failure'))
       .mockResolvedValueOnce({
-        data: [{ ...target.case, id: 'data-fabric-row-id', businessCaseId: ` ${CASE_ID.toLowerCase()} ` }],
-        warnings: [],
+        data: [targetSummary],
+        warnings: ['Final poll returned partial metadata.'],
       })
-      .mockResolvedValue({ data: [target.case], warnings: [] });
-    repository.loadWorkspaceWithWarnings.mockResolvedValue({ data: target, warnings: [] });
+      .mockResolvedValue({
+        data: [decoy.case, targetSummary],
+        warnings: ['Load lookup returned partial metadata.'],
+      });
+    repository.loadWorkspaceWithWarnings.mockResolvedValue({
+      data: target,
+      warnings: ['Workspace enrichment is partial.'],
+    });
 
     let outcome: Awaited<ReturnType<typeof result.current.startCase>> | undefined;
     await act(async () => {
@@ -208,10 +228,63 @@ describe('useCaseWorkspace case start coordination', () => {
     }));
     expect(repository.listCasesWithWarnings).toHaveBeenCalledTimes(3);
     expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledOnce();
-    expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledWith(CASE_ID);
+    expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledWith('maestro-instance-42');
     expect(result.current.workspace?.case.id).toBe(CASE_ID);
     expect(result.current.caseStartStatus).toBe('registered');
+    expect(result.current.warnings).toEqual(expect.arrayContaining([
+      'Final poll returned partial metadata.',
+      'Load lookup returned partial metadata.',
+      'Workspace enrichment is partial.',
+    ]));
+    expect(result.current.warnings.join(' ')).not.toContain('stale transient poll failure');
     expect(outcome).toEqual({ status: 'registered', caseId: CASE_ID, jobKey: JOB_KEY });
+  });
+
+  it('does not fall back to another workspace when the generated case disappears before load', async () => {
+    const repository = createRepository();
+    const target = liveWorkspace(CASE_ID);
+    const decoy = liveWorkspace('PI-PCS-2026-DECOY1');
+    const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+    const { result } = await renderReady(repository, options(repository, { caseStarter }));
+    repository.listCasesWithWarnings
+      .mockResolvedValueOnce({ data: [target.case], warnings: [] })
+      .mockResolvedValueOnce({ data: [decoy.case], warnings: [] });
+    repository.loadWorkspaceWithWarnings.mockResolvedValue({ data: decoy, warnings: [] });
+
+    await act(async () => {
+      await expect(result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      })).rejects.toThrow(`Requested live case was not found: ${CASE_ID}`);
+    });
+
+    expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
+    expect(result.current.workspace).toBeNull();
+    expect(result.current.caseStartStatus).toBe('error');
+    expect(result.current.caseStartMessage).toBe(`Requested live case was not found: ${CASE_ID}`);
+  });
+
+  it('surfaces a current-generation workspace load failure after registration is discovered', async () => {
+    const repository = createRepository();
+    const target = liveWorkspace(CASE_ID);
+    const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+    const { result } = await renderReady(repository, options(repository, { caseStarter }));
+    repository.listCasesWithWarnings.mockResolvedValue({ data: [target.case], warnings: [] });
+    repository.loadWorkspaceWithWarnings.mockRejectedValue(new Error('Workspace detail read denied (403)'));
+
+    await act(async () => {
+      await expect(result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      })).rejects.toThrow('Workspace detail read denied (403)');
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.caseStartStatus).toBe('error');
+    expect(result.current.caseStartMessage).toBe('Workspace detail read denied (403)');
+    expect(result.current.warnings).toContain(
+      'Unable to load live UiPath case data: Workspace detail read denied (403).',
+    );
   });
 
   it('does not load a workspace before the generated case appears', async () => {
@@ -282,7 +355,9 @@ describe('useCaseWorkspace case start coordination', () => {
     const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
     const delay = vi.fn().mockResolvedValue(undefined);
     const { result } = await renderReady(repository, options(repository, { caseStarter, delay }));
-    repository.listCasesWithWarnings.mockRejectedValue(new Error('Data Fabric temporarily unavailable'));
+    repository.listCasesWithWarnings
+      .mockResolvedValueOnce({ data: [], warnings: ['Earlier successful warning.'] })
+      .mockRejectedValue(new Error('Final Data Fabric failure'));
 
     await act(async () => {
       await expect(result.current.startCase({
@@ -297,8 +372,52 @@ describe('useCaseWorkspace case start coordination', () => {
       `Process started; workspace registration is pending for ${CASE_ID}.`,
     );
     expect(result.current.warnings).toContain(
-      `Unable to confirm workspace registration for ${CASE_ID}: Data Fabric temporarily unavailable.`,
+      `Unable to confirm workspace registration for ${CASE_ID}: Final Data Fabric failure.`,
     );
+    expect(result.current.warnings.join(' ')).not.toContain('Earlier successful warning');
+  });
+
+  it('clears an earlier poll rejection when the final attempt is successfully empty', async () => {
+    const repository = createRepository();
+    const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+    const { result } = await renderReady(repository, options(repository, {
+      caseStarter,
+      pollPolicy: { attempts: 2, intervalMs: 0 },
+    }));
+    repository.listCasesWithWarnings
+      .mockRejectedValueOnce(new Error('Earlier Data Fabric failure'))
+      .mockResolvedValueOnce({ data: [], warnings: [] });
+
+    await act(async () => {
+      await result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      });
+    });
+
+    expect(result.current.caseStartStatus).toBe('pending');
+    expect(result.current.warnings).toEqual([]);
+  });
+
+  it('preserves warnings from the final successful empty poll', async () => {
+    const repository = createRepository();
+    const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+    const { result } = await renderReady(repository, options(repository, {
+      caseStarter,
+      pollPolicy: { attempts: 2, intervalMs: 0 },
+    }));
+    repository.listCasesWithWarnings
+      .mockResolvedValueOnce({ data: [], warnings: ['Earlier warning.'] })
+      .mockResolvedValueOnce({ data: [], warnings: ['Final page was partial.'] });
+
+    await act(async () => {
+      await result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      });
+    });
+
+    expect(result.current.warnings).toEqual(['Final page was partial.']);
   });
 
   it('uses the production default of ten 1500ms attempts when no policy is injected', async () => {
@@ -359,12 +478,7 @@ describe('useCaseWorkspace case start coordination', () => {
   });
 
   it('lets a newer request supersede an older start without loading stale workspace state', async () => {
-    vi.restoreAllMocks();
-    vi.spyOn(Date.prototype, 'getUTCFullYear').mockReturnValue(2026);
-    useGeneratedSuffixes(
-      [0, 1, 2, 27, 28, 29],
-      [23, 24, 25, 33, 34, 35],
-    );
+    useConcurrentGeneratedSuffixes();
     const repository = createRepository();
     const firstStart = deferred<{ caseId: string; jobKey: string }>();
     const secondStart = deferred<{ caseId: string; jobKey: string }>();
@@ -404,6 +518,170 @@ describe('useCaseWorkspace case start coordination', () => {
     expect(result.current.caseStartStatus).toBe('registered');
   });
 
+  it.each(['resolve', 'reject'] as const)(
+    'keeps the newer request coherent when a superseded delay later %ss',
+    async (settlement) => {
+      useConcurrentGeneratedSuffixes();
+      const repository = createRepository();
+      const blockedDelay = deferred<void>();
+      const delay = vi.fn()
+        .mockReturnValueOnce(blockedDelay.promise)
+        .mockResolvedValue(undefined);
+      const caseStarter = vi.fn(async (request: { caseId: string }) => ({
+        caseId: request.caseId,
+        jobKey: `${request.caseId}-job`,
+      }));
+      const { result } = await renderReady(repository, options(repository, {
+        caseStarter,
+        delay,
+        pollPolicy: { attempts: 1, intervalMs: 0 },
+      }));
+      const initialWorkspaceId = result.current.workspace?.case.id;
+      repository.listCasesWithWarnings.mockResolvedValue({
+        data: [],
+        warnings: ['Newer request final warning.'],
+      });
+
+      const firstPromise = result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'first@example.gov',
+      });
+      await waitFor(() => expect(delay).toHaveBeenCalledOnce());
+
+      let secondOutcome: Awaited<ReturnType<typeof result.current.startCase>> | undefined;
+      await act(async () => {
+        secondOutcome = await result.current.startCase({
+          caseType: 'StateMedicaidHospice',
+          requesterEmail: 'second@example.gov',
+        });
+      });
+      await act(async () => {
+        if (settlement === 'resolve') {
+          blockedDelay.resolve();
+        } else {
+          blockedDelay.reject(new Error('Stale delay failure'));
+        }
+        await expect(firstPromise).rejects.toThrow('Case start was superseded by a newer request.');
+      });
+
+      expect(secondOutcome).toEqual({
+        status: 'pending',
+        caseId: SECOND_CASE_ID,
+        jobKey: `${SECOND_CASE_ID}-job`,
+      });
+      expect(result.current.workspace?.case.id).toBe(initialWorkspaceId);
+      expect(result.current.status).toBe('live');
+      expect(result.current.caseStartStatus).toBe('pending');
+      expect(result.current.caseStartMessage).toContain(SECOND_CASE_ID);
+      expect(result.current.warnings).toEqual(['Newer request final warning.']);
+    },
+  );
+
+  it.each(['resolve', 'reject'] as const)(
+    'keeps the newer request coherent when a superseded list call later %ss',
+    async (settlement) => {
+      useConcurrentGeneratedSuffixes();
+      const repository = createRepository();
+      const blockedList = deferred<{
+        data: readonly DeepReadonly<CaseSummary>[];
+        warnings: readonly string[];
+      }>();
+      const caseStarter = vi.fn(async (request: { caseId: string }) => ({
+        caseId: request.caseId,
+        jobKey: `${request.caseId}-job`,
+      }));
+      const { result } = await renderReady(repository, options(repository, {
+        caseStarter,
+        pollPolicy: { attempts: 1, intervalMs: 0 },
+      }));
+      const initialWorkspaceId = result.current.workspace?.case.id;
+      repository.listCasesWithWarnings
+        .mockReturnValueOnce(blockedList.promise)
+        .mockResolvedValue({ data: [], warnings: ['Newer request final warning.'] });
+
+      const firstPromise = result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'first@example.gov',
+      });
+      await waitFor(() => expect(repository.listCasesWithWarnings).toHaveBeenCalledOnce());
+
+      await act(async () => {
+        await result.current.startCase({
+          caseType: 'StateMedicaidHospice',
+          requesterEmail: 'second@example.gov',
+        });
+      });
+      await act(async () => {
+        if (settlement === 'resolve') {
+          blockedList.resolve({ data: [liveWorkspace(CASE_ID).case], warnings: ['Stale warning.'] });
+        } else {
+          blockedList.reject(new Error('Stale list failure'));
+        }
+        await expect(firstPromise).rejects.toThrow('Case start was superseded by a newer request.');
+      });
+
+      expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
+      expect(result.current.workspace?.case.id).toBe(initialWorkspaceId);
+      expect(result.current.status).toBe('live');
+      expect(result.current.caseStartStatus).toBe('pending');
+      expect(result.current.caseStartMessage).toContain(SECOND_CASE_ID);
+      expect(result.current.warnings).toEqual(['Newer request final warning.']);
+    },
+  );
+
+  it.each(['resolve', 'reject'] as const)(
+    'restores coherent workspace state when a superseded load later %ss',
+    async (settlement) => {
+      useConcurrentGeneratedSuffixes();
+      const repository = createRepository();
+      const target = liveWorkspace(CASE_ID);
+      const blockedLoad = deferred<{ data: CaseWorkspaceSnapshot; warnings: readonly string[] }>();
+      const caseStarter = vi.fn(async (request: { caseId: string }) => ({
+        caseId: request.caseId,
+        jobKey: `${request.caseId}-job`,
+      }));
+      const { result } = await renderReady(repository, options(repository, {
+        caseStarter,
+        pollPolicy: { attempts: 1, intervalMs: 0 },
+      }));
+      const initialWorkspaceId = result.current.workspace?.case.id;
+      repository.listCasesWithWarnings
+        .mockResolvedValueOnce({ data: [target.case], warnings: [] })
+        .mockResolvedValueOnce({ data: [target.case], warnings: [] })
+        .mockResolvedValue({ data: [], warnings: ['Newer request final warning.'] });
+      repository.loadWorkspaceWithWarnings.mockReturnValueOnce(blockedLoad.promise);
+
+      const firstPromise = result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'first@example.gov',
+      });
+      await waitFor(() => expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledOnce());
+      expect(result.current.status).toBe('loading');
+
+      await act(async () => {
+        await result.current.startCase({
+          caseType: 'StateMedicaidHospice',
+          requesterEmail: 'second@example.gov',
+        });
+      });
+      await act(async () => {
+        if (settlement === 'resolve') {
+          blockedLoad.resolve({ data: target, warnings: ['Stale load warning.'] });
+        } else {
+          blockedLoad.reject(new Error('Stale load failure'));
+        }
+        await expect(firstPromise).rejects.toThrow('Case start was superseded by a newer request.');
+      });
+
+      expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledOnce();
+      expect(result.current.workspace?.case.id).toBe(initialWorkspaceId);
+      expect(result.current.status).toBe('live');
+      expect(result.current.caseStartStatus).toBe('pending');
+      expect(result.current.caseStartMessage).toContain(SECOND_CASE_ID);
+      expect(result.current.warnings).toEqual(['Newer request final warning.']);
+    },
+  );
+
   it('does not poll or update stale workspace state after unmount', async () => {
     const repository = createRepository();
     const started = deferred<{ caseId: string; jobKey: string }>();
@@ -421,4 +699,88 @@ describe('useCaseWorkspace case start coordination', () => {
     expect(repository.listCasesWithWarnings).not.toHaveBeenCalled();
     expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
   });
+
+  it.each(['resolve', 'reject'] as const)(
+    'does not continue after an unmounted delay later %ss',
+    async (settlement) => {
+      const repository = createRepository();
+      const blockedDelay = deferred<void>();
+      const delay = vi.fn().mockReturnValueOnce(blockedDelay.promise);
+      const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+      const view = await renderReady(repository, options(repository, { caseStarter, delay }));
+
+      const startPromise = view.result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      });
+      await waitFor(() => expect(delay).toHaveBeenCalledOnce());
+      view.unmount();
+
+      if (settlement === 'resolve') {
+        blockedDelay.resolve();
+      } else {
+        blockedDelay.reject(new Error('Stale delay failure'));
+      }
+      await expect(startPromise).rejects.toThrow('Case start was superseded by a newer request.');
+      expect(repository.listCasesWithWarnings).not.toHaveBeenCalled();
+      expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['resolve', 'reject'] as const)(
+    'does not continue after an unmounted list call later %ss',
+    async (settlement) => {
+      const repository = createRepository();
+      const blockedList = deferred<{
+        data: readonly DeepReadonly<CaseSummary>[];
+        warnings: readonly string[];
+      }>();
+      const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+      const view = await renderReady(repository, options(repository, { caseStarter }));
+      repository.listCasesWithWarnings.mockReturnValueOnce(blockedList.promise);
+
+      const startPromise = view.result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      });
+      await waitFor(() => expect(repository.listCasesWithWarnings).toHaveBeenCalledOnce());
+      view.unmount();
+
+      if (settlement === 'resolve') {
+        blockedList.resolve({ data: [liveWorkspace(CASE_ID).case], warnings: ['Stale warning.'] });
+      } else {
+        blockedList.reject(new Error('Stale list failure'));
+      }
+      await expect(startPromise).rejects.toThrow('Case start was superseded by a newer request.');
+      expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['resolve', 'reject'] as const)(
+    'does not apply an unmounted workspace load that later %ss',
+    async (settlement) => {
+      const repository = createRepository();
+      const target = liveWorkspace(CASE_ID);
+      const blockedLoad = deferred<{ data: CaseWorkspaceSnapshot; warnings: readonly string[] }>();
+      const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
+      const view = await renderReady(repository, options(repository, { caseStarter }));
+      repository.listCasesWithWarnings.mockResolvedValue({ data: [target.case], warnings: [] });
+      repository.loadWorkspaceWithWarnings.mockReturnValueOnce(blockedLoad.promise);
+
+      const startPromise = view.result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      });
+      await waitFor(() => expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledOnce());
+      view.unmount();
+
+      if (settlement === 'resolve') {
+        blockedLoad.resolve({ data: target, warnings: ['Stale load warning.'] });
+      } else {
+        blockedLoad.reject(new Error('Stale load failure'));
+      }
+      await expect(startPromise).rejects.toThrow('Case start was superseded by a newer request.');
+      expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledOnce();
+    },
+  );
 });
