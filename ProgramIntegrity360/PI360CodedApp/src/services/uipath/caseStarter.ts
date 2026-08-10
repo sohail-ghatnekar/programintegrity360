@@ -74,6 +74,24 @@ function assertValidRequest(request: CaseStartRequest): void {
   if (!hasObjectValues) {
     throw new Error('Case start inputArguments must contain exactly the six Maestro trigger objects.');
   }
+
+  const caseInput = request.inputArguments.caseInput;
+  const nestedCaseId = caseInput.caseId;
+  const caseType = caseInput.caseType;
+  if (nestedCaseId !== request.caseId) {
+    throw new Error('caseInput.caseId must exactly match the outer case ID.');
+  }
+  if (caseType !== 'MedicaidPCS' && caseType !== 'StateMedicaidHospice') {
+    throw new Error('caseInput.caseType must be MedicaidPCS or StateMedicaidHospice.');
+  }
+
+  const expectedPrefix = caseType === 'MedicaidPCS' ? 'PCS' : 'HSP';
+  const caseTypePattern = new RegExp(`^PI-${expectedPrefix}-\\d{4}-[A-Z0-9]{6}$`);
+  if (!caseTypePattern.test(request.caseId)) {
+    throw new Error(
+      `${caseType} case IDs must match PI-${expectedPrefix}-<year>-<six uppercase alphanumeric characters>.`,
+    );
+  }
 }
 
 export function createCaseStarter(
@@ -102,7 +120,10 @@ export function createCaseStarter(
     }
 
     const matches = inventory.items.filter(
-      (release) => isRecord(release) && release.name === processName,
+      (release) => isRecord(release)
+        && release.name === processName
+        && release.isPackageDeleted !== true
+        && release.isCompiled !== false,
     );
     if (matches.length === 0) {
       throw new Error(`No UiPath process named "${processName}" was found in folder ${folderId}.`);

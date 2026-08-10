@@ -6,6 +6,7 @@ import type {
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CaseStartPayload } from '../../features/cases/caseIntakeCatalog';
+import uipathConfig from '../../../uipath.json';
 
 const sdkModuleState = vi.hoisted(() => ({
   entityModuleLoads: 0,
@@ -85,7 +86,7 @@ function processFixture(overrides: Partial<ProcessGetResponse> = {}): ProcessGet
     createdTime: '2026-08-07T15:05:14.300Z',
     creatorUserId: 0,
     ...overrides,
-  };
+  } as ProcessGetResponse;
 }
 
 function jobFixture(overrides: Partial<ProcessStartResponse> = {}): ProcessStartResponse {
@@ -127,7 +128,7 @@ function jobFixture(overrides: Partial<ProcessStartResponse> = {}): ProcessStart
     folderId: 2182825,
     folderName: 'AMER Presales/Public Sector/ProgramIntegrity360',
     ...overrides,
-  };
+  } as ProcessStartResponse;
 }
 
 function injectedStarter(
@@ -194,6 +195,10 @@ describe('createCaseStarter', () => {
     expect(sdkModuleState.entityModuleLoads).toBe(0);
   });
 
+  it('keeps live workspace discovery on the same process name as process start', () => {
+    expect(uipathConfig.caseProcessName).toBe(DEFAULT_CASE_PROCESS_NAME);
+  });
+
   it('supports an injected Processes factory, folder ID, and future process name', async () => {
     const createProcesses = vi.fn(() => ({
       getAll: sdkModuleState.getAll,
@@ -245,6 +250,52 @@ describe('createCaseStarter', () => {
   });
 
   it.each([
+    ['deleted', { isPackageDeleted: true }],
+    ['uncompiled', { isCompiled: false }],
+  ])('excludes a sole %s exact-name release from start eligibility', async (_label, overrides) => {
+    sdkModuleState.getAll.mockResolvedValue({
+      items: [processFixture(overrides)],
+      totalCount: 1,
+    });
+    const { startCase } = injectedStarter();
+
+    await expect(startCase({ caseId: CASE_ID, inputArguments })).rejects.toThrow(
+      'No UiPath process named "PI360CaseManagement" was found in folder 2182825.',
+    );
+    expect(sdkModuleState.start).not.toHaveBeenCalled();
+  });
+
+  it('starts the runnable release when a deleted exact-name release also exists', async () => {
+    sdkModuleState.getAll.mockResolvedValue({
+      items: [
+        processFixture({ key: 'deleted-key', isPackageDeleted: true, id: 461901 }),
+        processFixture(),
+      ],
+      totalCount: 2,
+    });
+    const { startCase } = injectedStarter();
+
+    await startCase({ caseId: CASE_ID, inputArguments });
+
+    expect(sdkModuleState.start).toHaveBeenCalledOnce();
+    expect(sdkModuleState.start).toHaveBeenCalledWith(expect.objectContaining({
+      processKey: PROCESS_KEY,
+    }), 2182825);
+  });
+
+  it('keeps a runnable nonlatest exact-name release eligible', async () => {
+    sdkModuleState.getAll.mockResolvedValue({
+      items: [processFixture({ isLatestVersion: false })],
+      totalCount: 1,
+    });
+    const { startCase } = injectedStarter();
+
+    await startCase({ caseId: CASE_ID, inputArguments });
+
+    expect(sdkModuleState.start).toHaveBeenCalledOnce();
+  });
+
+  it.each([
     ['missing', { key: undefined }],
     ['blank', { key: '   ' }],
   ])('rejects a %s release key before calling start', async (_label, overrides) => {
@@ -257,6 +308,47 @@ describe('createCaseStarter', () => {
     await expect(startCase({ caseId: CASE_ID, inputArguments })).rejects.toThrow(
       'UiPath process "PI360CaseManagement" in folder 2182825 has no valid release key.',
     );
+    expect(sdkModuleState.start).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a nested case ID mismatch', {
+      caseId: CASE_ID,
+      inputArguments: {
+        ...inputArguments,
+        caseInput: { ...inputArguments.caseInput, caseId: 'PI-HSP-2026-XYZ999' },
+      },
+    }],
+    ['an unsupported nested case type', {
+      caseId: CASE_ID,
+      inputArguments: {
+        ...inputArguments,
+        caseInput: { ...inputArguments.caseInput, caseType: 'MedicareHospice' },
+      },
+    }],
+    ['a PCS case type with an HSP-prefixed ID', {
+      caseId: CASE_ID,
+      inputArguments: {
+        ...inputArguments,
+        caseInput: { ...inputArguments.caseInput, caseType: 'MedicaidPCS' },
+      },
+    }],
+    ['a hospice case type with a PCS-prefixed ID', {
+      caseId: 'PI-PCS-2026-ABC123',
+      inputArguments: {
+        ...inputArguments,
+        caseInput: {
+          ...inputArguments.caseInput,
+          caseId: 'PI-PCS-2026-ABC123',
+          caseType: 'StateMedicaidHospice',
+        },
+      },
+    }],
+  ])('rejects %s before process inventory or start', async (_label, request) => {
+    const { startCase } = injectedStarter();
+
+    await expect(startCase(request as Parameters<typeof startCase>[0])).rejects.toThrow();
+    expect(sdkModuleState.getAll).not.toHaveBeenCalled();
     expect(sdkModuleState.start).not.toHaveBeenCalled();
   });
 
