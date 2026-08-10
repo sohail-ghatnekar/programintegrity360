@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import type { ReactNode } from 'react';
 import { UiPath } from '@uipath/uipath-typescript/core';
 import type { UiPathSDKConfig } from '@uipath/uipath-typescript/core';
+import { User } from '@uipath/uipath-typescript/conversational-agent';
 import {
   completePkceAuthorization,
   createPkceAuthorizationRequest,
@@ -86,6 +87,15 @@ function clearOAuthSession(clientId?: string) {
   }
   sessionStorage.removeItem('uipath_sdk_oauth_context');
   sessionStorage.removeItem('uipath_sdk_code_verifier');
+}
+
+function normalizeProfileValue(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized || null;
 }
 
 function removeOAuthCallbackParameters() {
@@ -229,7 +239,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       }
 
       try {
-        setAuthenticationState(activeSdk.isAuthenticated());
+        const authenticated = activeSdk.isAuthenticated();
+        setAuthenticationState(authenticated);
+
+        if (authenticated) {
+          try {
+            const settings = await new User(activeSdk).getSettings();
+            if (!isCurrent()) {
+              return;
+            }
+
+            setCurrentUserName(normalizeProfileValue(settings?.name) || AUTHENTICATED_USER_NAME);
+            setCurrentUserEmail(normalizeProfileValue(settings?.email));
+          } catch {
+            if (!isCurrent()) {
+              return;
+            }
+
+            setCurrentUserName(AUTHENTICATED_USER_NAME);
+            setCurrentUserEmail(null);
+          }
+        }
       } catch {
         failAuthentication();
       } finally {

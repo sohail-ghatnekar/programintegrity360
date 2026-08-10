@@ -6,6 +6,23 @@ import type { OAuthTokenResponse } from '../auth/pkce';
 import { AuthProvider, useAuth } from './useAuth';
 import type { PkceClient } from './useAuth';
 
+const { getSettingsMock, userConstructorMock } = vi.hoisted(() => ({
+  getSettingsMock: vi.fn(),
+  userConstructorMock: vi.fn(),
+}));
+
+vi.mock('@uipath/uipath-typescript/conversational-agent', () => ({
+  User: class UserMock {
+    constructor(sdk: UiPath) {
+      userConstructorMock(sdk);
+    }
+
+    getSettings() {
+      return getSettingsMock();
+    }
+  },
+}));
+
 const authConfig: UiPathSDKConfig = {
   clientId: 'test-client-id',
   orgName: 'uipathlabs',
@@ -57,11 +74,19 @@ function createPkceClientMock({
 }
 
 function AuthState() {
-  const { currentUserName, error, isAuthenticated, login, logout } = useAuth();
+  const {
+    currentUserEmail,
+    currentUserName,
+    error,
+    isAuthenticated,
+    login,
+    logout,
+  } = useAuth();
   return (
     <>
       <div data-testid="auth-state">{isAuthenticated ? 'authenticated' : 'anonymous'}</div>
       <div data-testid="auth-name">{currentUserName || 'none'}</div>
+      <div data-testid="auth-email">{currentUserEmail || 'none'}</div>
       <div data-testid="auth-error">{error || 'none'}</div>
       <button type="button" onClick={() => void login()}>Login</button>
       <button type="button" onClick={logout}>Logout</button>
@@ -103,6 +128,9 @@ describe('AuthProvider', () => {
   beforeEach(() => {
     history.replaceState({}, '', '/');
     sessionStorage.clear();
+    getSettingsMock.mockReset();
+    getSettingsMock.mockRejectedValue(new Error('profile unavailable'));
+    userConstructorMock.mockReset();
   });
 
   afterEach(() => {
@@ -128,6 +156,94 @@ describe('AuthProvider', () => {
     expect(sessionStorage.removeItem).not.toHaveBeenCalled();
     expect(getItem).not.toHaveBeenCalled();
     expect(screen.getByTestId('auth-name')).toHaveTextContent('Authenticated UiPath user');
+  });
+
+  it('loads the authenticated user name and email from UiPath settings', async () => {
+    const sdk = createSdkMock({ authenticated: true, callback: false });
+    getSettingsMock.mockResolvedValue({
+      company: 'UiPath',
+      country: 'United States',
+      createdTime: '2026-08-10T12:00:00Z',
+      department: 'Public Sector',
+      email: 'sohail@example.gov',
+      name: 'Sohail Ghatnekar',
+      role: 'Investigator',
+      timezone: 'America/New_York',
+      updatedTime: '2026-08-10T12:00:00Z',
+      userId: '2f199503-ff2b-4c87-ad95-e24f50ad5bb8',
+    });
+
+    renderAuthProvider(sdk);
+
+    expect(await screen.findByTestId('auth-name')).toHaveTextContent('Sohail Ghatnekar');
+    expect(screen.getByTestId('auth-email')).toHaveTextContent('sohail@example.gov');
+    expect(screen.getByTestId('auth-state')).toHaveTextContent('authenticated');
+    expect(userConstructorMock).toHaveBeenCalledWith(sdk);
+  });
+
+  it('keeps OAuth authenticated when the user profile request fails', async () => {
+    const sdk = createSdkMock({ authenticated: true, callback: false });
+    getSettingsMock.mockRejectedValue(new Error('profile request failed'));
+
+    renderAuthProvider(sdk);
+
+    await waitFor(() => expect(getSettingsMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId('auth-state')).toHaveTextContent('authenticated');
+    expect(screen.getByTestId('auth-name')).toHaveTextContent('Authenticated UiPath user');
+    expect(screen.getByTestId('auth-email')).toHaveTextContent('none');
+    expect(screen.getByTestId('auth-error')).toHaveTextContent('none');
+  });
+
+  it('normalizes malformed or empty profile identity values', async () => {
+    const sdk = createSdkMock({ authenticated: true, callback: false });
+    getSettingsMock.mockResolvedValue({
+      company: null,
+      country: null,
+      createdTime: '2026-08-10T12:00:00Z',
+      department: null,
+      email: { unexpected: true },
+      name: '   ',
+      role: null,
+      timezone: null,
+      updatedTime: '2026-08-10T12:00:00Z',
+      userId: '2f199503-ff2b-4c87-ad95-e24f50ad5bb8',
+    });
+
+    renderAuthProvider(sdk);
+
+    await waitFor(() => expect(getSettingsMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByTestId('auth-name')).toHaveTextContent('Authenticated UiPath user');
+    expect(screen.getByTestId('auth-email')).toHaveTextContent('none');
+  });
+
+  it('does not repopulate profile identity when a late settings request resolves after logout', async () => {
+    const deferred = createDeferred<{
+      email: string;
+      name: string;
+    }>();
+    const authenticatedSdk = createSdkMock({ authenticated: true, callback: false });
+    const loggedOutSdk = createSdkMock({ authenticated: false, callback: false });
+    const sdkFactory = vi.fn()
+      .mockReturnValueOnce(authenticatedSdk)
+      .mockReturnValue(loggedOutSdk);
+    getSettingsMock.mockReturnValue(deferred.promise);
+
+    renderAuthProvider(authenticatedSdk, { sdkFactory });
+
+    await waitFor(() => expect(getSettingsMock).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
+
+    await act(async () => {
+      deferred.resolve({
+        email: 'stale@example.gov',
+        name: 'Stale User',
+      });
+      await deferred.promise;
+    });
+
+    expect(screen.getByTestId('auth-state')).toHaveTextContent('anonymous');
+    expect(screen.getByTestId('auth-name')).toHaveTextContent('none');
+    expect(screen.getByTestId('auth-email')).toHaveTextContent('none');
   });
 
   it('starts the exact-scope PKCE flow instead of the SDK OAuth initializer', async () => {
