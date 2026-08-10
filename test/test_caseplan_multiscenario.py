@@ -1,5 +1,10 @@
+import copy
 import json
+import re
+from collections import Counter
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +36,74 @@ def stage_tasks(stage):
 def task_by_id(caseplan, task_id):
     tasks = [task for stage in stage_nodes(caseplan) for task in stage_tasks(stage)]
     return next(task for task in tasks if task["id"] == task_id)
+
+
+def task_location(caseplan, task_id):
+    for stage_index, stage in enumerate(stage_nodes(caseplan)):
+        for lane_index, lane in enumerate(stage["data"].get("tasks", [])):
+            for task_index, task in enumerate(lane):
+                if task["id"] == task_id:
+                    return stage, (stage_index, lane_index, task_index)
+    raise StopIteration(task_id)
+
+
+def assert_first_intake_contract(caseplan):
+    expected_names = (
+        "workflowName",
+        "caseType",
+        "caseId",
+        "caseInput",
+        "claimInput",
+        "memberInput",
+        "providerInput",
+        "serviceEventInput",
+        "documentInput",
+    )
+    object_names = expected_names[3:]
+    intake = task_by_id(caseplan, "tINT1case")
+    intake_stage, intake_position = task_location(caseplan, intake["id"])
+    triage = task_by_id(caseplan, "tTRI1agnt")
+    triage_stage, triage_position = task_location(caseplan, triage["id"])
+    input_items = intake["data"]["inputs"]
+
+    assert intake["type"] == "api-workflow"
+    assert intake["shouldRunOnlyOnce"] is True
+    assert Counter(item["name"] for item in input_items) == Counter(expected_names)
+
+    inputs = {item["name"]: item for item in input_items}
+    assert inputs["workflowName"]["value"] == "IntakeClaimByCaseType"
+    assert (
+        inputs["caseType"]["value"]
+        == "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+    )
+    assert (
+        inputs["caseId"]["value"]
+        == "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+    )
+
+    object_ids = []
+    for name in object_names:
+        item = inputs[name]
+        assert item["type"] == "object"
+        assert item["value"] == f"=vars.{name}"
+        assert item["id"] == item["var"]
+        assert re.fullmatch(r"v[A-Za-z0-9]{8}", item["id"])
+        assert item["elementId"] == intake["elementId"]
+        object_ids.append(item["id"])
+    assert len(set(object_ids)) == len(object_ids)
+
+    dependency_rules = [
+        rule
+        for condition in triage.get("entryConditions", [])
+        for rule_group in condition.get("rules", [])
+        for rule in rule_group
+        if rule.get("rule") == "selected-tasks-completed"
+    ]
+    assert len(dependency_rules) == 1
+    assert dependency_rules[0]["selectedTasksIds"] == ["tINT1case"]
+
+    assert intake_stage["id"] == triage_stage["id"] == "Stage_Aintk1"
+    assert intake_position < triage_position
 
 
 def test_caseplan_preserves_shared_six_stage_journey_and_six_object_intake():
@@ -107,30 +180,20 @@ def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
 
 def test_first_intake_task_registers_all_trigger_objects_before_triage():
     caseplan = load_caseplan()
-    intake = task_by_id(caseplan, "tINT1case")
-    inputs = {item["name"]: item for item in intake["data"]["inputs"]}
+    assert_first_intake_contract(caseplan)
 
-    assert {name: item["value"] for name, item in inputs.items()} == {
-        "workflowName": "IntakeClaimByCaseType",
-        "caseType": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type",
-        "caseId": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id",
-        "caseInput": "=vars.caseInput",
-        "claimInput": "=vars.claimInput",
-        "memberInput": "=vars.memberInput",
-        "providerInput": "=vars.providerInput",
-        "serviceEventInput": "=vars.serviceEventInput",
-        "documentInput": "=vars.documentInput",
-    }
-    for name in (
-        "caseInput",
-        "claimInput",
-        "memberInput",
-        "providerInput",
-        "serviceEventInput",
-        "documentInput",
-    ):
-        assert inputs[name]["type"] == "object"
-    assert intake["shouldRunOnlyOnce"] is True
 
-    triage = task_by_id(caseplan, "tTRI1agnt")
-    assert "tINT1case" in json.dumps(triage)
+def test_first_intake_contract_rejects_duplicate_or_nonsemantic_dependencies():
+    duplicate_input = copy.deepcopy(load_caseplan())
+    duplicate_intake = task_by_id(duplicate_input, "tINT1case")
+    duplicate_intake["data"]["inputs"].append(
+        copy.deepcopy(duplicate_intake["data"]["inputs"][3])
+    )
+    with pytest.raises(AssertionError):
+        assert_first_intake_contract(duplicate_input)
+
+    nonsemantic_dependency = copy.deepcopy(load_caseplan())
+    triage = task_by_id(nonsemantic_dependency, "tTRI1agnt")
+    triage["entryConditions"][0]["rules"][0][0]["rule"] = "current-stage-entered"
+    with pytest.raises(AssertionError):
+        assert_first_intake_contract(nonsemantic_dependency)
