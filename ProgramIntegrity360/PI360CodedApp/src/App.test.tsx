@@ -69,6 +69,9 @@ test('renders exact canonical stages and Demo data provenance', async () => {
     refresh: vi.fn(),
     useDemoData: vi.fn(),
     selectCase: vi.fn(),
+    startCase: vi.fn(),
+    caseStartStatus: 'idle',
+    caseStartMessage: null,
   });
 
   const user = userEvent.setup();
@@ -94,6 +97,9 @@ test('integrates the real Task Center and its only Action Center iframe into she
     refresh: vi.fn(),
     useDemoData: vi.fn(),
     selectCase: vi.fn(),
+    startCase: vi.fn(),
+    caseStartStatus: 'idle',
+    caseStartMessage: null,
   });
 
   const user = userEvent.setup();
@@ -116,6 +122,9 @@ test('keeps the demo assistant next task as a non-completable preview', async ()
     refresh: vi.fn(),
     useDemoData: vi.fn(),
     selectCase: vi.fn(),
+    startCase: vi.fn(),
+    caseStartStatus: 'idle',
+    caseStartMessage: null,
   });
 
   const user = userEvent.setup();
@@ -143,6 +152,9 @@ test('retains task status observations across refreshes and resets them for a di
     refresh: vi.fn(),
     useDemoData: vi.fn(),
     selectCase: vi.fn(),
+    startCase: vi.fn(),
+    caseStartStatus: 'idle',
+    caseStartMessage: null,
   }));
 
   const user = userEvent.setup();
@@ -196,6 +208,9 @@ test('refreshes case tasks, stages, and timeline once after Tasks API confirms c
     refresh,
     useDemoData: vi.fn(),
     selectCase: vi.fn(),
+    startCase: vi.fn(),
+    caseStartStatus: 'idle',
+    caseStartMessage: null,
   });
 
   render(<App />);
@@ -209,4 +224,46 @@ test('refreshes case tasks, stages, and timeline once after Tasks API confirms c
   expect(screen.getByRole('status', { name: 'Task completed' })).toBeInTheDocument();
   await act(() => vi.advanceTimersByTimeAsync(30_000));
   expect(refresh).toHaveBeenCalledTimes(1);
+});
+
+test('threads the authenticated email and exactly one start action into the command center', async () => {
+  const workspace = createDemoCaseWorkspace();
+  const startCase = vi.fn().mockResolvedValue({
+    status: 'pending',
+    caseId: 'PI-PCS-2026-ABC123',
+    jobKey: 'job-123',
+  });
+  authState.current = {
+    ...authState.current,
+    isAuthenticated: true,
+    currentUserName: 'Authenticated UiPath user',
+    currentUserEmail: 'investigator@example.gov',
+  };
+  vi.mocked(useCaseWorkspace).mockReturnValue({
+    cases: [workspace.case],
+    workspace,
+    status: 'live',
+    warnings: [],
+    refresh: vi.fn(),
+    useDemoData: vi.fn(),
+    selectCase: vi.fn(),
+    startCase,
+    caseStartStatus: 'idle',
+    caseStartMessage: null,
+  });
+
+  const user = userEvent.setup();
+  render(<App />);
+  await user.click(screen.getByRole('button', { name: 'Start new case' }));
+  expect(screen.getByRole('textbox', { name: 'Requester email' })).toHaveValue('investigator@example.gov');
+  await user.click(screen.getByRole('button', { name: 'Start case' }));
+
+  expect(startCase).toHaveBeenCalledOnce();
+  expect(startCase).toHaveBeenCalledWith({
+    caseType: 'MedicaidPCS',
+    requesterEmail: 'investigator@example.gov',
+  });
+  expect(screen.getByRole('dialog', { name: 'Start new case' })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(screen.getByRole('heading', { name: 'Command center' })).toBeInTheDocument();
 });

@@ -79,6 +79,11 @@ test('keeps completion confirmed and exposes retry when the real workspace refre
   render(<App />);
   expect(await screen.findByText('Live UiPath')).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Start new case' }));
+  expect(screen.getByRole('dialog', { name: 'Start new case' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Requester email' })).toHaveValue('investigator@example.com');
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Task Center' }));
   fireEvent.click(screen.getByRole('button', { name: `Open task ${task.id}` }));

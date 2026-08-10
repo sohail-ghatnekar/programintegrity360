@@ -343,9 +343,100 @@ describe('AppShell', () => {
 
     rerender(<AppShell {...commonProps} status="demo" />);
 
-    expect(screen.getByRole('status', { name: 'No cases available' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Command center' })).toBeInTheDocument();
+    expect(screen.getByText('No cases available.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start new case' })).toBeDisabled();
     expect(screen.queryByRole('status', { name: 'Loading command center' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Case data unavailable' })).not.toBeInTheDocument();
+  });
+
+  test('keeps an authenticated empty live command center available for case launch', () => {
+    render(
+      <AppShell
+        cases={[]}
+        workspace={null}
+        status="live"
+        warnings={[]}
+        identity={{ isAuthenticated: true, name: 'Investigator', email: 'investigator@example.gov' }}
+        role="investigator"
+        onRoleChange={vi.fn()}
+        onSelectCase={vi.fn()}
+        onStartCase={vi.fn()}
+        caseStartStatus="idle"
+        caseStartMessage={null}
+        onRefresh={vi.fn()}
+        onUseDemoData={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Command center' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start new case' })).toBeEnabled();
+    expect(screen.getByText('No cases available.')).toBeInTheDocument();
+  });
+
+  test('opens a registered case workspace but keeps a pending registration on Command center', async () => {
+    const user = userEvent.setup();
+    const registeredCaseId = 'PI-PCS-2026-ABC123';
+    const onStartCase = vi.fn().mockResolvedValue({
+      status: 'registered',
+      caseId: registeredCaseId,
+      jobKey: 'job-registered',
+    });
+    render(
+      <AppShell
+        cases={[workspace.case]}
+        workspace={{
+          ...workspace,
+          case: { ...workspace.case, id: registeredCaseId, sourceId: `case:${registeredCaseId}` },
+        }}
+        status="live"
+        warnings={[]}
+        identity={{ isAuthenticated: true, name: 'Investigator', email: 'investigator@example.gov' }}
+        role="investigator"
+        onRoleChange={vi.fn()}
+        onSelectCase={vi.fn()}
+        onStartCase={onStartCase}
+        caseStartStatus="idle"
+        caseStartMessage={null}
+        onRefresh={vi.fn()}
+        onUseDemoData={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Start new case' }));
+    await user.click(screen.getByRole('button', { name: 'Start case' }));
+    expect(await screen.findByRole('heading', { name: 'Case workspace' })).toBeInTheDocument();
+    expect(onStartCase).toHaveBeenCalledOnce();
+
+    cleanup();
+    const pendingMessage = 'Process started; workspace registration is pending for PI-HSP-2026-ABC123.';
+    const pendingStart = vi.fn().mockResolvedValue({
+      status: 'pending',
+      caseId: 'PI-HSP-2026-ABC123',
+      jobKey: 'job-pending',
+    });
+    render(
+      <AppShell
+        cases={[workspace.case]}
+        workspace={workspace}
+        status="live"
+        warnings={[]}
+        identity={{ isAuthenticated: true, name: 'Investigator', email: 'investigator@example.gov' }}
+        role="investigator"
+        onRoleChange={vi.fn()}
+        onSelectCase={vi.fn()}
+        onStartCase={pendingStart}
+        caseStartStatus="pending"
+        caseStartMessage={pendingMessage}
+        onRefresh={vi.fn()}
+        onUseDemoData={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Command center' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Start new case' }));
+    await user.click(screen.getByRole('button', { name: 'Start case' }));
+    expect(screen.getByText(pendingMessage)).toBeInTheDocument();
   });
 
   test('renders a stable empty workspace separately from loading', async () => {

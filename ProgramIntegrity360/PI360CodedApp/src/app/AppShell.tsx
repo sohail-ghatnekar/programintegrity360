@@ -41,7 +41,8 @@ import logoUrl from '../assets/uipath-logo-png_seeklogo-618304.png';
 import { CaseWorkspace } from '../features/cases/CaseWorkspace';
 import { CommandCenter } from '../features/cases/CommandCenter';
 import type { ActivityEvent, CaseSummary, CaseWorkspaceSnapshot, DemoRole } from '../features/cases/types';
-import type { CaseWorkspaceStatus } from '../features/cases/useCaseWorkspace';
+import type { CaseType } from '../features/cases/caseIntakeCatalog';
+import type { CaseStartOutcome, CaseStartStatus, CaseWorkspaceStatus } from '../features/cases/useCaseWorkspace';
 
 type ShellView = 'command' | 'workspace' | 'tasks';
 type RecoveryOperation = 'refresh' | 'demo';
@@ -61,6 +62,12 @@ export type AppShellProps = {
   role: DemoRole;
   onRoleChange: (role: DemoRole) => void;
   onSelectCase: (caseId: string) => void | Promise<void>;
+  onStartCase?: (input: {
+    caseType: CaseType;
+    requesterEmail: string;
+  }) => Promise<CaseStartOutcome>;
+  caseStartStatus?: CaseStartStatus;
+  caseStartMessage?: string | null;
   onRefresh: () => void | Promise<void>;
   onUseDemoData: () => void | Promise<void>;
   onLogin?: () => void | Promise<void>;
@@ -88,6 +95,9 @@ export function AppShell({
   role,
   onRoleChange,
   onSelectCase,
+  onStartCase,
+  caseStartStatus = 'idle',
+  caseStartMessage = null,
   onRefresh,
   onUseDemoData,
   onLogin,
@@ -157,6 +167,22 @@ export function AppShell({
 
   const refreshCaseData = () => runRecovery('refresh', onRefresh);
   const useDemoCaseData = () => runRecovery('demo', onUseDemoData);
+  const launchCase = async (input: { caseType: CaseType; requesterEmail: string }) => {
+    if (!onStartCase) {
+      throw new Error('Connect UiPath to start a case.');
+    }
+
+    const outcome = await onStartCase(input);
+    if (outcome.status === 'registered') {
+      selectionRequest.current += 1;
+      setSelectionIntent(outcome.caseId);
+      setPendingSelection(null);
+      setSelectionError(null);
+      setRecoveryPending(null);
+      setActiveView('workspace');
+    }
+    return outcome;
+  };
   const visibleWorkspace = selectionIntent
     && workspace?.case.id !== selectionIntent
     && acceptedWorkspace.current?.case.id === selectionIntent
@@ -335,6 +361,10 @@ export function AppShell({
               status={status}
               warnings={warnings}
               role={role}
+              identity={identity}
+              onStartCase={launchCase}
+              caseStartStatus={caseStartStatus}
+              caseStartMessage={caseStartMessage}
               selectionIntent={selectionIntent}
               pendingSelection={pendingSelection}
               selectionError={selectionError}
@@ -358,13 +388,14 @@ export function AppShell({
   );
 }
 
-type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'onRefresh' | 'onUseDemoData' | 'taskCenter' | 'activityEvents'> & {
+type ShellContentProps = Pick<AppShellProps, 'cases' | 'workspace' | 'status' | 'warnings' | 'role' | 'identity' | 'onRefresh' | 'onUseDemoData' | 'taskCenter' | 'activityEvents' | 'caseStartStatus' | 'caseStartMessage'> & {
   activeView: ShellView;
   selectionIntent: string | null;
   pendingSelection: string | null;
   selectionError: string | null;
   recoveryPending: RecoveryOperation | null;
   onSelectCase: (caseId: string) => void | Promise<void>;
+  onStartCase: (input: { caseType: CaseType; requesterEmail: string }) => Promise<CaseStartOutcome>;
 };
 
 function ShellContent({
@@ -374,11 +405,15 @@ function ShellContent({
   status,
   warnings,
   role,
+  identity,
   selectionIntent,
   pendingSelection,
   selectionError,
   recoveryPending,
   onSelectCase,
+  onStartCase,
+  caseStartStatus,
+  caseStartMessage,
   onRefresh,
   onUseDemoData,
   taskCenter,
@@ -409,9 +444,18 @@ function ShellContent({
   }
 
   if (activeView === 'command' && pendingSelection) {
-    return cases.length === 0
-      ? <EmptyState label="No cases available" detail="No case records were returned by the current data source." icon={Inbox} />
-      : <CommandCenter cases={cases} selectedCaseId={workspace?.case.id} onSelectCase={onSelectCase} />;
+    return (
+      <CommandCenter
+        cases={cases}
+        selectedCaseId={workspace?.case.id}
+        identityEmail={identity.email}
+        isAuthenticated={identity.isAuthenticated}
+        caseStartStatus={caseStartStatus}
+        caseStartMessage={caseStartMessage}
+        onStartCase={onStartCase}
+        onSelectCase={onSelectCase}
+      />
+    );
   }
 
   if (pendingSelection) {
@@ -429,9 +473,18 @@ function ShellContent({
   }
 
   if (activeView === 'command') {
-    return cases.length === 0
-      ? <EmptyState label="No cases available" detail="No case records were returned by the current data source." icon={Inbox} />
-      : <CommandCenter cases={cases} selectedCaseId={workspace?.case.id} onSelectCase={onSelectCase} />;
+    return (
+      <CommandCenter
+        cases={cases}
+        selectedCaseId={workspace?.case.id}
+        identityEmail={identity.email}
+        isAuthenticated={identity.isAuthenticated}
+        caseStartStatus={caseStartStatus}
+        caseStartMessage={caseStartMessage}
+        onStartCase={onStartCase}
+        onSelectCase={onSelectCase}
+      />
+    );
   }
 
   if (!workspace) {

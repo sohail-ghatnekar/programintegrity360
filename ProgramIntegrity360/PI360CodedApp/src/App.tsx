@@ -136,6 +136,9 @@ function ProgramIntegrityWorkbench() {
         role={role}
         onRoleChange={setRole}
         onSelectCase={caseWorkspace.selectCase}
+        onStartCase={caseWorkspace.startCase}
+        caseStartStatus={caseWorkspace.caseStartStatus}
+        caseStartMessage={caseWorkspace.caseStartMessage}
         onRefresh={refreshCaseWorkspace}
         onUseDemoData={caseWorkspace.useDemoData}
         onLogin={auth.login}
