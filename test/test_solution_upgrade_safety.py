@@ -5,6 +5,7 @@ from pathlib import Path
 
 SOLUTION_ROOT = Path(__file__).parents[1] / "ProgramIntegrity360"
 RESOURCE_ROOT = SOLUTION_ROOT / "resources" / "solution_folder"
+USER_PROFILE_ROOT = SOLUTION_ROOT / "userProfile"
 
 
 def _deployment_resources() -> list[dict]:
@@ -53,6 +54,27 @@ def test_concrete_runtime_dependency_keys_resolve_locally():
     assert unresolved == [], (
         "Concrete runtime dependency keys must resolve to resources in the "
         f"upgrade package: {unresolved}"
+    )
+
+
+def test_debug_overwrites_reference_local_solution_resources():
+    local_keys = {
+        json.loads(path.read_text())["resource"]["key"]
+        for path in RESOURCE_ROOT.rglob("*.json")
+    }
+    stale_overwrites = []
+
+    for path in USER_PROFILE_ROOT.rglob("debug_overwrites.json"):
+        payload = json.loads(path.read_text())
+        for tenant in payload.get("tenants", []):
+            for item in tenant.get("resources", []):
+                key = item.get("solutionResourceKey")
+                if key not in local_keys:
+                    stale_overwrites.append((str(path.relative_to(SOLUTION_ROOT)), key))
+
+    assert stale_overwrites == [], (
+        "Debug overwrites must not keep references to shadow resources that "
+        f"are absent from the solution package: {stale_overwrites}"
     )
 
 
