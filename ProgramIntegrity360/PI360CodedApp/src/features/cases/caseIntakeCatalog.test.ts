@@ -49,6 +49,49 @@ describe('case intake catalog', () => {
     expect(randomValues).toHaveBeenCalledOnce();
   });
 
+  it('rejects biased tail bytes and refills until six suffix characters are accepted', () => {
+    const randomValues = vi
+      .spyOn(globalThis.crypto, 'getRandomValues')
+      .mockImplementationOnce((array) => {
+        (array as Uint8Array).set([252, 0, 253, 1, 254, 2]);
+        return array;
+      })
+      .mockImplementationOnce((array) => {
+        (array as Uint8Array).set([27, 28, 255]);
+        return array;
+      })
+      .mockImplementationOnce((array) => {
+        (array as Uint8Array).set([29]);
+        return array;
+      });
+
+    const request = buildCaseStartPayload({
+      caseType: 'MedicaidPCS',
+      requesterEmail: 'investigator@example.gov',
+      now: FIXED_NOW,
+    });
+
+    expect(request.caseId).toBe('PI-PCS-2026-ABC123');
+    expect(randomValues).toHaveBeenCalledTimes(3);
+  });
+
+  it('fails after bounded refills when the entropy source only returns rejected bytes', () => {
+    const randomValues = vi
+      .spyOn(globalThis.crypto, 'getRandomValues')
+      .mockImplementation((array) => {
+        (array as Uint8Array).fill(255);
+        return array;
+      });
+
+    expect(() => buildCaseStartPayload({
+      caseType: 'MedicaidPCS',
+      requesterEmail: 'investigator@example.gov',
+      now: FIXED_NOW,
+    })).toThrow('Unable to generate an unbiased case ID suffix');
+    expect(randomValues.mock.calls.length).toBeGreaterThan(1);
+    expect(randomValues.mock.calls.length).toBeLessThanOrEqual(128);
+  });
+
   it.each(['MedicaidPCS', 'StateMedicaidHospice'] satisfies CaseType[]) (
     'emits exactly the six ordered Maestro trigger objects for %s',
     (caseType) => {
@@ -95,6 +138,13 @@ describe('case intake catalog', () => {
     expect(request.inputArguments.memberInput).toMatchObject({
       memberId: 'MBR-071426',
       memberName: 'Jordan Ellis',
+    });
+    expect(request.inputArguments.providerInput).toEqual({
+      providerId: 'PRV-100482',
+      providerName: 'Harbor Home Support Services',
+      caregiverId: 'ATT-HSP-4401',
+      attendantId: 'ATT-HSP-4401',
+      caregiverName: 'Taylor Brooks',
     });
     expect(request.inputArguments.serviceEventInput).toMatchObject({
       lineId: 'LINE-0714-01',
@@ -157,38 +207,76 @@ describe('case intake catalog', () => {
     expect(request.inputArguments.documentInput).not.toHaveProperty('hospitalRecordBucketPath');
   });
 
+  it('returns fresh nested payload objects for independent case starts', () => {
+    const first = buildCaseStartPayload({
+      caseType: 'MedicaidPCS',
+      requesterEmail: 'first@example.gov',
+      now: FIXED_NOW,
+      suffix: 'ABC123',
+    });
+    const second = buildCaseStartPayload({
+      caseType: 'MedicaidPCS',
+      requesterEmail: 'second@example.gov',
+      now: FIXED_NOW,
+      suffix: 'ABC123',
+    });
+
+    expect(first.inputArguments).not.toBe(second.inputArguments);
+    for (const name of TRIGGER_INPUT_NAMES) {
+      expect(first.inputArguments[name]).not.toBe(second.inputArguments[name]);
+    }
+
+    first.inputArguments.caseInput.requesterEmail = 'mutated@example.gov';
+    const firstPaths = first.inputArguments.documentInput.timesheetBucketPaths as string[];
+    firstPaths.push('Timesheets/pcs/mutated.pdf');
+
+    expect(second.inputArguments.caseInput.requesterEmail).toBe('second@example.gov');
+    expect(second.inputArguments.documentInput.timesheetBucketPaths).toEqual([
+      'Timesheets/pcs/PI-PCS-2026-ABC123/incoming/timesheet_0416.pdf',
+      'Timesheets/pcs/PI-PCS-2026-ABC123/incoming/timesheet_0519.pdf',
+    ]);
+  });
+
   it.each([
     {
       name: 'unsupported case type',
       caseType: 'MedicareHospice' as CaseType,
       requesterEmail: 'investigator@example.gov',
+      suffix: 'ABC123',
       error: 'Unsupported CaseType',
     },
     {
       name: 'invalid email',
       caseType: 'MedicaidPCS' as CaseType,
       requesterEmail: 'first@example.gov,second@example.gov',
+      suffix: 'ABC123',
       error: 'one valid requester email',
     },
-  ])('rejects $name before a process caller can run', ({ caseType, requesterEmail, error }) => {
+    {
+      name: 'invalid suffix',
+      caseType: 'MedicaidPCS' as CaseType,
+      requesterEmail: 'investigator@example.gov',
+      suffix: 'abc-12',
+      error: 'six uppercase alphanumeric characters',
+    },
+  ])('rejects $name before a process caller can run', ({
+    caseType,
+    requesterEmail,
+    suffix,
+    error,
+  }) => {
     const processStart = vi.fn();
     const start = () => {
       const request = buildCaseStartPayload({
         caseType,
         requesterEmail,
         now: FIXED_NOW,
-        suffix: 'ABC123',
+        suffix,
       });
       processStart(request);
     };
 
     expect(start).toThrow(error);
     expect(processStart).not.toHaveBeenCalled();
-  });
-
-  it('rejects an injected suffix outside the strict six-character contract', () => {
-    expect(() => createCaseId('MedicaidPCS', FIXED_NOW, 'abc-12')).toThrow(
-      'six uppercase alphanumeric characters',
-    );
   });
 });

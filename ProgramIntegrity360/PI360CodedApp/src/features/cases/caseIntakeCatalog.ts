@@ -12,6 +12,9 @@ export type CaseStartPayload = Record<CaseTriggerInputName, Record<string, unkno
 
 const CASE_TYPES: CaseType[] = ['MedicaidPCS', 'StateMedicaidHospice'];
 const RANDOM_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const RANDOM_ACCEPTANCE_LIMIT = Math.floor(256 / RANDOM_CHARACTERS.length)
+  * RANDOM_CHARACTERS.length;
+const MAX_RANDOM_REFILLS = 128;
 const SUFFIX_PATTERN = /^[A-Z0-9]{6}$/;
 const SINGLE_EMAIL_PATTERN = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
 
@@ -34,10 +37,24 @@ function normalizeRequesterEmail(requesterEmail: string): string {
 }
 
 function generateSuffix(): string {
-  const bytes = new Uint8Array(6);
-  globalThis.crypto.getRandomValues(bytes);
+  const characters: string[] = [];
 
-  return Array.from(bytes, (value) => RANDOM_CHARACTERS[value % RANDOM_CHARACTERS.length]).join('');
+  for (let refill = 0; refill < MAX_RANDOM_REFILLS && characters.length < 6; refill += 1) {
+    const bytes = new Uint8Array(6 - characters.length);
+    globalThis.crypto.getRandomValues(bytes);
+
+    for (const value of bytes) {
+      if (value < RANDOM_ACCEPTANCE_LIMIT) {
+        characters.push(RANDOM_CHARACTERS[value % RANDOM_CHARACTERS.length]);
+      }
+    }
+  }
+
+  if (characters.length !== 6) {
+    throw new Error('Unable to generate an unbiased case ID suffix from secure random values.');
+  }
+
+  return characters.join('');
 }
 
 export function createCaseId(caseType: CaseType, now: Date, suffix: string): string {
@@ -86,6 +103,7 @@ function hospicePayload(caseId: string, requesterEmail: string): CaseStartPayloa
       providerId: 'PRV-100482',
       providerName: 'Harbor Home Support Services',
       caregiverId: 'ATT-HSP-4401',
+      attendantId: 'ATT-HSP-4401',
       caregiverName: 'Taylor Brooks',
     },
     serviceEventInput: {

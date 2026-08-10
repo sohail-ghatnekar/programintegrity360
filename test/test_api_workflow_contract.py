@@ -318,6 +318,30 @@ def test_intake_validation_precedes_query_and_inspection_follows_query():
     ]
 
 
+def test_intake_maps_the_hospice_attendant_alias_emitted_by_the_case_catalog():
+    year = datetime.now(timezone.utc).year
+    workflow_input = valid_intake_input(
+        caseType="StateMedicaidHospice",
+        caseId=f"PI-HSP-{year}-ABC123",
+    )
+    workflow_input["providerInput"] = {
+        "providerId": "PRV-100482",
+        "providerName": "Harbor Home Support Services",
+        "caregiverId": "ATT-HSP-4401",
+        "attendantId": "ATT-HSP-4401",
+        "caregiverName": "Taylor Brooks",
+    }
+
+    result = run_lifecycle_script(
+        "PrepareLifecycleRequest",
+        workflow_input=workflow_input,
+    )
+
+    assert result["ok"] is True
+    assert result["result"]["record"]["attendant_id"] == "ATT-HSP-4401"
+    assert result["result"]["record"]["caregiver_name"] == "Taylor Brooks"
+
+
 @pytest.mark.parametrize(
     "content",
     (
