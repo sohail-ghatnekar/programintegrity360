@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 
@@ -5,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHOICE_SCRIPT = ROOT / "platform" / "01_choicesets.js"
 ENTITY_SCRIPT = ROOT / "platform" / "02_entities.js"
 SEED_SCRIPT = ROOT / "platform" / "03_seed.js"
+MIGRATION_RECORD = ROOT / "platform" / "cloud-playground-migration.json"
 
 
 def read(path: Path) -> str:
@@ -78,3 +80,21 @@ def test_seed_consolidates_hospice_source_data_into_existing_entities():
     assert "PI360ClaimLine" not in source
     assert "PI360Member" not in source
     assert "PI360InstitutionalEncounter" not in source
+
+
+def test_migration_record_matches_the_package_only_coded_app_upgrade():
+    coded_app = json.loads(read(MIGRATION_RECORD))["codedWebApp"]
+
+    assert coded_app["version"] == "0.5.6"
+    assert coded_app["systemName"] == "ID278b47bdb4d24033ab498eb94bec6e8b"
+    assert coded_app["packageSha256"] == (
+        "b0f6f050c92336b41ff231e59acd0f47a989d659e682695d4140442637b13958"
+    )
+    assert coded_app["appUrl"] == "https://uipathlabs.uipath.host/pi360-coded-app"
+    assert coded_app["deploymentId"] == "12eb1198-bd15-49e8-a009-d17410ad0477"
+    assert coded_app["deploymentRevision"] == 7
+    assert coded_app["deployedAt"] == "2026-08-10T17:27:54.940Z"
+    assert coded_app["deploymentNote"] == (
+        "Package-only upgrade from 0.5.5 to 0.5.6; no Studio Web source push "
+        "was performed."
+    )

@@ -280,7 +280,7 @@ describe('useCaseWorkspace case start coordination', () => {
     expect(outcome).toEqual({ status: 'registered', caseId: CASE_ID, jobKey: JOB_KEY });
   });
 
-  it('does not fall back to another workspace when the generated case disappears before load', async () => {
+  it('keeps the started job pending when the generated case disappears before load', async () => {
     const repository = createRepository();
     const target = liveWorkspace(CASE_ID);
     const decoy = liveWorkspace('PI-PCS-2026-DECOY1');
@@ -291,20 +291,22 @@ describe('useCaseWorkspace case start coordination', () => {
       .mockResolvedValueOnce({ data: [decoy.case], warnings: [] });
     repository.loadWorkspaceWithWarnings.mockResolvedValue({ data: decoy, warnings: [] });
 
+    let outcome: Awaited<ReturnType<typeof result.current.startCase>> | undefined;
     await act(async () => {
-      await expect(result.current.startCase({
+      outcome = await result.current.startCase({
         caseType: 'StateMedicaidHospice',
         requesterEmail: 'investigator@example.gov',
-      })).rejects.toThrow(`Requested live case was not found: ${CASE_ID}`);
+      });
     });
 
     expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
     expect(result.current.workspace).toBeNull();
-    expect(result.current.caseStartStatus).toBe('error');
-    expect(result.current.caseStartMessage).toBe(`Requested live case was not found: ${CASE_ID}`);
+    expect(result.current.caseStartStatus).toBe('pending');
+    expect(result.current.caseStartMessage).toContain(CASE_ID);
+    expect(outcome).toEqual({ status: 'pending', caseId: CASE_ID, jobKey: JOB_KEY });
   });
 
-  it('surfaces a current-generation workspace load failure after registration is discovered', async () => {
+  it('keeps a started job pending and blocks resubmission after workspace loading fails', async () => {
     const repository = createRepository();
     const target = liveWorkspace(CASE_ID);
     const caseStarter = vi.fn().mockResolvedValue({ caseId: CASE_ID, jobKey: JOB_KEY });
@@ -312,19 +314,36 @@ describe('useCaseWorkspace case start coordination', () => {
     repository.listCasesWithWarnings.mockResolvedValue({ data: [target.case], warnings: [] });
     repository.loadWorkspaceWithWarnings.mockRejectedValue(new Error('Workspace detail read denied (403)'));
 
+    let firstOutcome: Awaited<ReturnType<typeof result.current.startCase>> | undefined;
     await act(async () => {
-      await expect(result.current.startCase({
+      firstOutcome = await result.current.startCase({
         caseType: 'StateMedicaidHospice',
         requesterEmail: 'investigator@example.gov',
-      })).rejects.toThrow('Workspace detail read denied (403)');
+      });
     });
 
     expect(result.current.status).toBe('error');
-    expect(result.current.caseStartStatus).toBe('error');
-    expect(result.current.caseStartMessage).toBe('Workspace detail read denied (403)');
+    expect(result.current.caseStartStatus).toBe('pending');
+    expect(result.current.caseStartMessage).toBe(
+      `Process started; workspace registration is pending for ${CASE_ID}.`,
+    );
     expect(result.current.warnings).toContain(
       'Unable to load live UiPath case data: Workspace detail read denied (403).',
     );
+    expect(firstOutcome).toEqual({ status: 'pending', caseId: CASE_ID, jobKey: JOB_KEY });
+
+    let secondOutcome: Awaited<ReturnType<typeof result.current.startCase>> | undefined;
+    await act(async () => {
+      secondOutcome = await result.current.startCase({
+        caseType: 'StateMedicaidHospice',
+        requesterEmail: 'investigator@example.gov',
+      });
+    });
+
+    expect(secondOutcome).toEqual(firstOutcome);
+    expect(caseStarter).toHaveBeenCalledOnce();
+    expect(repository.loadWorkspaceWithWarnings).toHaveBeenCalledOnce();
+    expect(result.current.caseStartStatus).toBe('pending');
   });
 
   it('does not load a workspace before the generated case appears', async () => {

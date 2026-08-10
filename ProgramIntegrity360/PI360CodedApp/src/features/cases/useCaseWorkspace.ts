@@ -197,6 +197,7 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
   const selectedCaseId = useRef<string | null>(null);
   const requestId = useRef(0);
   const caseStartRequestId = useRef(0);
+  const pendingCaseStart = useRef<Extract<CaseStartOutcome, { status: 'pending' }> | null>(null);
   const mounted = useRef(true);
 
   const loadDemo = useCallback(async (): Promise<CaseWorkspaceRefreshResult> => {
@@ -316,6 +317,11 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
     caseType: CaseType;
     requesterEmail: string;
   }): Promise<CaseStartOutcome> => {
+    if (pendingCaseStart.current) {
+      return pendingCaseStart.current;
+    }
+
+    let startedOutcome: Extract<CaseStartOutcome, { status: 'pending' }> | null = null;
     const currentRequest = ++caseStartRequestId.current;
     requestId.current += 1;
     const isCurrent = () => mounted.current && currentRequest === caseStartRequestId.current;
@@ -354,6 +360,11 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
         throw new Error(`UiPath process start returned a mismatched case ID for ${payload.caseId}.`);
       }
 
+      startedOutcome = Object.freeze({
+        status: 'pending' as const,
+        caseId: payload.caseId,
+        jobKey: started.jobKey,
+      });
       setCaseStartStatus('polling');
       let terminalPollWarnings: readonly string[] = [];
       for (let attempt = 0; attempt < pollPolicy.attempts; attempt += 1) {
@@ -395,15 +406,20 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
 
       requireCurrent();
       setWarnings(terminalPollWarnings);
+      pendingCaseStart.current = startedOutcome;
       setCaseStartStatus('pending');
       setCaseStartMessage(`Process started; workspace registration is pending for ${payload.caseId}.`);
-      return {
-        status: 'pending',
-        caseId: payload.caseId,
-        jobKey: started.jobKey,
-      };
+      return startedOutcome;
     } catch (reason) {
       if (!isCurrent()) throw caseStartSuperseded();
+      if (startedOutcome) {
+        pendingCaseStart.current = startedOutcome;
+        setCaseStartStatus('pending');
+        setCaseStartMessage(
+          `Process started; workspace registration is pending for ${startedOutcome.caseId}.`,
+        );
+        return startedOutcome;
+      }
       return rejectStart(reason);
     }
   }, [auth?.isAuthenticated, caseStarter, delay, liveRepository, loadLive, pollPolicy, workspace]);

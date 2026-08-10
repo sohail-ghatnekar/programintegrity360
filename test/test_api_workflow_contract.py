@@ -195,7 +195,7 @@ def test_intake_registration_accepts_six_trigger_objects():
         assert entry_properties[name]["type"] == "object"
 
 
-def test_intake_registration_is_a_real_idempotent_data_fabric_upsert():
+def test_intake_registration_is_create_first_with_idempotent_conflict_recovery():
     workflow = load_json(LIFECYCLE_WORKFLOW_PATH)
     activities = list(walk(workflow["do"]))
     connector_activities = [
@@ -208,10 +208,9 @@ def test_intake_registration_is_a_real_idempotent_data_fabric_upsert():
     expected_activity_types = {
         "703065b9-a310-33b8-9d4d-12df0a6f520b",
         "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
-        "718fdc36-73a8-3607-8604-ddef95bb9967",
     }
 
-    assert len(connector_activities) == 3
+    assert len(connector_activities) == 2
     assert set(by_activity_type) == expected_activity_types
     for activity_type in expected_activity_types:
         assert sum(
@@ -231,10 +230,18 @@ def test_intake_registration_is_a_real_idempotent_data_fabric_upsert():
 
     query = by_activity_type["703065b9-a310-33b8-9d4d-12df0a6f520b"]
     create = by_activity_type["dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf"]
-    update = by_activity_type["718fdc36-73a8-3607-8604-ddef95bb9967"]
-    assert "'case_id'" in query["with"]["queryParameters"]["queryExpression"]
-    assert update["with"]["queryParameters"]["recordId"] == (
-        "${$context.outputs.InspectExistingCase.recordId}"
+    assert query["with"]["queryParameters"] == {
+        "queryExpression": (
+            "${\"'case_id' = '\" + "
+            "$context.outputs.PrepareLifecycleRequest.caseId.split(\"'\").join(\"''\") "
+            "+ \"'\"}"
+        ),
+        "limit": 2,
+    }
+    assert all(
+        item["metadata"]["uiPathActivityTypeId"]
+        != "718fdc36-73a8-3607-8604-ddef95bb9967"
+        for item in connector_activities
     )
     for field in (
         "case_id",
@@ -249,11 +256,10 @@ def test_intake_registration_is_a_real_idempotent_data_fabric_upsert():
         "updated_at",
     ):
         assert field in create["with"]["bodyParameters"]
-        assert field in update["with"]["bodyParameters"]
-    for activity in (create, update):
-        assert activity["with"]["bodyParameters"]["priority"] == 0
-        assert activity["with"]["bodyParameters"]["stage"] == 0
-        assert activity["with"]["bodyParameters"]["status"] == 0
+    for field in ("priority", "stage", "status"):
+        assert create["with"]["bodyParameters"][field] == 0
+    for field in ("risk_signal_count", "opened_at", "created_at"):
+        assert field in create["with"]["bodyParameters"]
 
     raw = json.dumps(workflow)
     assert "requester_email" in raw
@@ -269,7 +275,6 @@ def test_intake_registration_is_a_real_idempotent_data_fabric_upsert():
         "arbitrary-case-id",
         "PI-PCS-2026-abc123",
         "PI-PCS-2026-ABC12",
-        "PI-PCS-1999-ABC123",
         "PI-HSP-2026-ABC123",
     ),
 )
@@ -281,6 +286,17 @@ def test_intake_validation_rejects_case_ids_before_the_first_connector(case_id):
 
     assert result["ok"] is False
     assert "case ID" in result["error"]
+
+
+@pytest.mark.parametrize("year", (1999, 2027, 2099))
+def test_intake_validation_accepts_any_four_digit_embedded_year(year):
+    result = run_lifecycle_script(
+        "PrepareLifecycleRequest",
+        workflow_input=valid_intake_input(caseId=f"PI-PCS-{year}-ABC123"),
+    )
+
+    assert result["ok"] is True
+    assert result["result"]["caseId"] == f"PI-PCS-{year}-ABC123"
 
 
 @pytest.mark.parametrize(
@@ -303,7 +319,7 @@ def test_intake_validation_rejects_non_single_emails_before_the_first_connector(
     assert "requesterEmail" in result["error"]
 
 
-def test_intake_validation_precedes_query_and_inspection_follows_query():
+def test_intake_validation_precedes_create_and_query_is_conflict_recovery_only():
     main_do = load_json(LIFECYCLE_WORKFLOW_PATH)["do"][0]["Main"]["do"]
     assert activity_keys(main_do)[:3] == [
         "WorkflowStart",
@@ -311,10 +327,18 @@ def test_intake_validation_precedes_query_and_inspection_follows_query():
         "If_Intake#Wrapper",
     ]
     intake_then = lifecycle_activity("If_Intake#Then")["do"]
-    assert activity_keys(intake_then) == [
+    assert activity_keys(intake_then) == ["Try_CreateRegistration"]
+    create_first = lifecycle_activity("Try_CreateRegistration")
+    assert activity_keys(create_first["try"]) == [
+        "CreateEntityRecordCurated_1",
+        "ReturnCreatedRegistration",
+    ]
+    assert create_first["catch"]["as"] == "createError"
+    assert activity_keys(create_first["catch"]["do"]) == [
         "QueryEntityRecordsCurated_1",
         "InspectExistingCase",
-        "If_Existing#Wrapper",
+        "ConfirmConflictRecovery",
+        "ReturnExistingRegistration",
     ]
 
 
@@ -414,6 +438,84 @@ def test_query_inspection_routes_zero_one_and_duplicate_rows_safely():
     assert "returned 2" in duplicate["error"]
 
 
+def test_conflict_recovery_preserves_progressed_lifecycle_and_rejects_missing_row():
+    existing = run_lifecycle_script(
+        "InspectExistingCase",
+        context=inspect_context(
+            [
+                {
+                    "Id": "record-1",
+                    "priority": "Low",
+                    "stage": "Closure",
+                    "status": "Closed",
+                    "risk_signal_count": 8,
+                    "opened_at": "2025-12-31T23:59:00Z",
+                    "created_at": "2025-12-31T23:58:00Z",
+                }
+            ]
+        ),
+    )
+    assert existing["ok"] is True
+    assert existing["result"] == {
+        "exists": True,
+        "recordId": "record-1",
+        "priority": "Low",
+        "stage": "Closure",
+        "status": "Closed",
+        "riskSignalCount": 8,
+        "createdAt": "2025-12-31T23:58:00Z",
+        "openedAt": "2025-12-31T23:59:00Z",
+    }
+
+    recovered = run_lifecycle_script(
+        "ConfirmConflictRecovery",
+        context={"outputs": {"InspectExistingCase": existing["result"]}},
+    )
+    assert recovered["ok"] is True
+    assert recovered["result"] == {
+        "recovered": True,
+        "recordId": "record-1",
+        "priority": "Low",
+        "stage": "Closure",
+        "status": "Closed",
+    }
+
+    existing_result = run_lifecycle_script(
+        "ReturnExistingRegistration",
+        context={
+            "outputs": {
+                "PrepareLifecycleRequest": run_lifecycle_script(
+                    "PrepareLifecycleRequest",
+                    workflow_input=valid_intake_input(),
+                )["result"],
+                "InspectExistingCase": existing["result"],
+            }
+        },
+    )
+    assert existing_result["ok"] is True
+    assert existing_result["result"]["registrationMode"] == "Existing"
+    assert existing_result["result"]["status"] == "Closed"
+    assert existing_result["result"]["payload"]["preservedLifecycle"] == {
+        "priority": "Low",
+        "stage": "Closure",
+        "status": "Closed",
+    }
+
+    missing = run_lifecycle_script(
+        "ConfirmConflictRecovery",
+        context={
+            "outputs": {
+                "InspectExistingCase": {
+                    "exists": False,
+                    "recordId": None,
+                }
+            }
+        },
+    )
+    assert missing["ok"] is False
+    assert "create failed" in missing["error"].lower()
+
+
 def test_query_inspection_faults_when_the_existing_row_has_no_record_id():
     result = run_lifecycle_script(
         "InspectExistingCase",
@@ -424,11 +526,13 @@ def test_query_inspection_faults_when_the_existing_row_has_no_record_id():
     assert "no record ID" in result["error"]
 
 
-def test_create_and_update_are_exclusive_and_return_the_matching_mode():
-    update_keys = activity_keys(lifecycle_activity("If_Existing#Then")["do"])
-    create_keys = activity_keys(lifecycle_activity("If_Existing#Else")["do"])
-    assert update_keys == ["UpdateEntityRecordV2_1", "ReturnUpdatedRegistration"]
-    assert create_keys == ["CreateEntityRecordCurated_1", "ReturnCreatedRegistration"]
+def test_create_and_existing_no_op_are_exclusive_and_return_the_matching_mode():
+    create_first = lifecycle_activity("Try_CreateRegistration")
+    assert activity_keys(create_first["try"]) == [
+        "CreateEntityRecordCurated_1",
+        "ReturnCreatedRegistration",
+    ]
+    assert activity_keys(create_first["catch"]["do"])[-1] == "ReturnExistingRegistration"
 
     prepared = run_lifecycle_script(
         "PrepareLifecycleRequest",
@@ -436,11 +540,23 @@ def test_create_and_update_are_exclusive_and_return_the_matching_mode():
     )["result"]
     context = {"outputs": {"PrepareLifecycleRequest": prepared}}
     created = run_lifecycle_script("ReturnCreatedRegistration", context=context)
-    updated = run_lifecycle_script("ReturnUpdatedRegistration", context=context)
+    existing_context = {
+        "outputs": {
+            "PrepareLifecycleRequest": prepared,
+            "InspectExistingCase": {
+                "exists": True,
+                "recordId": "record-1",
+                "priority": "High",
+                "stage": "Investigation",
+                "status": "Open",
+            },
+        }
+    }
+    existing = run_lifecycle_script("ReturnExistingRegistration", context=existing_context)
     assert created["result"]["registrationMode"] == "Created"
-    assert updated["result"]["registrationMode"] == "Updated"
+    assert existing["result"]["registrationMode"] == "Existing"
     assert created["result"]["persistedCaseId"] == prepared["caseId"]
-    assert updated["result"]["persistedCaseId"] == prepared["caseId"]
+    assert existing["result"]["persistedCaseId"] == prepared["caseId"]
 
 
 def test_api_workflow_binds_the_folder_scoped_data_fabric_connection():
