@@ -130,6 +130,29 @@ test('keeps the dialog open for start errors and closes it only after registrati
   expect(screen.queryByRole('dialog', { name: 'Start new case' })).not.toBeInTheDocument();
 });
 
+test('does not show a previous submission error after the dialog is closed and reopened', async () => {
+  const user = userEvent.setup();
+  const onStartCase = vi.fn().mockRejectedValue(new Error('UiPath process start failed.'));
+  const { rerender, props } = renderDialog({ onStartCase });
+
+  await user.click(screen.getByRole('button', { name: 'Start new case' }));
+  await user.click(screen.getByRole('button', { name: 'Start case' }));
+  rerender(
+    <StartCaseDialog
+      {...props}
+      startStatus="error"
+      startMessage="UiPath process start failed."
+    />,
+  );
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('UiPath process start failed.');
+  await user.click(screen.getByRole('button', { name: 'Cancel' }));
+  await user.click(screen.getByRole('button', { name: 'Start new case' }));
+
+  expect(screen.getByRole('dialog', { name: 'Start new case' })).toBeInTheDocument();
+  expect(screen.queryByText('UiPath process start failed.')).not.toBeInTheDocument();
+});
+
 test('resets defaults on reopen and profile changes without overwriting active edits', async () => {
   const user = userEvent.setup();
   const { rerender, props } = renderDialog();

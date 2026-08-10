@@ -51,6 +51,7 @@ export function StartCaseDialog({
   const [localError, setLocalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [registrationPending, setRegistrationPending] = useState(false);
+  const [submissionAttempted, setSubmissionAttempted] = useState(false);
   const isStarting = submitting || startStatus === 'starting' || startStatus === 'polling';
   const formLocked = isStarting || registrationPending;
 
@@ -70,6 +71,7 @@ export function StartCaseDialog({
       setValidationError(null);
       setLocalError(null);
       setRegistrationPending(false);
+      setSubmissionAttempted(false);
     }
   };
 
@@ -85,6 +87,7 @@ export function StartCaseDialog({
 
     setValidationError(null);
     setLocalError(null);
+    setSubmissionAttempted(true);
     setSubmitting(true);
     try {
       const outcome = await onStartCase({ caseType, requesterEmail });
@@ -100,7 +103,8 @@ export function StartCaseDialog({
     }
   };
 
-  const displayedError = localError ?? (startStatus === 'error' ? startMessage : null);
+  const displayedError = localError
+    ?? (submissionAttempted && startStatus === 'error' ? startMessage : null);
   const displayedPending = registrationPending && startMessage;
 
   return (

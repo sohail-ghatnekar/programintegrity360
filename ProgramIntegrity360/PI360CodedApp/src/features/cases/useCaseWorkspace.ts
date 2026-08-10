@@ -248,6 +248,14 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       if (currentRequest !== requestId.current) return refreshSuperseded();
       const liveCases = casesResult.data;
       const requestedCaseId = preferredCaseId?.trim() || null;
+      if (!requestedCaseId && liveCases.length === 0) {
+        selectedCaseId.current = null;
+        setCases([]);
+        setWorkspace(null);
+        setWarnings(casesResult.warnings);
+        setStatus('live');
+        return refreshSucceeded;
+      }
       const selected = requestedCaseId
         ? liveCases.find((candidate) => matchesBusinessCaseId(candidate, requestedCaseId))
         : liveCases[0];

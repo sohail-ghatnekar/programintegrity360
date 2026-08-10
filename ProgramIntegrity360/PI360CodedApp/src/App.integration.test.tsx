@@ -109,3 +109,15 @@ test('keeps completion confirmed and exposes retry when the real workspace refre
   expect(taskSdk.getById).toHaveBeenCalledTimes(1);
   expect(repository.listCases).toHaveBeenCalledTimes(3);
 });
+
+test('renders an authenticated empty live queue through the real workspace hook', async () => {
+  repository.listCases.mockResolvedValue([]);
+
+  render(<App />);
+
+  expect(await screen.findByText('Live UiPath')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Command center' })).toBeInTheDocument();
+  expect(screen.getByText('No cases available.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start new case' })).toBeEnabled();
+  expect(repository.loadWorkspace).not.toHaveBeenCalled();
+});

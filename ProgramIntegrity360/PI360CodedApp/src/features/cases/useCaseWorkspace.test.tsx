@@ -159,6 +159,46 @@ describe('useCaseWorkspace case start coordination', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps an authenticated empty live queue available and preserves repository warnings', async () => {
+    const repository = createRepository();
+    repository.listCasesWithWarnings.mockResolvedValue({
+      data: [],
+      warnings: ['Program Integrity Fabric returned no case records.'],
+    });
+    const hookOptions = options(repository);
+
+    const { result } = renderHook(() => useCaseWorkspace(hookOptions));
+
+    await waitFor(() => expect(result.current.status).toBe('live'));
+    expect(result.current.cases).toEqual([]);
+    expect(result.current.workspace).toBeNull();
+    expect(result.current.warnings).toEqual([
+      'Program Integrity Fabric returned no case records.',
+    ]);
+    expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
+  });
+
+  it('still errors when an explicitly requested live case is absent', async () => {
+    const repository = createRepository();
+    const { result } = await renderReady(repository, options(repository));
+    repository.listCasesWithWarnings.mockResolvedValue({
+      data: [],
+      warnings: ['Program Integrity Fabric returned a partial page.'],
+    });
+
+    await act(async () => {
+      await result.current.selectCase(CASE_ID);
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.workspace).toBeNull();
+    expect(result.current.warnings).toEqual([
+      'Program Integrity Fabric returned a partial page.',
+      `Unable to load live UiPath case data: Requested live case was not found: ${CASE_ID}.`,
+    ]);
+    expect(repository.loadWorkspaceWithWarnings).not.toHaveBeenCalled();
+  });
+
   it('rejects unauthenticated demo starts with the exact connect message', async () => {
     authState.current = { ...authState.current, isAuthenticated: false };
     const repository = createRepository();
