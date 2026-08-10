@@ -16,7 +16,13 @@
           "claimTotalBilled": { "type": "number", "description": "Claim aggregate used by deterministic threshold logic." },
           "hospitalRecordAvailable": { "type": "boolean", "description": "Whether the requested hospital record has returned." },
           "investigatorProceed": { "type": "boolean", "description": "Human investigator gate for the provider record request." },
-          "supervisorApproved": { "type": "boolean", "description": "Human supervisor gate for closure and communication." }
+          "supervisorApproved": { "type": "boolean", "description": "Human supervisor gate for closure and communication." },
+          "caseInput": { "type": "object", "additionalProperties": true, "description": "Case trigger details, including CaseType, case ID, requester email, and optional Maestro instance ID." },
+          "claimInput": { "type": "object", "additionalProperties": true, "description": "Claim trigger details used to initialize the case header." },
+          "memberInput": { "type": "object", "additionalProperties": true, "description": "Member trigger details used to initialize the case header." },
+          "providerInput": { "type": "object", "additionalProperties": true, "description": "Provider trigger details used to initialize the case header." },
+          "serviceEventInput": { "type": "object", "additionalProperties": true, "description": "Service-event trigger details used to initialize the case header." },
+          "documentInput": { "type": "object", "additionalProperties": true, "description": "Document trigger details used to initialize the case header." }
         },
         "required": []
       },
@@ -29,6 +35,8 @@
           "status": { "type": "string" },
           "gated": { "type": "boolean" },
           "recordsAffected": { "type": "number" },
+          "persistedCaseId": { "type": "string" },
+          "registrationMode": { "type": "string" },
           "message": { "type": "string" },
           "payload": { "type": "object" }
         },

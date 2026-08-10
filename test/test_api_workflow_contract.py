@@ -12,6 +12,9 @@ ENTRY_POINTS_PATH = (
 LIFECYCLE_WORKFLOW_PATH = (
     ROOT / "ProgramIntegrity360" / "PI360ApiWorkflows" / "Main.json"
 )
+LIFECYCLE_ENTRY_POINTS_PATH = (
+    ROOT / "ProgramIntegrity360" / "PI360ApiWorkflows" / "entry-points.json"
+)
 
 
 def load_json(path: Path):
@@ -84,3 +87,83 @@ def test_case_lifecycle_api_supports_every_simplified_case_stage_contract():
     assert "Observation" in raw
     assert "locationConflictMinutes: 360" in raw
     assert "responseTimer: 'P3D'" in raw
+
+
+def test_intake_registration_accepts_six_trigger_objects():
+    workflow = load_json(LIFECYCLE_WORKFLOW_PATH)
+    properties = workflow["input"]["schema"]["document"]["properties"]
+    entry = load_json(LIFECYCLE_ENTRY_POINTS_PATH)["entryPoints"][0]
+    entry_properties = entry["input"]["properties"]
+
+    for name in (
+        "caseInput",
+        "claimInput",
+        "memberInput",
+        "providerInput",
+        "serviceEventInput",
+        "documentInput",
+    ):
+        assert properties[name]["type"] == "object"
+        assert entry_properties[name]["type"] == "object"
+
+
+def test_intake_registration_is_a_real_idempotent_data_fabric_upsert():
+    workflow = load_json(LIFECYCLE_WORKFLOW_PATH)
+    activities = list(walk(workflow["do"]))
+    connector_activities = [
+        item for item in activities if item.get("call") == "UiPath.IntSvc"
+    ]
+    by_activity_type = {
+        item["metadata"]["uiPathActivityTypeId"]: item
+        for item in connector_activities
+    }
+    expected_activity_types = {
+        "703065b9-a310-33b8-9d4d-12df0a6f520b",
+        "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+        "718fdc36-73a8-3607-8604-ddef95bb9967",
+    }
+
+    assert set(by_activity_type) == expected_activity_types
+    for activity in connector_activities:
+        assert activity["with"]["connectionId"] == (
+            "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
+        )
+        assert activity["with"]["connectionResourceId"] == (
+            "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
+        )
+        assert activity["with"]["pathParameters"]["entityName"] == (
+            "PI360ProgramIntegrityCase"
+        )
+
+    query = by_activity_type["703065b9-a310-33b8-9d4d-12df0a6f520b"]
+    create = by_activity_type["dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf"]
+    update = by_activity_type["718fdc36-73a8-3607-8604-ddef95bb9967"]
+    assert "'case_id'" in query["with"]["queryParameters"]["queryExpression"]
+    assert update["with"]["queryParameters"]["recordId"] == (
+        "${$context.outputs.InspectExistingCase.recordId}"
+    )
+    for field in (
+        "case_id",
+        "case_type",
+        "title",
+        "program",
+        "status",
+        "stage",
+        "requester_email",
+        "maestro_instance_id",
+        "created_at",
+        "updated_at",
+    ):
+        assert field in create["with"]["bodyParameters"]
+        assert field in update["with"]["bodyParameters"]
+    for activity in (create, update):
+        assert activity["with"]["bodyParameters"]["priority"] == 0
+        assert activity["with"]["bodyParameters"]["stage"] == 0
+        assert activity["with"]["bodyParameters"]["status"] == 0
+
+    raw = json.dumps(workflow)
+    assert "requester_email" in raw
+    assert "maestro_instance_id" in raw
+    assert "registrationMode" in raw
+    assert "Demo contract only; no external write is performed." not in raw
+    assert "recordsAffected" in raw
