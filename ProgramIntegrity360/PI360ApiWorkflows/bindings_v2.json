@@ -1,4 +1,24 @@
 {
   "version": "2.0",
-  "resources": []
+  "resources": [
+    {
+      "resource": "Connection",
+      "key": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "id": "Connectiona0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "value": {
+        "ConnectionId": {
+          "defaultValue": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "isExpression": false,
+          "displayName": "Program Integrity Fabric"
+        }
+      },
+      "metadata": {
+        "ActivityName": "PI360 Program Integrity Case Upsert",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "Program Integrity Fabric",
+        "UseConnectionService": "true",
+        "Connector": "uipath-uipath-dataservice"
+      }
+    }
+  ]
 }
