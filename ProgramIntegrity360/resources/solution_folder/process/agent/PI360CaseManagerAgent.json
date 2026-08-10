@@ -16,22 +16,16 @@
     "runtimeDependencies": [
       {
         "bindingType": "app",
-        "bindingKey": "pi360-escalation-action-app",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "pi360-escalation-action-app",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
+        "bindingKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+        "bindingValues": {},
         "bindingMetadata": {
           "bindingsVersion": "2.2",
           "solutionsSupport": "true"
         },
-        "resourceKind": "App"
+        "resourceKind": "App",
+        "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+        "resourceName": "pi360-escalation-action-app",
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       }
     ],
     "folders": [

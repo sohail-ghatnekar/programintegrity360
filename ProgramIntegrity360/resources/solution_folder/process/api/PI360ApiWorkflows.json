@@ -13,7 +13,29 @@
         "name": "PI360ApiWorkflows"
       }
     ],
-    "runtimeDependencies": [],
+    "runtimeDependencies": [
+      {
+        "bindingType": "Connection",
+        "bindingKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+        "bindingValues": {
+          "connectionId": {
+            "defaultValue": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+            "isExpression": false
+          }
+        },
+        "bindingMetadata": {
+          "activityName": "PI360 Program Integrity Case Upsert",
+          "bindingsVersion": "2.2",
+          "connector": "uipath-uipath-dataservice",
+          "useConnectionService": "true"
+        },
+        "resourceKind": "Connection",
+        "resourceType": "uipath-uipath-dataservice",
+        "resourceKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+        "resourceName": "Program Integrity Fabric",
+        "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4"
+      }
+    ],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"

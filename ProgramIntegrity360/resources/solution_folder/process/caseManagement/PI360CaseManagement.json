@@ -16,38 +16,36 @@
     "runtimeDependencies": [
       {
         "bindingType": "process",
-        "bindingKey": "solution_folder.PI360CaseManagerAgent",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "PI360CaseManagerAgent",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
+        "bindingKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+        "bindingValues": {},
+        "bindingMetadata": {
+          "activityName": "UiPath Case Agent",
+          "bindingsVersion": "2.2",
+          "solutionsSupport": "true"
         },
-        "bindingMetadata": {},
-        "resourceKind": "Process"
+        "resourceKind": "Process",
+        "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+        "resourceName": "PI360CaseManagerAgent",
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       },
       {
         "bindingType": "app",
-        "bindingKey": "solution_folder.pi360-escalation-action-app",
+        "bindingKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
         "bindingValues": {
-          "name": {
-            "defaultValue": "pi360-escalation-action-app",
-            "isExpression": false
-          },
           "folderPath": {
             "defaultValue": "solution_folder",
             "isExpression": false
           }
         },
         "bindingMetadata": {
+          "activityName": "Human - confirm true investigation and record findings",
           "bindingsVersion": "2.2",
           "solutionsSupport": "true"
         },
-        "resourceKind": "App"
+        "resourceKind": "App",
+        "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+        "resourceName": "pi360-escalation-action-app",
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       }
     ],
     "folders": [

@@ -3,15 +3,9 @@
   "resources": [
     {
       "resource": "process",
-      "key": "solution_folder.PI360CaseManagerAgent",
-      "id": "processsolution_folder.PI360CaseManagerAgent",
-      "value": {
-        "name": {
-          "defaultValue": "PI360CaseManagerAgent",
-          "isExpression": false,
-          "displayName": "Process name"
-        }
-      },
+      "key": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "id": "process64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "value": {},
       "metadata": {
         "ActivityName": "UiPath Case Agent",
         "BindingsVersion": "2.2",
@@ -22,18 +16,13 @@
     },
     {
       "resource": "app",
-      "key": "solution_folder.pi360-escalation-action-app",
-      "id": "appsolution_folder.pi360-escalation-action-app",
+      "key": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+      "id": "app54f913fa-10c8-4eec-85ef-58f05e15b6d5",
       "value": {
         "folderPath": {
           "defaultValue": "solution_folder",
           "isExpression": false,
           "displayName": "Folder path"
-        },
-        "name": {
-          "defaultValue": "pi360-escalation-action-app",
-          "isExpression": false,
-          "displayName": "App name"
         }
       },
       "metadata": {

@@ -6,16 +6,26 @@ from pathlib import Path
 SOLUTION_ROOT = Path(__file__).parents[1] / "ProgramIntegrity360"
 RESOURCE_ROOT = SOLUTION_ROOT / "resources" / "solution_folder"
 USER_PROFILE_ROOT = SOLUTION_ROOT / "userProfile"
+CASE_MANAGER_RESOURCE_KEY = "64ee0873-ac2c-4393-a970-7f67f9c7a423"
+ESCALATION_APP_RESOURCE_KEY = "54f913fa-10c8-4eec-85ef-58f05e15b6d5"
 
 
-def _deployment_resources() -> list[dict]:
+def _all_solution_resources() -> list[dict]:
     resources = []
     for path in RESOURCE_ROOT.rglob("*.json"):
         payload = json.loads(path.read_text())
         resource = payload.get("resource", {})
-        if resource.get("kind") in {"app", "process"}:
+        if resource.get("key"):
             resources.append(resource)
     return resources
+
+
+def _deployment_resources() -> list[dict]:
+    return [
+        resource
+        for resource in _all_solution_resources()
+        if resource.get("kind") in {"app", "process"}
+    ]
 
 
 def test_solution_has_no_shadow_copies_of_owned_deployment_resources():
@@ -42,7 +52,7 @@ def test_solution_has_no_shadow_copies_of_owned_deployment_resources():
 
 def test_concrete_runtime_dependency_keys_resolve_locally():
     resources = _deployment_resources()
-    local_keys = {resource["key"] for resource in resources}
+    local_keys = {resource["key"] for resource in _all_solution_resources()}
     unresolved = []
 
     for resource in resources:
@@ -85,7 +95,7 @@ def test_caseworker_app_binding_is_solution_relative_and_unique():
         binding
         for binding in bindings["resources"]
         if binding["resource"] == "app"
-        and binding["key"] == "pi360-escalation-action-app"
+        and binding["key"] == ESCALATION_APP_RESOURCE_KEY
     ]
     action = json.loads(
         (
@@ -102,3 +112,29 @@ def test_caseworker_app_binding_is_solution_relative_and_unique():
     )
     assert folder_path in {None, "solution_folder"}
     assert action["channels"][0]["properties"]["folderName"] == "solution_folder"
+
+
+def test_owned_sibling_bindings_are_pinned_to_solution_resource_keys():
+    expected = {
+        SOLUTION_ROOT / "PI360CaseManagement" / "bindings_v2.json": {
+            ("process", CASE_MANAGER_RESOURCE_KEY),
+            ("app", ESCALATION_APP_RESOURCE_KEY),
+        },
+        SOLUTION_ROOT / "PI360CaseManagerAgent" / "bindings_v2.json": {
+            ("app", ESCALATION_APP_RESOURCE_KEY),
+        },
+    }
+
+    for path, expected_bindings in expected.items():
+        payload = json.loads(path.read_text())
+        actual = {
+            (binding["resource"], binding["key"])
+            for binding in payload["resources"]
+        }
+        assert actual == expected_bindings
+        for binding in payload["resources"]:
+            assert "name" not in binding.get("value", {}), (
+                "Owned sibling bindings must resolve directly by the solution "
+                "resource key. A name value makes resource refresh import the "
+                "live deployment as a suffixed shadow resource."
+            )
