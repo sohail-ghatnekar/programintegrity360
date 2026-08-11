@@ -197,7 +197,7 @@ Nested Flow package:
   - `fabc409c-d468-4964-92e0-2171e0ced3ba`, subtype `Agent`, default name
     `PI360QuickRulesCodedAgent`, empty folder path
 
-## Descriptor limitation
+## Accepted descriptor limitation
 
 After resource refresh and the final fresh pack, the packaged descriptor at
 `resources/solution_folder/process/flow/PI360CaseManagerFlow.json` still had no
@@ -206,11 +206,13 @@ After resource refresh and the final fresh pack, the packaged descriptor at
 two exact keys in their owned sibling resource descriptors and in the nested
 Flow `bindings_v2.json`, but not as Flow process `runtimeDependencies`.
 
-This is an evidence-backed limitation of the installed packer path, not a
-remaining `folderPath` binding failure: both nodes resolved, generated bindings
-are exact, and there were zero target warnings. The task prohibited fabricating
-or manually editing generated packaging metadata, so no unsupported descriptor
-workaround was applied.
+This is an evidence-backed and reviewed limitation of the installed packer
+path, not a remaining `folderPath` binding failure: both nodes resolved,
+generated nested bindings are exact, and there were zero target warnings. The
+outer descriptor omission is accepted for final delivery with UiPath CLI
+`1.198.0-preview.102`. The task prohibited fabricating or manually editing
+generated packaging metadata, so no unsupported descriptor workaround was
+applied.
 
 ## Safety and concerns
 
@@ -221,6 +223,7 @@ workaround was applied.
   routes changed.
 - No Studio Web upload, solution publish, deploy, activate, Git push, artifact
   run, or debug command was executed.
-- Remaining concern: if deployment tooling requires Flow dependencies duplicated
-  in the solution process descriptor rather than consuming the generated nested
-  bindings, CLI `1.198.0-preview.102` needs a supported fix or clarification.
+- Accepted limitation: the outer Flow solution-resource descriptor does not
+  duplicate the two resolved dependencies. Final delivery relies on the exact
+  generated nested Flow bindings and zero `folderPath` resolution warnings; no
+  fabricated descriptor metadata is permitted.
