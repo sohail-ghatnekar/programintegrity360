@@ -6,13 +6,33 @@
     "type": "flow",
     "apiVersion": "orchestrator.uipath.com/v1",
     "projectKey": "f0b1a338-4f9e-4d45-9556-0c8fc196f31d",
+    "isOverridable": true,
     "dependencies": [
       {
         "kind": "package",
         "name": "PI360EvidenceRoutingFlow"
       }
     ],
-    "runtimeDependencies": [],
+    "runtimeDependencies": [
+      {
+        "bindingType": "connection",
+        "bindingKey": "",
+        "bindingValues": {
+          "connectionId": {
+            "defaultValue": "ImplicitConnection",
+            "isExpression": false
+          }
+        },
+        "bindingMetadata": {
+          "activityName": "Get Medicaid claim details",
+          "bindingsVersion": "2.2",
+          "connector": "uipath-uipath-http",
+          "useConnectionService": "true"
+        },
+        "resourceKind": "Connection",
+        "resourceType": "uipath-uipath-http"
+      }
+    ],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
