@@ -223,6 +223,22 @@ def test_provider_bpmn_correlates_the_received_message_by_case_id():
     assert received.find("./bpmn:messageEventDefinition", NS) is not None
 
 
+def test_provider_bpmn_passes_received_record_metadata_to_intake():
+    _, process = _root_and_process()
+    intake = process.find("./bpmn:serviceTask[@id='Task_IntakeHospitalRecord']", NS)
+
+    assert intake is not None
+    job_arguments = intake.find(
+        "./bpmn:extensionElements/uipath:activity/"
+        "uipath:input[@name='JobArguments']",
+        NS,
+    )
+    assert job_arguments is not None
+    assert json.loads(job_arguments.text)["documentInput"] == (
+        "=vars.Var_ProviderRecordMessageResponse"
+    )
+
+
 def test_provider_bpmn_maps_each_distinct_outcome():
     _, process = _root_and_process()
 

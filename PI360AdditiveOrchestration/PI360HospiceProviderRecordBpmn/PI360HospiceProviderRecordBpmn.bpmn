@@ -98,7 +98,7 @@
             <uipath:input name="folderPath" value="=bindings.Bind_ApiFolder" />
             <uipath:input name="name" value="=bindings.Bind_ApiName" />
           </uipath:context>
-          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"IntakeHospitalRecord","caseType":"=vars.Var_CaseType","caseId":"=vars.Var_CaseId","providerId":"=vars.Var_ProviderId","hospitalRecordAvailable":true,"investigatorProceed":"=vars.Var_InvestigatorProceed"}]]></uipath:input>
+          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"IntakeHospitalRecord","caseType":"=vars.Var_CaseType","caseId":"=vars.Var_CaseId","providerId":"=vars.Var_ProviderId","hospitalRecordAvailable":true,"investigatorProceed":"=vars.Var_InvestigatorProceed","documentInput":"=vars.Var_ProviderRecordMessageResponse"}]]></uipath:input>
           <uipath:output name="Process response" type="Orchestrator.RunJob" var="Var_IntakeResponse" />
         </uipath:activity>
       </bpmn:extensionElements>
