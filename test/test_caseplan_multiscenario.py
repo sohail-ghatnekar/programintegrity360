@@ -14,6 +14,11 @@ CASEPLAN_PATH = (
     / "PI360CaseManagement"
     / "caseplan.json"
 )
+TASK8_BASELINE_PATH = (
+    ROOT / "test" / "fixtures" / "pi360_task8_cloud_baseline.json"
+)
+TASK8_CLOUD_BASELINE = json.loads(TASK8_BASELINE_PATH.read_text())
+CLOUD_ONLY_TASKS = TASK8_CLOUD_BASELINE["tasks"]
 FLOW_RESOURCE_KEY = "solution_folder.PI360CaseManagerFlow"
 BPMN_RESOURCE_KEY = "solution_folder.PI360AdHocReviewBpmn"
 CLOUD_STAGE_IDS = {
@@ -43,14 +48,6 @@ CLOUD_TASK_IDS = {
     "thmyc7i2S",
 }
 DORMANT_CLOUD_TASK_IDS = {"tUeO6EGo3", "tH5yKJJef", "thmyc7i2S"}
-CLOUD_ONLY_TASK_CONFIG = {
-    "tUeO6EGo3": ("rpa", "IXP Extraction TimeSheet @Matt"),
-    "tQAC3rec": ("api-workflow", "Rules - validate threshold and evidence indicators"),
-    "tPRV6wait": ("wait-for-timer", "Timer - await hospital record (72 hours)"),
-    "tH5yKJJef": ("rpa", "IXP Extraction Medical Record @Matt"),
-    "tPKT7prep": ("api-workflow", "API - prepare investigator findings and agentic evidence"),
-    "thmyc7i2S": ("rpa", "RPA - send outlook to someone"),
-}
 
 
 def load_caseplan():
@@ -109,6 +106,32 @@ def is_deterministically_dormant(task):
     )
 
 
+def canonicalize_task_for_cloud_comparison(value):
+    if isinstance(value, dict):
+        canonical = {}
+        for key, item in value.items():
+            key = "JsonSchema" if key == "_jsonSchema" else key[0].upper() + key[1:]
+            canonical[key] = canonicalize_task_for_cloud_comparison(item)
+        return canonical
+    if isinstance(value, list):
+        return [canonicalize_task_for_cloud_comparison(item) for item in value]
+    return value
+
+
+def expected_cloud_task_with_intentional_dormancy(task_id):
+    task = copy.deepcopy(CLOUD_ONLY_TASKS[task_id])
+    if task_id not in DORMANT_CLOUD_TASK_IDS:
+        return task
+
+    task["IsRequired"] = False
+    rules = task["EntryConditions"][0]["Rules"][0]
+    assert len(rules) == 1
+    assert rules[0]["Rule"] == "runs-sequentially"
+    rules[0]["Rule"] = "adhoc"
+    rules[0]["ConditionExpression"] = "=js:false"
+    return task
+
+
 def test_caseplan_stage_and_task_ids_are_a_superset_of_cloud_baseline():
     caseplan = load_caseplan()
     actual_stage_ids = {stage["id"] for stage in stage_nodes(caseplan)}
@@ -124,35 +147,23 @@ def test_preserved_ixp_rpa_and_email_tasks_are_present_but_unreachable():
         assert is_deterministically_dormant(task_by_id(caseplan, task_id)), task_id
 
 
-def test_cloud_only_tasks_keep_their_ids_types_names_and_runtime_configuration():
+def test_cloud_only_tasks_match_full_authoritative_objects_except_dormancy():
     caseplan = load_caseplan()
 
-    for task_id, (task_type, display_name) in CLOUD_ONLY_TASK_CONFIG.items():
-        task = task_by_id(caseplan, task_id)
-        assert (task["type"], task["displayName"]) == (task_type, display_name)
-
-    timesheet = task_by_id(caseplan, "tUeO6EGo3")
-    assert timesheet["data"]["name"] == "=bindings.b7DAhSveV"
-    assert timesheet["data"]["folderPath"] == "=bindings.bpqtM3QdN"
-    assert timesheet["data"]["outputs"][0]["id"] == "error"
-
-    validation = task_by_id(caseplan, "tQAC3rec")
-    assert validation["data"]["inputs"][0]["value"] == (
-        "ValidateEvidenceByCaseType"
-    )
-    assert [item["name"] for item in validation["data"]["inputs"]] == [
-        "workflowName",
-        "caseType",
-        "caseId",
-        "claimTotalBilled",
-        "hospitalRecordAvailable",
-    ]
-
-    timer = task_by_id(caseplan, "tPRV6wait")
-    assert timer["data"] == {"timerType": "timeDuration", "timeDuration": "P3D"}
-
-    packet = task_by_id(caseplan, "tPKT7prep")
-    assert packet["data"]["inputs"][0]["value"] == "PrepareSupervisorPacket"
+    assert set(CLOUD_ONLY_TASKS) == {
+        "tUeO6EGo3",
+        "tQAC3rec",
+        "tPRV6wait",
+        "tH5yKJJef",
+        "tPKT7prep",
+        "thmyc7i2S",
+    }
+    for task_id in CLOUD_ONLY_TASKS:
+        actual = canonicalize_task_for_cloud_comparison(
+            task_by_id(caseplan, task_id)
+        )
+        expected = expected_cloud_task_with_intentional_dormancy(task_id)
+        assert actual == expected, task_id
 
 
 def assert_first_intake_contract(caseplan):

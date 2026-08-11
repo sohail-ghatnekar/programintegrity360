@@ -1,0 +1,176 @@
+{
+  "resources": [
+    {"key":"03d46443-0ae3-460a-8ad5-dce6e8fdea62","kind":"app","type":"codedAction","name":"PI360EscalationActionApp"},
+    {"key":"07bc936d-d767-4ca8-845d-f6be376a0e2b","kind":"process","type":"agent","name":"PI360TriageAgent"},
+    {"key":"0f60dc9b-ee5c-4380-b92d-a06689f8b19f","kind":"package","type":null,"name":"PI360EvidenceCorrelationAgent"},
+    {"key":"1358edb0-6f6c-4267-a180-2f862e29713d","kind":"package","type":null,"name":"PI360EscalationActionApp"},
+    {"key":"165318d1-7e06-4a0d-8827-18158c01bddb","kind":"package","type":null,"name":"PI360SummaryAgent"},
+    {"key":"1e19a003-38dc-4bd3-a70e-14f262d4c19c","kind":"process","type":"caseManagement","name":"PI360CaseManagement"},
+    {"key":"4b3445e2-e309-4462-98b1-ee5a8e19c24b","kind":"process","type":"process","name":"PI360DecisionPacketAutomation"},
+    {"key":"4dafc4c7-2090-4d24-bbc2-7a51f0b539ca","kind":"package","type":null,"name":"PI360AdHocReviewBpmn"},
+    {"key":"54f913fa-10c8-4eec-85ef-58f05e15b6d5","kind":"app","type":"codedAction","name":"pi360-escalation-action-app"},
+    {"key":"58e4aa89-7358-47ee-a0d4-6711e9792208","kind":"process","type":"process","name":"PI360EvidenceSnapshotAutomation"},
+    {"key":"5ebc2453-4dca-4159-93f5-deaf778da54f","kind":"package","type":null,"name":"PI360RecordConversationAgent"},
+    {"key":"5fb67ceb-1d49-475b-96a3-1037eb152b2d","kind":"process","type":"processOrchestration","name":"PI360AdHocReviewBpmn"},
+    {"key":"63198c10-58f0-4380-b41a-b51f567ea457","kind":"process","type":"agent","name":"PI360SummaryAgent"},
+    {"key":"64ee0873-ac2c-4393-a970-7f67f9c7a423","kind":"process","type":"agent","name":"PI360CaseManagerAgent"},
+    {"key":"6b0b4cb2-318e-48a2-9126-ce021507131d","kind":"package","type":null,"name":"PI360CaseManagement"},
+    {"key":"6d04d330-e36f-4da8-a0ae-b74fef97f1b4","kind":"process","type":"api","name":"PI360ClaimDetailsApi"},
+    {"key":"7767e490-7d90-4a12-80af-b567e63d4235","kind":"package","type":null,"name":"PI360CaseManagerAgent"},
+    {"key":"78a50d04-e2a1-4a50-a51c-7cbb3f16ef4d","kind":"process","type":"agent","name":"PI360RecordConversationAgent"},
+    {"key":"86dcc831-9532-40a1-9a96-309010314afc","kind":"package","type":null,"name":"PI360EvidenceSnapshotAutomation"},
+    {"key":"8dd7c4ad-7050-4e54-b915-854f29fa5fd6","kind":"process","type":"flow","name":"PI360CaseManagerFlow"},
+    {"key":"9482957c-64bb-8001-8030-26e03416127d","kind":"ixpDeployment","type":null,"name":"PI360 Timesheet Extraction"},
+    {"key":"9c77c6aa-3a07-4053-a559-28c98f2520a3","kind":"process","type":"api","name":"PI360ApiWorkflows"},
+    {"key":"a0bd364e-c6cc-4749-9f92-f6a46e59fe4d","kind":"connection","type":"uipath-uipath-dataservice","name":"Program Integrity Fabric"},
+    {"key":"a9e226dd-1ea4-4352-b71e-9c482d328736","kind":"package","type":null,"name":"PI360TriageAgent"},
+    {"key":"b8b2d499-1a77-8063-8c63-d58052db357d","kind":"ixpDeployment","type":null,"name":"PI360 Service Evidence Extractor"},
+    {"key":"c5a54f6f-1c99-4153-8078-7c70c0e1d861","kind":"package","type":null,"name":"PI360InvestigationPlanningAgent"},
+    {"key":"cc65fd9e-f779-447e-a45d-24fda4ee318e","kind":"app","type":"codedAction","name":"PI360RecoveryAuthorizationActionApp"},
+    {"key":"d4fc01a6-9cba-4245-bfca-2bfc9e0726a9","kind":"package","type":null,"name":"PI360ClaimDetailsApi"},
+    {"key":"d7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f","kind":"process","type":"agent","name":"PI360EvidenceCorrelationAgent"},
+    {"key":"d8a8ac1a-bcb8-4342-926c-c15664b5d225","kind":"package","type":null,"name":"PI360 IXP Timesheet"},
+    {"key":"da8d33bc-864b-4ac0-ad48-220a77834bbd","kind":"process","type":"process","name":"PI360 IXP Timesheet"},
+    {"key":"e52e6a4d-5992-43f5-83bb-6c03a54daea5","kind":"package","type":null,"name":"PI360DecisionPacketAutomation"},
+    {"key":"eb0ebd1d-1112-4cac-8768-03575403b597","kind":"package","type":null,"name":"PI360RecoveryAuthorizationActionApp"},
+    {"key":"ee5b39e1-60de-4ddd-92c3-3bc05d0d74c4","kind":"bucket","type":"orchestratorBucket","name":"Timesheets"},
+    {"key":"eeb0ef1d-53cd-4174-8fd6-a13b54f8ae8a","kind":"package","type":null,"name":"PI360CaseManagerFlow"},
+    {"key":"f03d4cd5-2d9b-4202-b8df-9042004b7325","kind":"app","type":"codedAction","name":"pi360-recovery-approval"},
+    {"key":"f3c10615-185f-4eea-bcb8-c6c549eaab80","kind":"package","type":null,"name":"PI360ApiWorkflows"},
+    {"key":"f8e4b893-098d-4435-9a8d-52ec75e7a9fa","kind":"process","type":"agent","name":"PI360InvestigationPlanningAgent"},
+    {"key":"f94a79e7-44cd-42a6-ab3f-8164a63408cd","kind":"package","type":null,"name":"PI360QuickRulesCodedAgent"},
+    {"key":"fabc409c-d468-4964-92e0-2171e0ced3ba","kind":"process","type":"agent","name":"PI360QuickRulesCodedAgent"},
+    {"key":"pi360-escalation-action-app:0.2.0","kind":"package","type":null,"name":"pi360-escalation-action-app"},
+    {"key":"pi360-recovery-approval:0.2.0","kind":"package","type":null,"name":"pi360-recovery-approval"}
+  ],
+  "tasks": {
+    "tUeO6EGo3": {
+      "Id": "tUeO6EGo3",
+      "IsRequired": true,
+      "ShouldRunOnlyOnce": false,
+      "Data": {
+        "Name": "=bindings.b7DAhSveV",
+        "FolderPath": "=bindings.bpqtM3QdN",
+        "Inputs": [],
+        "Outputs": [
+          {
+            "Name": "Error",
+            "DisplayName": "Error",
+            "Value": "error",
+            "Type": "jsonSchema",
+            "Source": "=Error",
+            "JsonSchema": {
+              "Type": "object",
+              "Properties": {
+                "Code": {"Type": "string"},
+                "Message": {"Type": "string"},
+                "Detail": {"Type": "string"},
+                "Category": {"Type": "string"},
+                "Status": {"Type": "number"},
+                "Element": {"Type": "string"}
+              }
+            },
+            "Id": "error",
+            "Var": "error",
+            "ElementId": "Stage_Evcol2-tUeO6EGo3",
+            "Body": {
+              "Type": "object",
+              "Properties": {
+                "Code": {"Type": "string"},
+                "Message": {"Type": "string"},
+                "Detail": {"Type": "string"},
+                "Category": {"Type": "string"},
+                "Status": {"Type": "number"},
+                "Element": {"Type": "string"}
+              }
+            }
+          }
+        ]
+      },
+      "Type": "rpa",
+      "ElementId": "Stage_Evcol2-tUeO6EGo3",
+      "DisplayName": "IXP Extraction TimeSheet @Matt",
+      "EntryConditions": [
+        {"Id":"cdQ2cvPNv","DisplayName":"Entry rule 1","Rules":[[{"Id":"rBwCUHKkn","Rule":"runs-sequentially"}]]}
+      ]
+    },
+    "tQAC3rec": {
+      "Id": "tQAC3rec",
+      "ElementId": "Stage_Evcol2-tQAC3rec",
+      "DisplayName": "Rules - validate threshold and evidence indicators",
+      "Type": "api-workflow",
+      "IsRequired": true,
+      "ShouldRunOnlyOnce": true,
+      "EntryConditions": [
+        {"Id":"cjY9kzqud","DisplayName":"Entry rule 1","Rules":[[{"Id":"rjEXRp2VQ","Rule":"runs-sequentially"}]]}
+      ],
+      "Data": {
+        "Name": "PI360ApiWorkflows",
+        "FolderPath": "solution_folder",
+        "Inputs": [
+          {"Name":"workflowName","Type":"string","Id":"vQAC3wf","Var":"vQAC3wf","ElementId":"Stage_Evcol2-tQAC3rec","Value":"ValidateEvidenceByCaseType"},
+          {"Name":"caseType","Type":"string","Id":"vQAC3type","Var":"vQAC3type","ElementId":"Stage_Evcol2-tQAC3rec","Value":"=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"},
+          {"Name":"caseId","Type":"string","Id":"vQAC3case","Var":"vQAC3case","ElementId":"Stage_Evcol2-tQAC3rec","Value":"=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"},
+          {"Name":"claimTotalBilled","Type":"double","Id":"vQAC3bill","Var":"vQAC3bill","ElementId":"Stage_Evcol2-tQAC3rec","Value":"=js:Number(vars.claimInput?.totalBilled ?? vars.claimInput?.total_billed ?? 0)"},
+          {"Name":"hospitalRecordAvailable","Type":"boolean","Id":"vQAC3hosp","Var":"vQAC3hosp","ElementId":"Stage_Evcol2-tQAC3rec","Value":"=js:Boolean(vars.documentInput?.hospitalRecordAvailable ?? vars.documentInput?.hospital_record_available ?? false)"}
+        ]
+      }
+    },
+    "tPRV6wait": {
+      "Id": "tPRV6wait",
+      "ElementId": "Stage_Prreq6-tPRV6wait",
+      "DisplayName": "Timer - await hospital record (72 hours)",
+      "Type": "wait-for-timer",
+      "IsRequired": true,
+      "ShouldRunOnlyOnce": true,
+      "EntryConditions": [
+        {"Id":"c79vk7yYr","DisplayName":"Entry rule 1","Rules":[[{"Id":"riNyUZUrB","Rule":"runs-sequentially"}]]}
+      ],
+      "Data": {"TimerType":"timeDuration","TimeDuration":"P3D"}
+    },
+    "tH5yKJJef": {
+      "Id": "tH5yKJJef",
+      "IsRequired": true,
+      "ShouldRunOnlyOnce": false,
+      "Data": {},
+      "Type": "rpa",
+      "ElementId": "Stage_Prreq6-tH5yKJJef",
+      "DisplayName": "IXP Extraction Medical Record @Matt",
+      "EntryConditions": [
+        {"Id":"caFDL8DPD","DisplayName":"Entry rule 1","Rules":[[{"Id":"rkH2NZpvq","Rule":"runs-sequentially"}]]}
+      ]
+    },
+    "tPKT7prep": {
+      "Id": "tPKT7prep",
+      "ElementId": "Stage_Supv7a-tPKT7prep",
+      "DisplayName": "API - prepare investigator findings and agentic evidence",
+      "Type": "api-workflow",
+      "IsRequired": true,
+      "ShouldRunOnlyOnce": true,
+      "EntryConditions": [
+        {"Id":"cQHvJxb5Q","DisplayName":"Entry rule 1","Rules":[[{"Id":"rAPETZnAR","Rule":"runs-sequentially"}]]}
+      ],
+      "Data": {
+        "Name": "PI360ApiWorkflows",
+        "FolderPath": "solution_folder",
+        "Inputs": [
+          {"Name":"workflowName","Type":"string","Id":"vPKT7wf","Var":"vPKT7wf","ElementId":"Stage_Supv7a-tPKT7prep","Value":"PrepareSupervisorPacket"},
+          {"Name":"caseType","Type":"string","Id":"vPKT7type","Var":"vPKT7type","ElementId":"Stage_Supv7a-tPKT7prep","Value":"=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"},
+          {"Name":"caseId","Type":"string","Id":"vPKT7case","Var":"vPKT7case","ElementId":"Stage_Supv7a-tPKT7prep","Value":"=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"}
+        ]
+      }
+    },
+    "thmyc7i2S": {
+      "Id": "thmyc7i2S",
+      "IsRequired": true,
+      "ShouldRunOnlyOnce": false,
+      "Data": {},
+      "Type": "rpa",
+      "ElementId": "Stage_Clos9a-thmyc7i2S",
+      "DisplayName": "RPA - send outlook to someone",
+      "EntryConditions": [
+        {"Id":"cC8LinGvN","DisplayName":"Entry rule 1","Rules":[[{"Id":"rdOwyhJ50","Rule":"runs-sequentially"}]]}
+      ]
+    }
+  }
+}

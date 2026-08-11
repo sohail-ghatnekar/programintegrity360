@@ -1,6 +1,7 @@
 import json
 import re
 import xml.etree.ElementTree as ET
+from collections import Counter
 from pathlib import Path
 
 
@@ -15,6 +16,19 @@ AD_HOC_REVIEW_BPMN_RESOURCE_KEY = "5fb67ceb-1d49-475b-96a3-1037eb152b2d"
 API_WORKFLOWS_RESOURCE_KEY = "9c77c6aa-3a07-4053-a559-28c98f2520a3"
 IXP_TIMESHEET_RESOURCE_KEY = "da8d33bc-864b-4ac0-ad48-220a77834bbd"
 BPMN_PATH = SOLUTION_ROOT / "PI360AdHocReviewBpmn" / "PI360AdHocReviewBpmn.bpmn"
+TASK8_BASELINE_PATH = (
+    Path(__file__).parent / "fixtures" / "pi360_task8_cloud_baseline.json"
+)
+TASK8_CLOUD_BASELINE = json.loads(TASK8_BASELINE_PATH.read_text())
+CLOUD_RESOURCE_IDENTITIES = {
+    (
+        resource["key"],
+        resource["kind"],
+        resource.get("type"),
+        resource["name"],
+    )
+    for resource in TASK8_CLOUD_BASELINE["resources"]
+}
 CLOUD_PROJECTS = {
     "PI360SummaryAgent": "734cac0b-a987-4ec4-8cd4-dc5d3b1e6d4c",
     "PI360CaseManagerAgent": "72209049-a669-4dee-af0f-f67a87df1253",
@@ -34,52 +48,6 @@ CLOUD_PROJECTS = {
     "PI360 IXP Timesheet": "616518cc-4755-4790-a5ad-3f2c7b4191a5",
     "PI360RecoveryAuthorizationActionApp": "ec7a30ac-2270-421a-b5f7-0d9676d3bbe4",
 }
-CLOUD_RESOURCE_KEYS = {
-    "03d46443-0ae3-460a-8ad5-dce6e8fdea62",
-    "cc65fd9e-f779-447e-a45d-24fda4ee318e",
-    "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
-    "f03d4cd5-2d9b-4202-b8df-9042004b7325",
-    "ee5b39e1-60de-4ddd-92c3-3bc05d0d74c4",
-    "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
-    "b8b2d499-1a77-8063-8c63-d58052db357d",
-    "9482957c-64bb-8001-8030-26e03416127d",
-    "4dafc4c7-2090-4d24-bbc2-7a51f0b539ca",
-    "f3c10615-185f-4eea-bcb8-c6c549eaab80",
-    "6b0b4cb2-318e-48a2-9126-ce021507131d",
-    "7767e490-7d90-4a12-80af-b567e63d4235",
-    "eeb0ef1d-53cd-4174-8fd6-a13b54f8ae8a",
-    "d4fc01a6-9cba-4245-bfca-2bfc9e0726a9",
-    "e52e6a4d-5992-43f5-83bb-6c03a54daea5",
-    "1358edb0-6f6c-4267-a180-2f862e29713d",
-    "0f60dc9b-ee5c-4380-b92d-a06689f8b19f",
-    "86dcc831-9532-40a1-9a96-309010314afc",
-    "c5a54f6f-1c99-4153-8078-7c70c0e1d861",
-    "f94a79e7-44cd-42a6-ab3f-8164a63408cd",
-    "5ebc2453-4dca-4159-93f5-deaf778da54f",
-    "eb0ebd1d-1112-4cac-8768-03575403b597",
-    "165318d1-7e06-4a0d-8827-18158c01bddb",
-    "a9e226dd-1ea4-4352-b71e-9c482d328736",
-    "d8a8ac1a-bcb8-4342-926c-c15664b5d225",
-    "pi360-escalation-action-app:0.2.0",
-    "pi360-recovery-approval:0.2.0",
-    "64ee0873-ac2c-4393-a970-7f67f9c7a423",
-    "d7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f",
-    "f8e4b893-098d-4435-9a8d-52ec75e7a9fa",
-    "fabc409c-d468-4964-92e0-2171e0ced3ba",
-    "78a50d04-e2a1-4a50-a51c-7cbb3f16ef4d",
-    "63198c10-58f0-4380-b41a-b51f567ea457",
-    "07bc936d-d767-4ca8-845d-f6be376a0e2b",
-    "9c77c6aa-3a07-4053-a559-28c98f2520a3",
-    "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
-    "1e19a003-38dc-4bd3-a70e-14f262d4c19c",
-    "8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
-    "4b3445e2-e309-4462-98b1-ee5a8e19c24b",
-    "58e4aa89-7358-47ee-a0d4-6711e9792208",
-    "da8d33bc-864b-4ac0-ad48-220a77834bbd",
-    "5fb67ceb-1d49-475b-96a3-1037eb152b2d",
-}
-
-
 def _all_solution_resources() -> list[dict]:
     resources = []
     for path in RESOURCE_ROOT.rglob("*.json"):
@@ -96,6 +64,15 @@ def _deployment_resources() -> list[dict]:
         for resource in _all_solution_resources()
         if resource.get("kind") in {"app", "process"}
     ]
+
+
+def _resource_identity(resource: dict) -> tuple[str, str, str | None, str]:
+    return (
+        resource["key"],
+        resource["kind"],
+        resource.get("type"),
+        resource["name"],
+    )
 
 
 def test_local_solution_preserves_every_cloud_project_name_and_id():
@@ -116,13 +93,29 @@ def test_local_solution_preserves_every_cloud_project_name_and_id():
     )
 
 
-def test_local_solution_resource_keys_are_a_superset_of_cloud_baseline():
-    actual = {resource["key"] for resource in _all_solution_resources()}
-    missing = CLOUD_RESOURCE_KEYS - actual
+def test_local_solution_preserves_every_cloud_resource_identity_exactly_once():
+    resources = _all_solution_resources()
+    identity_counts = Counter(_resource_identity(resource) for resource in resources)
+    key_counts = Counter(resource["key"] for resource in resources)
+    missing_or_changed = CLOUD_RESOURCE_IDENTITIES - set(identity_counts)
+    duplicate_identities = {
+        identity: count for identity, count in identity_counts.items() if count != 1
+    }
+    duplicate_keys = {key: count for key, count in key_counts.items() if count != 1}
 
-    assert missing == set(), (
-        "Local solution must preserve every cloud resource key: "
-        f"{sorted(missing)}"
+    assert len(TASK8_CLOUD_BASELINE["resources"]) == 42
+    assert len(CLOUD_RESOURCE_IDENTITIES) == 42
+    assert missing_or_changed == set(), (
+        "Local solution must preserve every cloud (key, kind, type, name) "
+        f"identity: {sorted(missing_or_changed)}"
+    )
+    assert duplicate_identities == {}, (
+        "Every complete solution resource identity must be unique: "
+        f"{duplicate_identities}"
+    )
+    assert duplicate_keys == {}, (
+        "Every solution resource key must identify exactly one resource: "
+        f"{duplicate_keys}"
     )
 
 
@@ -139,25 +132,16 @@ def test_case_project_keeps_packager_inputs_at_root_with_content_mappings():
     assert package_files["caseplan.json.bpmn"] == "content/caseplan.json.bpmn"
 
 
-def test_solution_has_no_shadow_copies_of_owned_deployment_resources():
-    resources = _deployment_resources()
-    identities = {
-        (resource["kind"], resource.get("type"), resource["name"])
-        for resource in resources
-    }
-
-    shadow_copies = []
-    for resource in resources:
-        match = re.fullmatch(r"(.+)_\d+", resource["name"])
-        if not match:
-            continue
-        base_identity = (resource["kind"], resource.get("type"), match.group(1))
-        if base_identity in identities:
-            shadow_copies.append(resource["name"])
+def test_solution_has_no_numeric_suffix_resource_names_of_any_kind():
+    shadow_copies = sorted(
+        resource["name"]
+        for resource in _all_solution_resources()
+        if re.fullmatch(r".+_\d+", resource["name"])
+    )
 
     assert shadow_copies == [], (
-        "Solution upgrades cannot bundle suffixed reference copies of resources "
-        f"already owned by the deployment: {sorted(shadow_copies)}"
+        "Solution upgrades cannot bundle _N resource copies of any kind: "
+        f"{shadow_copies}"
     )
 
 

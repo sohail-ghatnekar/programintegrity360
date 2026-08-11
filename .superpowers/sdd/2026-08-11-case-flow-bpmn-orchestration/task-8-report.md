@@ -258,3 +258,77 @@ Corrective mutations were limited to the authorized `cp`/`rsync` restore, recove
 Final `git diff --check` is clean. The authoritative IXP `Main.xaml` is byte-identical to the download, so no cosmetic rewrite was applied. The only remaining warnings are the pre-existing Coded App lint warnings, one build chunk-size warning, and offline Flow dynamic-manifest warnings; none invalidate the focused tests, full test suite, validators, or packed artifact.
 
 No force, upload, publish, deploy, push, runtime, or debug command was used.
+
+## Review fix round 1: explicit preservation fallback and exhaustive baseline assertions
+
+This fix resolves the review finding against Task 8 base `2d8b1c2`. The earlier brief's CLI-only wording conflicted with the explicit requirement to retain exact cloud solution-definition IDs when the installed CLI cannot preserve them. Step 3 now defines one supported brownfield sequence:
+
+1. Attempt `uip solution project import`, `uip solution resources add --source remote --cloud-key ...`, and resource refresh first.
+2. Verify the resulting project IDs and complete resource identities after every CLI mutation.
+3. If the installed CLI demonstrably rekeys an official downloaded artifact or cannot address its exact solution-definition ID, restore only that official `uip solution download` artifact byte-for-byte.
+4. Never field-author `.uipx`, resource JSON, or downloaded project files; record the CLI failure/rekey evidence and prove restored equality with `cmp`, `diff`, and checksums.
+
+The prior CLI evidence remains controlling: project import minted an incorrect IXP project ID, remote add could not address several exact solution-definition keys, and Action App import recreated a remote object under a different solution key. The authoritative-download fallback therefore remains necessary. The correct cloud baseline was not reverted.
+
+Current byte-preservation proof is clean:
+
+```text
+ProgramIntegrity360.uipx: cmp against official download = 0
+PI360 IXP Timesheet: diff -qr against official download = no output
+resources/solution_folder: diff -qr reports only the intentional local additive resource
+  process/process/PI360EscalationActionApp.json (key e29e...)
+```
+
+Two ephemeral mutation probes changed local resource names solely to demonstrate RED behavior. They were not retained. Because patch restoration added trailing newlines, both affected files were immediately restored from the official download and verified byte-for-byte:
+
+```text
+PI360RecoveryAuthorizationActionApp.json: cmp = 0
+SHA-256 official/local: f86298e8452b73d1842677cf7fd078023ced9a1eaf875c557c686de04780d577
+Timesheets.json: cmp = 0
+SHA-256 official/local: f5d4e05413be42294138323e967321ba2c61f179c3ccee66ee09b3f78d7fbe78
+```
+
+No production solution artifact differs from `2d8b1c2` after this fix.
+
+### Exhaustive committed cloud fixture
+
+`test/fixtures/pi360_task8_cloud_baseline.json` is a compact, reviewable snapshot captured from the official download and supported `uip maestro case tasks get` output. It contains:
+
+- all 42 cloud resource identities as `(key, kind, type, name)`;
+- all six complete cloud-only Case task objects, including nested inputs, outputs, JSON schemas, timer data, and the empty medical-record and email `Data` payloads.
+
+The solution preservation test now requires exactly 42 unique fixture identities, requires every complete identity in the workspace exactly once, and separately rejects duplicate resource keys. Numeric `_N` suffix detection now scans every resource kind, not only app/process deployments.
+
+The Case preservation test canonicalizes the workspace's lower-camel disk representation to the CLI's PascalCase task representation and compares every field of all six task objects. Its expected-value normalization changes only these intentional dormancy leaves for `tUeO6EGo3`, `tH5yKJJef`, and `thmyc7i2S`:
+
+- `IsRequired`: `true` to `false`;
+- the existing single entry rule's `Rule`: `runs-sequentially` to `adhoc`;
+- the same rule gains `ConditionExpression: "=js:false"`.
+
+No other field is ignored or normalized away. The medical-record and email tasks' `Data: {}` values therefore participate in the full comparison.
+
+### RED proof and final verification
+
+Controlled mutation probes demonstrated each strengthened assertion fails for the intended reason:
+
+- changing the preserved recovery Action App package name reported the missing full identity `(eb0e..., package, null, PI360RecoveryAuthorizationActionApp)`;
+- changing the bucket name to `Timesheets_1` reported the suffix across a non-app/process resource kind;
+- changing the fixture's medical-record `Data` payload reported the complete-object mismatch for `tH5yKJJef`.
+
+All probes were restored before final verification.
+
+```text
+Focused Task 8 suite: 19 passed in 0.08s
+Full Python suite: 78 passed in 1.40s
+Case validator: Result Success, Status Valid
+git diff --check: clean
+```
+
+No JavaScript file changed, so `npm test` is not required by the workspace agreement. Because this round changes only tests, the committed fixture, and Task 8 documentation, no repack was required. Read-only inspection confirmed the prior 1.0.1 package remains present with 99 entries and unchanged SHA-256:
+
+```text
+/private/tmp/pi360-pack-final-1.0.1.EB3kZI/ProgramIntegrity360_1.0.1.zip
+feabce9fd1ecf4e11ee00b278542d70f36ec0c48596d39d39b64c9e69dd5ef6d
+```
+
+No force, upload, publish, deploy, push, runtime, debug, or cloud mutation command was used in this review fix.
