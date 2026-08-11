@@ -134,7 +134,7 @@
                 "connector": "uipath-uipath-http",
                 "connectionId": "ImplicitConnection",
                 "connectionResourceId": "ImplicitConnection",
-                "method": "POST",
+                "method": "GET",
                 "endpoint": "/http-request",
                 "bodyParameters": {
                   "authentication": "manual",
@@ -152,7 +152,7 @@
                 "displayName": "Fetch Medicaid Claim Details",
                 "uiPathActivityTypeId": "5c4cc855-b42a-37e6-b910-de8588998fce",
                 "assemblyQualifiedName": "Connector",
-                "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-http\",\"activityType\":\"Curated\",\"objectName\":\"http-request\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"http-request\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/http-request\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_http-request\"}}"
+                "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-http\",\"activityType\":\"Curated\",\"objectName\":\"http-request\",\"httpMethod\":\"GET\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"http-request\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"GET\",\"path\":\"/http-request\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_http-request\"}}"
               }
             }
           },
