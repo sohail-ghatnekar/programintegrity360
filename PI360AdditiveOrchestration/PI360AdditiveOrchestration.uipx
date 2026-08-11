@@ -1,0 +1,17 @@
+{
+  "DocVersion": "1.0.0",
+  "StudioMinVersion": "2025.10.0",
+  "SolutionId": "b1d3ddeb-55db-4de8-9a9d-46da693ee4a4",
+  "Projects": [
+    {
+      "Type": "Flow",
+      "ProjectRelativePath": "PI360EvidenceRoutingFlow/project.uiproj",
+      "Id": "f0b1a338-4f9e-4d45-9556-0c8fc196f31d"
+    },
+    {
+      "Type": "processOrchestration",
+      "ProjectRelativePath": "PI360HospiceProviderRecordBpmn/project.uiproj",
+      "Id": "2c4d8cf5-c5bb-45cd-b89f-bb5a419437d8"
+    }
+  ]
+}
