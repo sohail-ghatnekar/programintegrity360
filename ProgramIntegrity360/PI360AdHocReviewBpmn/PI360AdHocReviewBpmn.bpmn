@@ -4,6 +4,7 @@
     xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
     xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
     xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:uipath="http://uipath.org/schema/bpmn"
     id="Definitions_PI360_AdHocReview"
     targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -12,133 +13,149 @@
   <bpmn:process id="Process_1" name="PI360 Ad Hoc Review BPMN" isExecutable="true">
     <bpmn:extensionElements>
       <uipath:variables version="v1">
-        <uipath:input id="Var_CaseId" name="CaseId" type="string" elementId="Event_Start" default="PI-PCS-2026-0041" />
-        <uipath:input id="Var_ClaimsAvailable" name="ClaimsAvailable" type="boolean" elementId="Event_Start" default="true" />
-        <uipath:input id="Var_EvvAvailable" name="EvvAvailable" type="boolean" elementId="Event_Start" default="true" />
-        <uipath:input id="Var_PlanOfCareAvailable" name="PlanOfCareAvailable" type="boolean" elementId="Event_Start" default="true" />
-        <uipath:input id="Var_EnrollmentAvailable" name="EnrollmentAvailable" type="boolean" elementId="Event_Start" default="true" />
-        <uipath:input id="Var_ProviderPacketAvailable" name="ProviderPacketAvailable" type="boolean" elementId="Event_Start" default="true" />
-        <uipath:inputOutput id="Var_EvidenceReady" name="EvidenceReady" type="boolean" elementId="Task_EvidenceSnapshot" />
-        <uipath:inputOutput id="Var_MissingEvidenceCsv" name="MissingEvidenceCsv" type="string" elementId="Task_EvidenceSnapshot" />
-        <uipath:inputOutput id="Var_AutomationSummary" name="AutomationSummary" type="string" elementId="Task_EvidenceSnapshot" />
-        <uipath:inputOutput id="Var_NextStage" name="NextStage" type="string" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_NextStageId" name="NextStageId" type="string" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_RouteDecision" name="RouteDecision" type="string" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_RouteReason" name="RouteReason" type="string" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_RequiresEscalation" name="RequiresEscalation" type="boolean" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_HumanGate" name="HumanGate" type="string" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_CompletionRuleSatisfied" name="CompletionRuleSatisfied" type="boolean" elementId="Task_CaseManager" />
-        <uipath:inputOutput id="Var_AuditStatus" name="AuditStatus" type="string" elementId="Task_WriteAudit" />
-        <uipath:inputOutput id="Var_AuditMessage" name="AuditMessage" type="string" elementId="Task_WriteAudit" />
+        <uipath:input id="Var_CaseId" name="CaseId" type="string" elementId="Event_Start" default="PI-HSP-2026-0042" />
+        <uipath:input id="Var_CaseType" name="CaseType" type="string" elementId="Event_Start" default="StateMedicaidHospice" />
+        <uipath:input id="Var_ProviderId" name="ProviderId" type="string" elementId="Event_Start" default="PRV-HSP-2042" />
+        <uipath:inputOutput id="Var_HospitalRecordAvailable" name="HospitalRecordAvailable" type="boolean" elementId="Event_Start" default="false" />
+        <uipath:input id="Var_InvestigatorProceed" name="InvestigatorProceed" type="boolean" elementId="Event_Start" default="false" />
+        <uipath:output id="Var_ProviderRequestStatus" name="ProviderRequestStatus" type="string" elementId="Event_Start" />
+        <uipath:output id="Var_NextStageId" name="NextStageId" type="string" elementId="Event_Start" />
+        <uipath:output id="Var_AuditMessage" name="AuditMessage" type="string" elementId="Event_Start" />
+        <uipath:inputOutput id="Var_RequestResponse" name="RequestHospitalRecordResponse" type="Orchestrator.RunJob" elementId="Task_RequestHospitalRecord" />
+        <uipath:inputOutput id="Var_IntakeResponse" name="IntakeHospitalRecordResponse" type="Orchestrator.RunJob" elementId="Task_IntakeHospitalRecord" />
       </uipath:variables>
       <uipath:bindings version="v1">
-        <uipath:binding id="Bind_RpaKey" name="releaseKey" type="string" resource="process" resourceKey="solution_folder.PI360EvidenceSnapshotAutomation" propertyAttribute="Key" />
-        <uipath:binding id="Bind_RpaFolder" name="folderPath" type="string" default="solution_folder" resource="process" resourceKey="solution_folder.PI360EvidenceSnapshotAutomation" propertyAttribute="folderPath" />
-        <uipath:binding id="Bind_RpaName" name="name" type="string" default="PI360EvidenceSnapshotAutomation" resource="process" resourceKey="solution_folder.PI360EvidenceSnapshotAutomation" propertyAttribute="name" />
-        <uipath:binding id="Bind_AgentFolder" name="folderPath" type="string" default="solution_folder" resource="process" resourceSubType="Agent" resourceKey="solution_folder.PI360CaseManagerAgent" propertyAttribute="folderPath" />
-        <uipath:binding id="Bind_AgentName" name="name" type="string" default="PI360CaseManagerAgent" resource="process" resourceSubType="Agent" resourceKey="solution_folder.PI360CaseManagerAgent" propertyAttribute="name" />
         <uipath:binding id="Bind_ApiKey" name="releaseKey" type="string" resource="process" resourceSubType="Api" resourceKey="solution_folder.PI360ApiWorkflows" propertyAttribute="Key" />
         <uipath:binding id="Bind_ApiFolder" name="folderPath" type="string" default="solution_folder" resource="process" resourceSubType="Api" resourceKey="solution_folder.PI360ApiWorkflows" propertyAttribute="folderPath" />
         <uipath:binding id="Bind_ApiName" name="name" type="string" default="PI360ApiWorkflows" resource="process" resourceSubType="Api" resourceKey="solution_folder.PI360ApiWorkflows" propertyAttribute="name" />
       </uipath:bindings>
       <uipath:migrationVersion version="18" />
     </bpmn:extensionElements>
-    <bpmn:startEvent id="Event_Start" name="Manual case review">
+    <bpmn:startEvent id="Event_Start" name="Provider record review">
       <bpmn:extensionElements>
         <uipath:entryPointId value="653364ff-7770-494b-b2e3-9d0217d16635" />
       </bpmn:extensionElements>
-      <bpmn:outgoing>Flow_Start_Evidence</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Start_ProceedGate</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:serviceTask id="Task_EvidenceSnapshot" name="Build evidence snapshot">
+    <bpmn:exclusiveGateway id="Gateway_InvestigatorProceed" name="Investigator proceed?" default="Flow_Proceed_Blocked">
+      <bpmn:incoming>Flow_Start_ProceedGate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Proceed_Request</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Proceed_Blocked</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_RequestHospitalRecord" name="API: Request hospital record">
       <bpmn:extensionElements>
-        <uipath:tags>
-          <uipath:tag key="caseTaskType">rpa</uipath:tag>
-        </uipath:tags>
-        <uipath:activity version="v1">
-          <uipath:type value="Orchestrator.StartJob" version="v2" />
-          <uipath:context>
-            <uipath:input name="releaseKey" type="string" value="=bindings.Bind_RpaKey" />
-            <uipath:input name="folderPath" type="string" value="=bindings.Bind_RpaFolder" />
-            <uipath:input name="name" type="string" value="=bindings.Bind_RpaName" />
-            <uipath:input name="_label" type="string" value="PI360 Evidence Snapshot Automation" />
-            <uipath:inputSchema type="jsonSchema"><![CDATA[{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"in_CaseId":{"type":"string"},"in_ClaimsAvailable":{"type":"boolean"},"in_EvvAvailable":{"type":"boolean"},"in_PlanOfCareAvailable":{"type":"boolean"},"in_EnrollmentAvailable":{"type":"boolean"},"in_ProviderPacketAvailable":{"type":"boolean"}},"required":["in_CaseId","in_ClaimsAvailable","in_EvvAvailable","in_PlanOfCareAvailable","in_EnrollmentAvailable","in_ProviderPacketAvailable"]}]]></uipath:inputSchema>
-          </uipath:context>
-          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"in_CaseId":"=vars.Var_CaseId","in_ClaimsAvailable":"=vars.Var_ClaimsAvailable","in_EvvAvailable":"=vars.Var_EvvAvailable","in_PlanOfCareAvailable":"=vars.Var_PlanOfCareAvailable","in_EnrollmentAvailable":"=vars.Var_EnrollmentAvailable","in_ProviderPacketAvailable":"=vars.Var_ProviderPacketAvailable"}]]></uipath:input>
-          <uipath:output name="out_EvidenceReady" type="boolean" source="=out_EvidenceReady" var="Var_EvidenceReady" />
-          <uipath:output name="out_MissingEvidenceCsv" type="string" source="=out_MissingEvidenceCsv" var="Var_MissingEvidenceCsv" />
-          <uipath:output name="out_AutomationSummary" type="string" source="=out_AutomationSummary" var="Var_AutomationSummary" />
-        </uipath:activity>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Start_Evidence</bpmn:incoming>
-      <bpmn:outgoing>Flow_Evidence_Manager</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:serviceTask id="Task_CaseManager" name="Select next case stage">
-      <bpmn:extensionElements>
-        <uipath:tags>
-          <uipath:tag key="caseTaskType">agent</uipath:tag>
-        </uipath:tags>
-        <uipath:activity version="v1">
-          <uipath:type value="Orchestrator.StartAgentJob" version="v2" />
-          <uipath:context>
-            <uipath:input name="folderPath" type="string" value="=bindings.Bind_AgentFolder" />
-            <uipath:input name="name" type="string" value="=bindings.Bind_AgentName" />
-            <uipath:input name="_label" type="string" value="PI360 Case Manager Agent" />
-            <uipath:inputSchema type="jsonSchema"><![CDATA[{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"caseId":{"type":"string"},"currentStage":{"type":"string"},"groundingJson":{"type":"string"},"quickRulesJson":{"type":"string"}},"required":["caseId","currentStage","groundingJson","quickRulesJson"]}]]></uipath:inputSchema>
-          </uipath:context>
-          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"caseId":"=vars.Var_CaseId","currentStage":"Investigation and Case Manager routing","groundingJson":"=js:JSON.stringify({evidenceReady:vars.Var_EvidenceReady,missingEvidence:vars.Var_MissingEvidenceCsv,automationSummary:vars.Var_AutomationSummary})","quickRulesJson":"=js:JSON.stringify({source:'PI360EvidenceSnapshotAutomation',evidenceReady:vars.Var_EvidenceReady})"}]]></uipath:input>
-          <uipath:output name="nextStage" type="string" source="=nextStage" var="Var_NextStage" />
-          <uipath:output name="nextStageId" type="string" source="=nextStageId" var="Var_NextStageId" />
-          <uipath:output name="routeDecision" type="string" source="=routeDecision" var="Var_RouteDecision" />
-          <uipath:output name="routeReason" type="string" source="=routeReason" var="Var_RouteReason" />
-          <uipath:output name="requiresEscalation" type="boolean" source="=requiresEscalation" var="Var_RequiresEscalation" />
-          <uipath:output name="humanGate" type="string" source="=humanGate" var="Var_HumanGate" />
-          <uipath:output name="completionRuleSatisfied" type="boolean" source="=completionRuleSatisfied" var="Var_CompletionRuleSatisfied" />
-        </uipath:activity>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Evidence_Manager</bpmn:incoming>
-      <bpmn:outgoing>Flow_Manager_Audit</bpmn:outgoing>
-    </bpmn:serviceTask>
-    <bpmn:serviceTask id="Task_WriteAudit" name="Write routing audit trail">
-      <bpmn:extensionElements>
-        <uipath:tags>
-          <uipath:tag key="caseTaskType">api</uipath:tag>
-        </uipath:tags>
         <uipath:activity version="v1">
           <uipath:type value="Orchestrator.ExecuteApiWorkflowAsync" version="v1" />
           <uipath:context>
-            <uipath:input name="releaseKey" type="string" value="=bindings.Bind_ApiKey" />
-            <uipath:input name="folderPath" type="string" value="=bindings.Bind_ApiFolder" />
-            <uipath:input name="name" type="string" value="=bindings.Bind_ApiName" />
-            <uipath:input name="_label" type="string" value="PI360 API Workflows" />
-            <uipath:inputSchema type="jsonSchema"><![CDATA[{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","properties":{"workflowName":{"type":"string"},"caseId":{"type":"string"},"currentStage":{"type":"string"}},"required":["workflowName","caseId","currentStage"]}]]></uipath:inputSchema>
+            <uipath:input name="releaseKey" value="=bindings.Bind_ApiKey" />
+            <uipath:input name="folderId" value="" />
+            <uipath:input name="folderPath" value="=bindings.Bind_ApiFolder" />
+            <uipath:input name="name" value="=bindings.Bind_ApiName" />
           </uipath:context>
-          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"CreateCaseAuditTrail","caseId":"=vars.Var_CaseId","currentStage":"=vars.Var_NextStageId"}]]></uipath:input>
-          <uipath:output name="status" type="string" source="=status" var="Var_AuditStatus" />
-          <uipath:output name="message" type="string" source="=message" var="Var_AuditMessage" />
+          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"RequestHospitalRecord","caseType":"=vars.Var_CaseType","caseId":"=vars.Var_CaseId","providerId":"=vars.Var_ProviderId","hospitalRecordAvailable":"=vars.Var_HospitalRecordAvailable","investigatorProceed":"=vars.Var_InvestigatorProceed"}]]></uipath:input>
+          <uipath:output name="Process response" type="Orchestrator.RunJob" var="Var_RequestResponse" />
         </uipath:activity>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Manager_Audit</bpmn:incoming>
-      <bpmn:outgoing>Flow_Audit_End</bpmn:outgoing>
+      <bpmn:incoming>Flow_Proceed_Request</bpmn:incoming>
+      <bpmn:outgoing>Flow_Request_Timer</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:endEvent id="Event_End" name="Route selected and audited">
-      <bpmn:incoming>Flow_Audit_End</bpmn:incoming>
+    <bpmn:intermediateCatchEvent id="Event_AwaitProviderResponse" name="Await response (P3D)">
+      <bpmn:incoming>Flow_Request_Timer</bpmn:incoming>
+      <bpmn:outgoing>Flow_Timer_RecordGate</bpmn:outgoing>
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P3D</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="Gateway_HospitalRecordAvailable" name="Hospital record available?" default="Flow_Record_Awaiting">
+      <bpmn:incoming>Flow_Timer_RecordGate</bpmn:incoming>
+      <bpmn:outgoing>Flow_Record_Intake</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Record_Awaiting</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_IntakeHospitalRecord" name="API: Intake hospital record">
+      <bpmn:extensionElements>
+        <uipath:activity version="v1">
+          <uipath:type value="Orchestrator.ExecuteApiWorkflowAsync" version="v1" />
+          <uipath:context>
+            <uipath:input name="releaseKey" value="=bindings.Bind_ApiKey" />
+            <uipath:input name="folderId" value="" />
+            <uipath:input name="folderPath" value="=bindings.Bind_ApiFolder" />
+            <uipath:input name="name" value="=bindings.Bind_ApiName" />
+          </uipath:context>
+          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"IntakeHospitalRecord","caseType":"=vars.Var_CaseType","caseId":"=vars.Var_CaseId","providerId":"=vars.Var_ProviderId","hospitalRecordAvailable":"=vars.Var_HospitalRecordAvailable","investigatorProceed":"=vars.Var_InvestigatorProceed"}]]></uipath:input>
+          <uipath:output name="Process response" type="Orchestrator.RunJob" var="Var_IntakeResponse" />
+        </uipath:activity>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Record_Intake</bpmn:incoming>
+      <bpmn:outgoing>Flow_Intake_Investigation</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_EndBlocked" name="Blocked: investigator approval required">
+      <bpmn:extensionElements>
+        <uipath:mapping version="v1">
+          <uipath:type value="BPMN.Variables" version="v1" />
+          <uipath:output name="ProviderRequestStatus" type="string" source="Blocked" var="Var_ProviderRequestStatus" />
+          <uipath:output name="HospitalRecordAvailable" type="boolean" source="=vars.Var_HospitalRecordAvailable" var="Var_HospitalRecordAvailable" />
+          <uipath:output name="NextStageId" type="string" source="Stage_Prreq6" var="Var_NextStageId" />
+          <uipath:output name="AuditMessage" type="string" source="Provider record request blocked until investigator approval; no analysis was performed." var="Var_AuditMessage" />
+        </uipath:mapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Proceed_Blocked</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_Start_Evidence" sourceRef="Event_Start" targetRef="Task_EvidenceSnapshot" />
-    <bpmn:sequenceFlow id="Flow_Evidence_Manager" sourceRef="Task_EvidenceSnapshot" targetRef="Task_CaseManager" />
-    <bpmn:sequenceFlow id="Flow_Manager_Audit" sourceRef="Task_CaseManager" targetRef="Task_WriteAudit" />
-    <bpmn:sequenceFlow id="Flow_Audit_End" sourceRef="Task_WriteAudit" targetRef="Event_End" />
+    <bpmn:endEvent id="Event_EndAwaitingProvider" name="Awaiting provider record">
+      <bpmn:extensionElements>
+        <uipath:mapping version="v1">
+          <uipath:type value="BPMN.Variables" version="v1" />
+          <uipath:output name="ProviderRequestStatus" type="string" source="TimedOutAwaitingProvider" var="Var_ProviderRequestStatus" />
+          <uipath:output name="HospitalRecordAvailable" type="boolean" source="=vars.Var_HospitalRecordAvailable" var="Var_HospitalRecordAvailable" />
+          <uipath:output name="NextStageId" type="string" source="Stage_Prreq6" var="Var_NextStageId" />
+          <uipath:output name="AuditMessage" type="string" source="Provider response window expired after P3D without a hospital record; no analysis was performed." var="Var_AuditMessage" />
+        </uipath:mapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Record_Awaiting</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="Event_EndInvestigation" name="Return to Investigation">
+      <bpmn:extensionElements>
+        <uipath:mapping version="v1">
+          <uipath:type value="BPMN.Variables" version="v1" />
+          <uipath:output name="ProviderRequestStatus" type="string" source="Completed" var="Var_ProviderRequestStatus" />
+          <uipath:output name="HospitalRecordAvailable" type="boolean" source="=vars.Var_HospitalRecordAvailable" var="Var_HospitalRecordAvailable" />
+          <uipath:output name="NextStageId" type="string" source="Stage_Corr4a" var="Var_NextStageId" />
+          <uipath:output name="AuditMessage" type="string" source="Hospital record received and intake completed; return to Investigation." var="Var_AuditMessage" />
+        </uipath:mapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Intake_Investigation</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_ProceedGate" sourceRef="Event_Start" targetRef="Gateway_InvestigatorProceed" />
+    <bpmn:sequenceFlow id="Flow_Proceed_Request" sourceRef="Gateway_InvestigatorProceed" targetRef="Task_RequestHospitalRecord">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=vars.Var_InvestigatorProceed == true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_Proceed_Blocked" sourceRef="Gateway_InvestigatorProceed" targetRef="Event_EndBlocked" />
+    <bpmn:sequenceFlow id="Flow_Request_Timer" sourceRef="Task_RequestHospitalRecord" targetRef="Event_AwaitProviderResponse" />
+    <bpmn:sequenceFlow id="Flow_Timer_RecordGate" sourceRef="Event_AwaitProviderResponse" targetRef="Gateway_HospitalRecordAvailable" />
+    <bpmn:sequenceFlow id="Flow_Record_Intake" sourceRef="Gateway_HospitalRecordAvailable" targetRef="Task_IntakeHospitalRecord">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=vars.Var_HospitalRecordAvailable == true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_Record_Awaiting" sourceRef="Gateway_HospitalRecordAvailable" targetRef="Event_EndAwaitingProvider" />
+    <bpmn:sequenceFlow id="Flow_Intake_Investigation" sourceRef="Task_IntakeHospitalRecord" targetRef="Event_EndInvestigation" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="Diagram_1">
     <bpmndi:BPMNPlane id="Plane_1" bpmnElement="Process_1">
       <bpmndi:BPMNShape id="Shape_Start" bpmnElement="Event_Start"><dc:Bounds x="120" y="220" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_Evidence" bpmnElement="Task_EvidenceSnapshot"><dc:Bounds x="230" y="198" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_Manager" bpmnElement="Task_CaseManager"><dc:Bounds x="480" y="198" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_Audit" bpmnElement="Task_WriteAudit"><dc:Bounds x="730" y="198" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_End" bpmnElement="Event_End"><dc:Bounds x="980" y="220" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Edge_Start_Evidence" bpmnElement="Flow_Start_Evidence"><di:waypoint x="156" y="238" /><di:waypoint x="230" y="238" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Evidence_Manager" bpmnElement="Flow_Evidence_Manager"><di:waypoint x="390" y="238" /><di:waypoint x="480" y="238" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Manager_Audit" bpmnElement="Flow_Manager_Audit"><di:waypoint x="640" y="238" /><di:waypoint x="730" y="238" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Audit_End" bpmnElement="Flow_Audit_End"><di:waypoint x="890" y="238" /><di:waypoint x="980" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Shape_ProceedGate" bpmnElement="Gateway_InvestigatorProceed"><dc:Bounds x="220" y="213" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Request" bpmnElement="Task_RequestHospitalRecord"><dc:Bounds x="340" y="198" width="160" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Timer" bpmnElement="Event_AwaitProviderResponse"><dc:Bounds x="570" y="220" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_RecordGate" bpmnElement="Gateway_HospitalRecordAvailable"><dc:Bounds x="670" y="213" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Intake" bpmnElement="Task_IntakeHospitalRecord"><dc:Bounds x="790" y="198" width="160" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_InvestigationEnd" bpmnElement="Event_EndInvestigation"><dc:Bounds x="1020" y="220" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_BlockedEnd" bpmnElement="Event_EndBlocked"><dc:Bounds x="340" y="350" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_AwaitingEnd" bpmnElement="Event_EndAwaitingProvider"><dc:Bounds x="790" y="350" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_Start_ProceedGate" bpmnElement="Flow_Start_ProceedGate"><di:waypoint x="156" y="238" /><di:waypoint x="220" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Proceed_Request" bpmnElement="Flow_Proceed_Request"><di:waypoint x="270" y="238" /><di:waypoint x="340" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Proceed_Blocked" bpmnElement="Flow_Proceed_Blocked"><di:waypoint x="245" y="263" /><di:waypoint x="245" y="368" /><di:waypoint x="340" y="368" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Request_Timer" bpmnElement="Flow_Request_Timer"><di:waypoint x="500" y="238" /><di:waypoint x="570" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Timer_RecordGate" bpmnElement="Flow_Timer_RecordGate"><di:waypoint x="606" y="238" /><di:waypoint x="670" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Record_Intake" bpmnElement="Flow_Record_Intake"><di:waypoint x="720" y="238" /><di:waypoint x="790" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Record_Awaiting" bpmnElement="Flow_Record_Awaiting"><di:waypoint x="695" y="263" /><di:waypoint x="695" y="368" /><di:waypoint x="790" y="368" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Intake_Investigation" bpmnElement="Flow_Intake_Investigation"><di:waypoint x="950" y="238" /><di:waypoint x="1020" y="238" /></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

@@ -12,6 +12,7 @@ ESCALATION_APP_RESOURCE_KEY = "54f913fa-10c8-4eec-85ef-58f05e15b6d5"
 PROGRAM_INTEGRITY_FABRIC_RESOURCE_KEY = "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
 CASE_MANAGER_FLOW_RESOURCE_KEY = "8dd7c4ad-7050-4e54-b915-854f29fa5fd6"
 AD_HOC_REVIEW_BPMN_RESOURCE_KEY = "5fb67ceb-1d49-475b-96a3-1037eb152b2d"
+API_WORKFLOWS_RESOURCE_KEY = "9c77c6aa-3a07-4053-a559-28c98f2520a3"
 BPMN_PATH = SOLUTION_ROOT / "PI360AdHocReviewBpmn" / "PI360AdHocReviewBpmn.bpmn"
 
 
@@ -212,6 +213,65 @@ def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity
 
     request_task = api_task("RequestHospitalRecord")
     intake_task = api_task("IntakeHospitalRecord")
+    for task in (request_task, intake_task):
+        response_outputs = [
+            output
+            for output in task.findall(".//uipath:output", namespaces)
+            if output.attrib.get("name") == "Process response"
+            and output.attrib.get("type") == "Orchestrator.RunJob"
+        ]
+        assert len(response_outputs) == 1
+
+    bindings = json.loads(
+        (BPMN_PATH.parent / "bindings_v2.json").read_text()
+    )["resources"]
+    assert {
+        (binding["resource"], binding["key"]) for binding in bindings
+    } == {("process", API_WORKFLOWS_RESOURCE_KEY)}
+
+    entry_point = json.loads(
+        (BPMN_PATH.parent / "entry-points.json").read_text()
+    )["entryPoints"][0]
+    assert set(entry_point["input"]["properties"]) == {
+        "CaseId",
+        "CaseType",
+        "ProviderId",
+        "HospitalRecordAvailable",
+        "InvestigatorProceed",
+    }
+    assert set(entry_point["output"]["properties"]) == {
+        "ProviderRequestStatus",
+        "HospitalRecordAvailable",
+        "NextStageId",
+        "AuditMessage",
+    }
+
+    sequence_flows = process.findall("bpmn:sequenceFlow", namespaces)
+    proceed_gateway = process.find(
+        "bpmn:exclusiveGateway[@id='Gateway_InvestigatorProceed']", namespaces
+    )
+    assert proceed_gateway is not None
+    assert any(
+        flow.attrib["sourceRef"] == proceed_gateway.attrib["id"]
+        and flow.attrib["targetRef"] == request_task.attrib["id"]
+        and flow.find("bpmn:conditionExpression", namespaces) is not None
+        and "Var_InvestigatorProceed"
+        in flow.find("bpmn:conditionExpression", namespaces).text
+        for flow in sequence_flows
+    )
+    blocked_flow = next(
+        flow
+        for flow in sequence_flows
+        if flow.attrib["id"] == proceed_gateway.attrib["default"]
+    )
+    assert blocked_flow.attrib["targetRef"] != request_task.attrib["id"]
+    blocked_end = process.find(
+        f"bpmn:endEvent[@id='{blocked_flow.attrib['targetRef']}']", namespaces
+    )
+    assert blocked_end is not None
+    blocked_xml = ET.tostring(blocked_end, encoding="unicode")
+    assert "Blocked" in blocked_xml
+    assert "no analysis was performed" in blocked_xml
     timer_matches = [
         event
         for event in process.findall("bpmn:intermediateCatchEvent", namespaces)
@@ -226,7 +286,7 @@ def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity
     assert timer_duration.text == "P3D"
 
     sequence_graph = {}
-    for sequence_flow in process.findall("bpmn:sequenceFlow", namespaces):
+    for sequence_flow in sequence_flows:
         sequence_graph.setdefault(sequence_flow.attrib["sourceRef"], set()).add(
             sequence_flow.attrib["targetRef"]
         )
@@ -246,6 +306,9 @@ def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity
 
     assert reaches(request_task.attrib["id"], timer.attrib["id"])
     assert reaches(timer.attrib["id"], intake_task.attrib["id"])
+    process_xml = ET.tostring(process, encoding="unicode")
+    assert "TimedOutAwaitingProvider" in process_xml
+    assert "Stage_Corr4a" in process_xml
 
     activities = root.findall(".//uipath:activity", namespaces)
     activity_types = [
