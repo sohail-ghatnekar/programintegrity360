@@ -130,35 +130,52 @@ def test_caseplan_preserves_shared_six_stage_journey_and_six_object_intake():
     assert all(item["type"] == "jsonSchema" for item in caseplan["variables"]["inputs"])
 
 
-def test_caseplan_contains_simplified_claim_ixp_rules_and_provider_wait_path():
+def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     caseplan = load_caseplan()
     stages = {stage["id"]: stage for stage in stage_nodes(caseplan)}
 
-    evidence_names = {
-        task["displayName"] for task in stage_tasks(stages["Stage_Evcol2"])
-    }
-    assert evidence_names == {
-        "API - retrieve CaseType claim details",
-        "IXP - extract service evidence",
-        "Rules - validate threshold and evidence indicators",
-    }
+    evidence_processes = [
+        task
+        for task in stage_tasks(stages["Stage_Evcol2"])
+        if task["type"] == "process"
+    ]
+    assert len(evidence_processes) == 1
+    assert evidence_processes[0]["displayName"] == (
+        "Flow - acquire and validate claim evidence"
+    )
 
-    provider_tasks = stage_tasks(stages["Stage_Prreq6"])
-    assert {task["displayName"] for task in provider_tasks} == {
-        "API - request hospital record",
-        "Timer - await hospital record (72 hours)",
-        "API - intake hospital record",
-        "IXP - extract institutional encounter",
-    }
-    timer = next(task for task in provider_tasks if task["type"] == "wait-for-timer")
-    assert timer["data"]["timeDuration"] == "P3D"
+    provider_processes = [
+        task
+        for task in stage_tasks(stages["Stage_Prreq6"])
+        if task["type"] == "process"
+    ]
+    assert len(provider_processes) == 1
+    assert provider_processes[0]["displayName"] == (
+        "BPMN - request and await hospital record"
+    )
+    provider_rules = [
+        rule
+        for condition in stages["Stage_Prreq6"].get("entryConditions", [])
+        for rule_group in condition.get("rules", [])
+        for rule in rule_group
+    ]
+    assert len(provider_rules) == 1
+    assert provider_rules[0]["conditionExpression"] == (
+        "=js:(vars.caseInput?.caseType ?? vars.caseInput?.case_type) "
+        "=== 'StateMedicaidHospice'"
+    )
 
-    raw = CASEPLAN_PATH.read_text()
-    assert "StateMedicaidHospice" in raw
-    assert "MedicaidPCS" in raw
-    assert "2500" in raw
-    assert "Observation" in raw
-    assert "360" in raw
+    active_display_names = [
+        task["displayName"]
+        for stage in stage_nodes(caseplan)
+        for task in stage_tasks(stage)
+    ]
+    forbidden = ("ixp", "rpa", "send closure summary")
+    assert not any(
+        forbidden_name in display_name.lower()
+        for display_name in active_display_names
+        for forbidden_name in forbidden
+    )
 
 
 def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
@@ -172,8 +189,8 @@ def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
     assert any(task["type"] == "action" for task in investigation)
     assert any(task["type"] == "action" for task in supervisor)
     assert any("Agentic Caseworker" in task["displayName"] for task in investigation)
-    assert any(
-        "send closure summary and next steps" in task["displayName"]
+    assert all(
+        "send closure summary" not in task["displayName"].lower()
         for task in closure
     )
 

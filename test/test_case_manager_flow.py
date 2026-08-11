@@ -37,6 +37,7 @@ def test_flow_exposes_six_separate_manual_trigger_objects():
 def test_flow_uses_case_type_claim_api_deterministic_rules_and_caseworker():
     flow = load_flow()
     nodes = {node["id"]: node for node in flow["nodes"]}
+    node_types = {node["type"] for node in flow["nodes"]}
 
     assert nodes["claimDetailsByCaseType"]["type"].startswith(
         "uipath.core.api-workflow."
@@ -45,11 +46,29 @@ def test_flow_uses_case_type_claim_api_deterministic_rules_and_caseworker():
     assert nodes["agentSelectNextCaseStage1"]["type"].startswith(
         "uipath.core.agent."
     )
-    assert nodes["extractServiceEvidenceIxp"]["type"] == "core.logic.mock"
-    assert nodes["extractInstitutionalEncounterIxp"]["type"] == "core.logic.mock"
-    assert "IXP runtime registration pending" in nodes[
-        "extractServiceEvidenceIxp"
-    ]["display"]["label"]
+    assert "core.logic.mock" not in node_types
+    assert not any("rpa" in node_type.lower() for node_type in node_types)
+    assert "extractServiceEvidenceIxp" not in nodes
+    assert "extractInstitutionalEncounterIxp" not in nodes
+    assert "evidenceSnapshotRpa" not in nodes
+
+    outputs = {
+        item["id"]
+        for item in flow["variables"].get("globals", [])
+        if item.get("direction") == "out"
+    }
+    assert outputs == {
+        "caseId",
+        "caseType",
+        "claimCount",
+        "lineCount",
+        "totalUnits",
+        "totalBilled",
+        "claimThreshold",
+        "thresholdExceeded",
+        "recommendedStageId",
+        "routeReason",
+    }
 
     raw = FLOW_PATH.read_text()
     assert "MedicaidPCS" in raw
@@ -57,8 +76,6 @@ def test_flow_uses_case_type_claim_api_deterministic_rules_and_caseworker():
     assert "2500" in raw
     assert "360" in raw
     assert "Observation" in raw
-    assert "PI360 Service Evidence Extractor" in raw
-    assert "PI360 Institutional Encounter Extractor" in raw
 
 
 def test_flow_has_explicit_hospice_provider_route_and_no_risk_only_default():

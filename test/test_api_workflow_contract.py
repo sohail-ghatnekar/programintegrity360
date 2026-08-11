@@ -141,9 +141,15 @@ def test_claim_workflow_uses_stubbed_http_activity_for_both_beeceptor_routes():
     assert activity["metadata"]["uiPathActivityTypeId"] == (
         "5c4cc855-b42a-37e6-b910-de8588998fce"
     )
+    assert activity["with"]["method"] == "GET"
+    assert activity["with"]["bodyParameters"]["method"] == "GET"
+    assert '"httpMethod":"GET"' in activity["metadata"]["configuration"]
     url_expression = activity["with"]["bodyParameters"]["url"]
-    assert "/MedicaidPCS" in url_expression
-    assert "/StateMedicaidHospice" in url_expression
+    assert "https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS" in url_expression
+    assert (
+        "https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice"
+        in url_expression
+    )
     assert "http_request_1" in activity["export"]["as"]
 
 

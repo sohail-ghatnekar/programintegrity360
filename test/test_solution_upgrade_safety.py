@@ -1,5 +1,6 @@
 import json
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -9,6 +10,9 @@ USER_PROFILE_ROOT = SOLUTION_ROOT / "userProfile"
 CASE_MANAGER_RESOURCE_KEY = "64ee0873-ac2c-4393-a970-7f67f9c7a423"
 ESCALATION_APP_RESOURCE_KEY = "54f913fa-10c8-4eec-85ef-58f05e15b6d5"
 PROGRAM_INTEGRITY_FABRIC_RESOURCE_KEY = "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
+CASE_MANAGER_FLOW_RESOURCE_KEY = "8dd7c4ad-7050-4e54-b915-854f29fa5fd6"
+AD_HOC_REVIEW_BPMN_RESOURCE_KEY = "5fb67ceb-1d49-475b-96a3-1037eb152b2d"
+BPMN_PATH = SOLUTION_ROOT / "PI360AdHocReviewBpmn" / "PI360AdHocReviewBpmn.bpmn"
 
 
 def _all_solution_resources() -> list[dict]:
@@ -141,6 +145,8 @@ def test_owned_sibling_bindings_are_pinned_to_solution_resource_keys():
         SOLUTION_ROOT / "PI360CaseManagement" / "bindings_v2.json": {
             ("process", CASE_MANAGER_RESOURCE_KEY),
             ("app", ESCALATION_APP_RESOURCE_KEY),
+            ("process", CASE_MANAGER_FLOW_RESOURCE_KEY),
+            ("process", AD_HOC_REVIEW_BPMN_RESOURCE_KEY),
         },
         SOLUTION_ROOT / "PI360CaseManagerAgent" / "bindings_v2.json": {
             ("app", ESCALATION_APP_RESOURCE_KEY),
@@ -160,3 +166,51 @@ def test_owned_sibling_bindings_are_pinned_to_solution_resource_keys():
                 "resource key. A name value makes resource refresh import the "
                 "live deployment as a suffixed shadow resource."
             )
+
+
+def test_case_orchestration_resources_are_unique_unsuffixed_processes():
+    resources = _deployment_resources()
+    expected = {
+        ("PI360CaseManagerFlow", "flow"): CASE_MANAGER_FLOW_RESOURCE_KEY,
+        ("PI360AdHocReviewBpmn", "processOrchestration"): (
+            AD_HOC_REVIEW_BPMN_RESOURCE_KEY
+        ),
+    }
+
+    for (name, resource_type), resource_key in expected.items():
+        matches = [
+            resource
+            for resource in resources
+            if resource["name"] == name and resource.get("type") == resource_type
+        ]
+        assert len(matches) == 1
+        assert matches[0]["key"] == resource_key
+        assert re.fullmatch(r".+_\d+", matches[0]["name"]) is None
+
+
+def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity():
+    namespaces = {
+        "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
+        "bpmndi": "http://www.omg.org/spec/BPMN/20100524/DI",
+        "uipath": "http://uipath.org/schema/bpmn",
+    }
+    root = ET.parse(BPMN_PATH).getroot()
+    activities = root.findall(".//uipath:activity", namespaces)
+    activity_xml = [ET.tostring(activity, encoding="unicode") for activity in activities]
+    activity_types = [
+        activity.find("uipath:type", namespaces).attrib["value"]
+        for activity in activities
+    ]
+
+    assert any("RequestHospitalRecord" in activity for activity in activity_xml)
+    assert any("IntakeHospitalRecord" in activity for activity in activity_xml)
+    assert any(
+        duration.text == "P3D"
+        for duration in root.findall(".//bpmn:timeDuration", namespaces)
+    )
+    diagram = root.find(".//bpmndi:BPMNDiagram", namespaces)
+    assert diagram is not None
+    assert diagram.find("bpmndi:BPMNPlane", namespaces) is not None
+    assert diagram.findall(".//bpmndi:BPMNShape", namespaces)
+    assert diagram.findall(".//bpmndi:BPMNEdge", namespaces)
+    assert not any("rpa" in activity_type.lower() for activity_type in activity_types)
