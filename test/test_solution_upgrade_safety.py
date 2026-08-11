@@ -195,22 +195,56 @@ def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity
         "uipath": "http://uipath.org/schema/bpmn",
     }
     root = ET.parse(BPMN_PATH).getroot()
+    process = root.find("bpmn:process", namespaces)
+    assert process is not None
+    process_children = list(process)
+    service_tasks = process.findall("bpmn:serviceTask", namespaces)
+
+    def api_task(workflow_name):
+        matches = [
+            task
+            for task in service_tasks
+            if task.find(".//uipath:type", namespaces).attrib["value"]
+            == "Orchestrator.ExecuteApiWorkflowAsync"
+            and workflow_name in ET.tostring(task, encoding="unicode")
+        ]
+        assert len(matches) == 1
+        return matches[0]
+
+    request_task = api_task("RequestHospitalRecord")
+    intake_task = api_task("IntakeHospitalRecord")
+    timer_matches = [
+        event
+        for event in process.findall("bpmn:intermediateCatchEvent", namespaces)
+        if event.find("bpmn:timerEventDefinition/bpmn:timeDuration", namespaces)
+        is not None
+    ]
+    assert len(timer_matches) == 1
+    timer = timer_matches[0]
+    timer_duration = timer.find(
+        "bpmn:timerEventDefinition/bpmn:timeDuration", namespaces
+    )
+    assert timer_duration.text == "P3D"
+    assert process_children.index(request_task) < process_children.index(timer)
+    assert process_children.index(timer) < process_children.index(intake_task)
+
     activities = root.findall(".//uipath:activity", namespaces)
-    activity_xml = [ET.tostring(activity, encoding="unicode") for activity in activities]
     activity_types = [
         activity.find("uipath:type", namespaces).attrib["value"]
         for activity in activities
     ]
 
-    assert any("RequestHospitalRecord" in activity for activity in activity_xml)
-    assert any("IntakeHospitalRecord" in activity for activity in activity_xml)
-    assert any(
-        duration.text == "P3D"
-        for duration in root.findall(".//bpmn:timeDuration", namespaces)
-    )
     diagram = root.find(".//bpmndi:BPMNDiagram", namespaces)
     assert diagram is not None
     assert diagram.find("bpmndi:BPMNPlane", namespaces) is not None
     assert diagram.findall(".//bpmndi:BPMNShape", namespaces)
     assert diagram.findall(".//bpmndi:BPMNEdge", namespaces)
-    assert not any("rpa" in activity_type.lower() for activity_type in activity_types)
+    assert diagram.find(
+        f".//bpmndi:BPMNShape[@bpmnElement='{timer.attrib['id']}']", namespaces
+    ) is not None
+    assert "Orchestrator.StartJob" not in activity_types
+    assert not any(
+        "ixp" in ET.tostring(activity, encoding="unicode").lower()
+        for activity in activities
+    )
+    assert "CreateCaseAuditTrail" not in ET.tostring(process, encoding="unicode")

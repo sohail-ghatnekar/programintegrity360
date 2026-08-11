@@ -15,6 +15,8 @@ CASEPLAN_PATH = (
     / "content"
     / "caseplan.json"
 )
+FLOW_RESOURCE_KEY = "solution_folder.PI360CaseManagerFlow"
+BPMN_RESOURCE_KEY = "solution_folder.PI360AdHocReviewBpmn"
 
 
 def load_caseplan():
@@ -133,26 +135,45 @@ def test_caseplan_preserves_shared_six_stage_journey_and_six_object_intake():
 def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     caseplan = load_caseplan()
     stages = {stage["id"]: stage for stage in stage_nodes(caseplan)}
+    bindings = caseplan["bindings"]
 
-    evidence_processes = [
-        task
-        for task in stage_tasks(stages["Stage_Evcol2"])
-        if task["type"] == "process"
-    ]
-    assert len(evidence_processes) == 1
-    assert evidence_processes[0]["displayName"] == (
-        "Flow - acquire and validate claim evidence"
-    )
+    def binding_id(resource_key, name):
+        matches = [
+            binding
+            for binding in bindings
+            if binding["resourceKey"] == resource_key and binding["name"] == name
+        ]
+        assert len(matches) == 1
+        return matches[0]["id"]
 
-    provider_processes = [
-        task
-        for task in stage_tasks(stages["Stage_Prreq6"])
-        if task["type"] == "process"
+    flow_name_binding = binding_id(FLOW_RESOURCE_KEY, "name")
+    flow_folder_binding = binding_id(FLOW_RESOURCE_KEY, "folderPath")
+    bpmn_name_binding = binding_id(BPMN_RESOURCE_KEY, "name")
+    bpmn_folder_binding = binding_id(BPMN_RESOURCE_KEY, "folderPath")
+
+    evidence_tasks = stage_tasks(stages["Stage_Evcol2"])
+    assert [(task["type"], task["displayName"]) for task in evidence_tasks] == [
+        ("process", "Flow - acquire and validate claim evidence")
     ]
-    assert len(provider_processes) == 1
-    assert provider_processes[0]["displayName"] == (
-        "BPMN - request and await hospital record"
+    evidence_process = evidence_tasks[0]
+    assert evidence_process["data"]["name"] == f"=bindings.{flow_name_binding}"
+    assert evidence_process["data"]["folderPath"] == (
+        f"=bindings.{flow_folder_binding}"
     )
+    assert evidence_process["data"]["name"] != "PI360CaseManagerFlow"
+    assert evidence_process["data"]["folderPath"] != "solution_folder"
+
+    provider_tasks = stage_tasks(stages["Stage_Prreq6"])
+    assert [(task["type"], task["displayName"]) for task in provider_tasks] == [
+        ("process", "BPMN - request and await hospital record")
+    ]
+    provider_process = provider_tasks[0]
+    assert provider_process["data"]["name"] == f"=bindings.{bpmn_name_binding}"
+    assert provider_process["data"]["folderPath"] == (
+        f"=bindings.{bpmn_folder_binding}"
+    )
+    assert provider_process["data"]["name"] != "PI360AdHocReviewBpmn"
+    assert provider_process["data"]["folderPath"] != "solution_folder"
     provider_rules = [
         rule
         for condition in stages["Stage_Prreq6"].get("entryConditions", [])

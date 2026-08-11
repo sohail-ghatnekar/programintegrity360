@@ -52,6 +52,28 @@ def test_flow_uses_case_type_claim_api_deterministic_rules_and_caseworker():
     assert "extractInstitutionalEncounterIxp" not in nodes
     assert "evidenceSnapshotRpa" not in nodes
 
+    active_serialized_flow = json.dumps(
+        {
+            key: flow[key]
+            for key in ("nodes", "edges", "variables", "bindings")
+            if key in flow
+        }
+    ).lower()
+    for forbidden_reference in (
+        "ixp",
+        "pi360 service evidence extractor",
+        "pi360 institutional encounter extractor",
+        "extract service evidence",
+        "extract institutional encounter",
+        "extractserviceevidenceixp",
+        "extractinstitutionalencounterixp",
+        "hasinstitutionalrecordforixp",
+        "rpaevidencecompletenesssnapshot1",
+        "evidencesnapshotrpa",
+        "pi360evidencesnapshotautomation",
+    ):
+        assert forbidden_reference not in active_serialized_flow
+
     outputs = {
         item["id"]
         for item in flow["variables"].get("globals", [])
