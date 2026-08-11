@@ -162,6 +162,34 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     )
     assert evidence_process["data"]["name"] != "PI360CaseManagerFlow"
     assert evidence_process["data"]["folderPath"] != "solution_folder"
+    assert [item["name"] for item in evidence_process["data"]["inputs"]] == [
+        "caseInput",
+        "claimInput",
+        "memberInput",
+        "providerInput",
+        "serviceEventInput",
+        "documentInput",
+    ]
+    assert [item["value"] for item in evidence_process["data"]["inputs"]] == [
+        "=vars.caseInput",
+        "=vars.claimInput",
+        "=vars.memberInput",
+        "=vars.providerInput",
+        "=vars.serviceEventInput",
+        "=vars.documentInput",
+    ]
+    assert [item["name"] for item in evidence_process["data"]["outputs"]] == [
+        "caseId",
+        "caseType",
+        "claimCount",
+        "lineCount",
+        "totalUnits",
+        "totalBilled",
+        "claimThreshold",
+        "thresholdExceeded",
+        "recommendedStageId",
+        "routeReason",
+    ]
 
     provider_tasks = stage_tasks(stages["Stage_Prreq6"])
     assert [(task["type"], task["displayName"]) for task in provider_tasks] == [
@@ -174,16 +202,50 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     )
     assert provider_process["data"]["name"] != "PI360AdHocReviewBpmn"
     assert provider_process["data"]["folderPath"] != "solution_folder"
+    assert [item["name"] for item in provider_process["data"]["inputs"]] == [
+        "CaseId",
+        "CaseType",
+        "ProviderId",
+        "HospitalRecordAvailable",
+        "InvestigatorProceed",
+    ]
+    assert [item["name"] for item in provider_process["data"]["outputs"]] == [
+        "ProviderRequestStatus",
+        "HospitalRecordAvailable",
+        "NextStageId",
+        "AuditMessage",
+    ]
     provider_rules = [
         rule
-        for condition in stages["Stage_Prreq6"].get("entryConditions", [])
+        for condition in stages["Stage_Prreq6"]["data"].get("entryConditions", [])
         for rule_group in condition.get("rules", [])
         for rule in rule_group
     ]
     assert len(provider_rules) == 1
     assert provider_rules[0]["conditionExpression"] == (
-        "=js:(vars.caseInput?.caseType ?? vars.caseInput?.case_type) "
-        "=== 'StateMedicaidHospice'"
+        "=js:((vars.caseInput?.caseType ?? vars.caseInput?.case_type) "
+        "=== 'StateMedicaidHospice') && "
+        "(vars.recommendedStageId === 'Stage_Prreq6')"
+    )
+    assert provider_rules[0]["selectedStageId"] == "Stage_Evcol2"
+
+    investigation_rules = [
+        rule
+        for condition in stages["Stage_Corr4a"]["data"].get("entryConditions", [])
+        for rule_group in condition.get("rules", [])
+        for rule in rule_group
+    ]
+    assert any(
+        rule.get("selectedStageId") == "Stage_Evcol2"
+        and rule.get("conditionExpression")
+        == "=js:vars.recommendedStageId === 'Stage_Corr4a'"
+        for rule in investigation_rules
+    )
+    assert any(
+        rule.get("selectedStageId") == "Stage_Prreq6"
+        and rule.get("conditionExpression")
+        == "=js:vars.providerNextStageId === 'Stage_Corr4a'"
+        for rule in investigation_rules
     )
 
     active_display_names = [
@@ -210,6 +272,12 @@ def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
     assert any(task["type"] == "action" for task in investigation)
     assert any(task["type"] == "action" for task in supervisor)
     assert any("Agentic Caseworker" in task["displayName"] for task in investigation)
+    assert [task["displayName"] for task in supervisor] == [
+        "Human - supervisor review and disposition"
+    ]
+    assert supervisor[0]["entryConditions"][0]["rules"][0][0]["rule"] == (
+        "current-stage-entered"
+    )
     assert all(
         "send closure summary" not in task["displayName"].lower()
         for task in closure

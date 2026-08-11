@@ -31,6 +31,32 @@
         "DisplayLabel": "name",
         "SolutionsSupport": "true"
       }
+    },
+    {
+      "resource": "process",
+      "key": "8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
+      "id": "process8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
+      "value": {},
+      "metadata": {
+        "ActivityName": "Flow - acquire and validate claim evidence",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "ProcessOrchestration"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "5fb67ceb-1d49-475b-96a3-1037eb152b2d",
+      "id": "process5fb67ceb-1d49-475b-96a3-1037eb152b2d",
+      "value": {},
+      "metadata": {
+        "ActivityName": "BPMN - request and await hospital record",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "ProcessOrchestration"
+      }
     }
   ]
 }
