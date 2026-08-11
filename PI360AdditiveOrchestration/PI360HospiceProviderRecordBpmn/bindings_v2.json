@@ -1,4 +1,24 @@
 {
   "version": "2.0",
-  "resources": []
+  "resources": [
+    {
+      "resource": "process",
+      "key": "02f01ee0-324d-4397-8433-5f074899a866",
+      "id": "process02f01ee0-324d-4397-8433-5f074899a866",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        }
+      },
+      "metadata": {
+        "ActivityName": "PI360 hospice provider record request and intake",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "PI360ApiWorkflows",
+        "SolutionsSupport": "true",
+        "subType": "Api"
+      }
+    }
+  ]
 }

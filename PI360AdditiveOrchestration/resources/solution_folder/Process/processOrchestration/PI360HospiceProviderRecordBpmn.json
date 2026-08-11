@@ -1,0 +1,38 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360HospiceProviderRecordBpmn",
+    "kind": "process",
+    "type": "processOrchestration",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "2c4d8cf5-c5bb-45cd-b89f-bb5a419437d8",
+    "dependencies": [
+      {
+        "kind": "package",
+        "name": "PI360HospiceProviderRecordBpmn"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "ProcessOrchestration",
+      "name": "PI360HospiceProviderRecordBpmn",
+      "package": {
+        "key": "b2062151-bc7d-4714-9809-e2f37d4ddcd1"
+      },
+      "packageName": "PI360AdditiveOrchestration.agentic.PI360HospiceProviderRecordBpmn",
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180
+    },
+    "locks": [],
+    "key": "711954dd-6e97-42e2-a057-4355393ea900",
+    "files": []
+  }
+}
