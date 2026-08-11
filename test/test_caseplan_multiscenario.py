@@ -16,6 +16,33 @@ CASEPLAN_PATH = (
 )
 FLOW_RESOURCE_KEY = "solution_folder.PI360CaseManagerFlow"
 BPMN_RESOURCE_KEY = "solution_folder.PI360AdHocReviewBpmn"
+CLOUD_STAGE_IDS = {
+    "Stage_Aintk1",
+    "Stage_Evcol2",
+    "Stage_Corr4a",
+    "Stage_Prreq6",
+    "Stage_Supv7a",
+    "Stage_Clos9a",
+}
+CLOUD_TASK_IDS = {
+    "tCaseManagerAgent",
+    "tINT1case",
+    "tTRI1agnt",
+    "tCLM2pull",
+    "tUeO6EGo3",
+    "tQAC3rec",
+    "tCOR4evid",
+    "tREV5task",
+    "tCMR4route",
+    "tREQ6send",
+    "tPRV6wait",
+    "tH5yKJJef",
+    "tPKT7prep",
+    "tSUP7gate",
+    "tCLS9case",
+    "thmyc7i2S",
+}
+DORMANT_CLOUD_TASK_IDS = {"tUeO6EGo3", "tH5yKJJef", "thmyc7i2S"}
 
 
 def load_caseplan():
@@ -46,6 +73,47 @@ def task_location(caseplan, task_id):
                 if task["id"] == task_id:
                     return stage, (stage_index, lane_index, task_index)
     raise StopIteration(task_id)
+
+
+def all_task_ids(caseplan):
+    ids = {
+        task["id"]
+        for stage in stage_nodes(caseplan)
+        for task in stage_tasks(stage)
+    }
+    for lane in caseplan["metadata"]["caseManagerData"]["data"].get("tasks", []):
+        ids.update(task["id"] for task in lane)
+    return ids
+
+
+def is_deterministically_dormant(task):
+    rules = [
+        rule
+        for condition in task.get("entryConditions", [])
+        for group in condition.get("rules", [])
+        for rule in group
+    ]
+    return (
+        task.get("isRequired") is False
+        and len(rules) == 1
+        and rules[0].get("rule") == "adhoc"
+        and rules[0].get("conditionExpression") == "=js:false"
+    )
+
+
+def test_caseplan_stage_and_task_ids_are_a_superset_of_cloud_baseline():
+    caseplan = load_caseplan()
+    actual_stage_ids = {stage["id"] for stage in stage_nodes(caseplan)}
+
+    assert CLOUD_STAGE_IDS - actual_stage_ids == set()
+    assert CLOUD_TASK_IDS - all_task_ids(caseplan) == set()
+
+
+def test_preserved_ixp_rpa_and_email_tasks_are_present_but_unreachable():
+    caseplan = load_caseplan()
+
+    for task_id in DORMANT_CLOUD_TASK_IDS:
+        assert is_deterministically_dormant(task_by_id(caseplan, task_id)), task_id
 
 
 def assert_first_intake_contract(caseplan):
@@ -150,7 +218,11 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     bpmn_name_binding = binding_id(BPMN_RESOURCE_KEY, "name")
     bpmn_folder_binding = binding_id(BPMN_RESOURCE_KEY, "folderPath")
 
-    evidence_tasks = stage_tasks(stages["Stage_Evcol2"])
+    evidence_tasks = [
+        task
+        for task in stage_tasks(stages["Stage_Evcol2"])
+        if task["displayName"] == "Flow - acquire and validate claim evidence"
+    ]
     assert [(task["type"], task["displayName"]) for task in evidence_tasks] == [
         ("process", "Flow - acquire and validate claim evidence")
     ]
@@ -190,7 +262,11 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
         "routeReason",
     ]
 
-    provider_tasks = stage_tasks(stages["Stage_Prreq6"])
+    provider_tasks = [
+        task
+        for task in stage_tasks(stages["Stage_Prreq6"])
+        if task["displayName"] == "BPMN - request and await hospital record"
+    ]
     assert [(task["type"], task["displayName"]) for task in provider_tasks] == [
         ("process", "BPMN - request and await hospital record")
     ]
@@ -251,6 +327,7 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
         task["displayName"]
         for stage in stage_nodes(caseplan)
         for task in stage_tasks(stage)
+        if not is_deterministically_dormant(task)
     ]
     forbidden = ("ixp", "rpa", "send closure summary")
     assert not any(
@@ -271,15 +348,17 @@ def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
     assert any(task["type"] == "action" for task in investigation)
     assert any(task["type"] == "action" for task in supervisor)
     assert any("Agentic Caseworker" in task["displayName"] for task in investigation)
-    assert [task["displayName"] for task in supervisor] == [
+    supervisor_human = [task for task in supervisor if task["type"] == "action"]
+    assert [task["displayName"] for task in supervisor_human] == [
         "Human - supervisor review and disposition"
     ]
-    assert supervisor[0]["entryConditions"][0]["rules"][0][0]["rule"] == (
+    assert supervisor_human[0]["entryConditions"][0]["rules"][0][0]["rule"] == (
         "current-stage-entered"
     )
     assert all(
         "send closure summary" not in task["displayName"].lower()
         for task in closure
+        if not is_deterministically_dormant(task)
     )
 
 

@@ -1,0 +1,44 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 IXP Timesheet",
+    "kind": "process",
+    "type": "process",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "79fb4fb4-73e6-4c82-aa3d-4548ca62d677",
+    "dependencies": [
+      {
+        "kind": "package",
+        "name": "PI360 IXP Timesheet"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Process",
+      "name": "PI360 IXP Timesheet",
+      "package": {
+        "key": "4ee71527-4a70-4bff-b216-6b520fe71d30"
+      },
+      "inputArguments": "{}",
+      "jobPriority": "Medium",
+      "jobRecording": "Disabled",
+      "targetFrameworkValue": "Portable",
+      "duration": 40,
+      "frequency": 500,
+      "quality": 100,
+      "remoteControlAccess": "None",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180
+    },
+    "locks": [],
+    "key": "fa5b106f-e39c-47e9-871c-747728fd58c0",
+    "files": []
+  }
+}

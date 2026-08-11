@@ -1,0 +1,36 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 Timesheet Extraction",
+    "kind": "ixpDeployment",
+    "apiVersion": "ixp.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360 Timesheet Extraction",
+      "description": "",
+      "modelVersion": 18,
+      "sourcePackageId": "c616fd8888684652",
+      "dataset": "{\"id\":\"7c0075d114bc0771\",\"owner\":\"pi360-timesheet-extraction-e5b28bff-ixp\",\"name\":\"pi360-timesheet-extraction-e5b28bff\",\"title\":\"PI360 Timesheet Extraction\",\"description\":\"\",\"created\":\"2026-08-11T13:28:47.843720Z\",\"last_modified\":\"2026-08-11T14:53:11.465628Z\",\"model_family\":\"transformer-english\",\"source_ids\":[\"9051bcb215cf01d3\"],\"has_sentiment\":true,\"limited_access\":true,\"entity_defs\":[{\"id\":\"69975228111bb350\",\"color\":0,\"name\":\"Boolean\",\"title\":\"Boolean\",\"inherits_from\":[\"0000000000000046\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent boolean values in text.\"},{\"id\":\"0b7f792e7cc9d45c\",\"color\":1,\"name\":\"Date\",\"title\":\"Date\",\"inherits_from\":[\"0000000000000007\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent dates in text.\"},{\"id\":\"c5af312fcd802d38\",\"color\":2,\"name\":\"Exact Text\",\"title\":\"Exact Text\",\"inherits_from\":[],\"trainable\":true,\"_entity_def_flags\":[\"appears_verbatim\"],\"instructions\":\"Use to represent text that appears verbatim in text.\"},{\"id\":\"8054400e9f6b5db1\",\"color\":3,\"name\":\"Inferred Text\",\"title\":\"Inferred Text\",\"inherits_from\":[],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use for text that might not appear verbatim in the text.\"},{\"id\":\"a788c488de66f511\",\"color\":4,\"name\":\"Monetary Quantity\",\"title\":\"Monetary Quantity\",\"inherits_from\":[\"0000000000000006\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent monetary values in text.\"},{\"id\":\"9cbf4aca333373b7\",\"color\":5,\"name\":\"Number\",\"title\":\"Number\",\"inherits_from\":[\"0000000000000044\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent amounts or quantities in text.\"}],\"general_fields\":[],\"label_groups\":[{\"name\":\"default\",\"label_defs\":[{\"name\":\"Caregiver Monthly Timesheet\",\"id\":\"baa0c49b366a14b2\",\"instructions\":\"Extract general information about the timesheet, including employer and caregiver details, and key dates.\",\"moon_form\":[{\"field_id\":\"3a1a3673af26b368\",\"id\":\"c5af312fcd802d38\",\"field_type_id\":\"c5af312fcd802d38\",\"kind\":\"Exact Text\",\"name\":\"Employer (Member)\",\"instructions\":\"Extract the full name of the employer (member).\"},{\"field_id\":\"faa18146b3fb93ff\",\"id\":\"c5af312fcd802d38\",\"field_type_id\":\"c5af312fcd802d38\",\"kind\":\"Exact Text\",\"name\":\"Employee (Caregiver)\",\"instructions\":\"Extract the full name of the employee (caregiver).\"},{\"field_id\":\"14e682fe0ab7489c\",\"id\":\"69975228111bb350\",\"field_type_id\":\"69975228111bb350\",\"kind\":\"Boolean\",\"name\":\"Yes Hospitalization\",\"instructions\":\"Extract checkbox related to the \\\"Yes\\\" field from \\\"Was the Employer hospitalized at any time this month?\\\"\"},{\"field_id\":\"d95db8551df88524\",\"id\":\"69975228111bb350\",\"field_type_id\":\"69975228111bb350\",\"kind\":\"Boolean\",\"name\":\"No Hospitalization\",\"instructions\":\"Extract checkbox related to the \\\"No\\\" field from \\\"Was the Employer hospitalized at any time this month?\\\"\"}]}],\"trainable\":true,\"hidden\":false,\"instructions\":\"Extract source facts from synthetic Medicaid personal care and hospice service-evidence documents. Preserve names, IDs, dates, times, units, and checkbox values exactly as shown. Do not calculate unsupported units, infer fraud, or make coverage or payment determinations.\"}],\"label_defs\":[{\"name\":\"Caregiver Monthly Timesheet\",\"id\":\"baa0c49b366a14b2\",\"instructions\":\"Extract general information about the timesheet, including employer and caregiver details, and key dates.\",\"moon_form\":[{\"field_id\":\"3a1a3673af26b368\",\"id\":\"c5af312fcd802d38\",\"field_type_id\":\"c5af312fcd802d38\",\"kind\":\"Exact Text\",\"name\":\"Employer (Member)\",\"instructions\":\"Extract the full name of the employer (member).\"},{\"field_id\":\"faa18146b3fb93ff\",\"id\":\"c5af312fcd802d38\",\"field_type_id\":\"c5af312fcd802d38\",\"kind\":\"Exact Text\",\"name\":\"Employee (Caregiver)\",\"instructions\":\"Extract the full name of the employee (caregiver).\"},{\"field_id\":\"14e682fe0ab7489c\",\"id\":\"69975228111bb350\",\"field_type_id\":\"69975228111bb350\",\"kind\":\"Boolean\",\"name\":\"Yes Hospitalization\",\"instructions\":\"Extract checkbox related to the \\\"Yes\\\" field from \\\"Was the Employer hospitalized at any time this month?\\\"\"},{\"field_id\":\"d95db8551df88524\",\"id\":\"69975228111bb350\",\"field_type_id\":\"69975228111bb350\",\"kind\":\"Boolean\",\"name\":\"No Hospitalization\",\"instructions\":\"Extract checkbox related to the \\\"No\\\" field from \\\"Was the Employer hospitalized at any time this month?\\\"\"}]}],\"_label_properties\":[],\"_timezone\":\"UTC\",\"_preferred_locales\":{\"default\":\"en_GB\",\"preferences\":[]},\"_dataset_flags\":[\"ixp\"],\"_model_config\":{\"kind\":\"gpt_ixp\",\"model_version\":\"gpt_4o_2024_05_13\",\"input_config\":{\"mode\":\"text_plus_image\",\"text_config\":{\"kind\":\"uipath_cv_table_only\"}},\"flags\":[\"append_field_descriptions\",\"append_group_descriptions\",\"append_taxonomy_descriptions\",\"append_type_descriptions\"],\"iterative_config\":{},\"attribution_method\":\"table_formatted_word_ids\"}}",
+      "fileReference": "c616fd8888684652",
+      "modelUrlName": "pi360-timesheet-extraction-e5b28bff-ixp",
+      "sourceDatasetId": "db86ac999362d0cb"
+    },
+    "locks": [],
+    "key": "9482957c-64bb-8001-8030-26e03416127d",
+    "files": [
+      {
+        "key": "c616fd8888684652",
+        "name": "PI360 Timesheet Extraction.ixp",
+        "url": "https://cloud.uipath.com/uipathlabs/Playground/reinfer_/api/_private/packages/c616fd8888684652/export",
+        "kind": "ixpDeployment"
+      }
+    ]
+  }
+}

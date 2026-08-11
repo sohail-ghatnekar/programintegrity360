@@ -422,3 +422,69 @@ git push origin codex/pi360-multiscenario-refit
 ```
 
 Verify the remote head matches local HEAD and report the existing PR URL.
+
+### Task 8: Preserve the Full Cloud Solution and Publish an Additive Upgrade
+
+**Files:**
+- Modify through supported UiPath CLI commands only: `ProgramIntegrity360/ProgramIntegrity360.uipx` and `ProgramIntegrity360/resources/solution_folder/`
+- Modify in place with stable IDs: `ProgramIntegrity360/PI360CaseManagement/content/caseplan.json`
+- Modify as required by preserved Case bindings: `ProgramIntegrity360/PI360CaseManagement/bindings_v2.json`
+- Test: `test/test_solution_upgrade_safety.py`
+- Test: `test/test_caseplan_multiscenario.py`
+
+**Interfaces:**
+- Consumes: fresh Studio Web backup `/private/tmp/pi360-before-final-force.9dpq1N/ProgramIntegrity360-before-final-force`, solution ID `494be60c-8bb2-4478-3beb-08def46ec69f`, and the currently active `uipathlabs / Playground` deployment.
+- Produces: a versioned solution package whose project/resource/Case-node inventory is a superset of the cloud baseline while retaining the net-new Flow, BPMN, and Beeceptor GET behavior.
+
+- [ ] **Step 1: Write failing preservation tests before changing solution metadata or the Case Plan**
+
+Add assertions that the local solution contains every cloud project name, project ID, resource key, Case stage ID, and Case task ID. The assertions may allow additional local projects/resources/nodes but must fail on any cloud baseline item that is absent. Preserve the exact cloud resource identities, including `PI360 IXP Timesheet`, `Timesheets`, both unsuffixed Action Apps, and both existing IXP deployments.
+
+- [ ] **Step 2: Verify the red failures describe only missing preservation items**
+
+Run the focused solution and Case tests. Confirm failures identify the cloud project/resources/Case nodes currently absent locally, not fixture or parsing errors.
+
+- [ ] **Step 3: Restore the cloud-only project and exact remote resources using supported CLI commands**
+
+Use `uip solution project import` for the cloud `PI360 IXP Timesheet` project and `uip solution resources add --source remote --cloud-key ...` for preserved cloud resources. Do not hand-edit `.uipx` or `resources/solution_folder/`. Do not remove or replace any existing project/resource. Keep IXP, RPA, and email resources present but inactive.
+
+- [ ] **Step 4: Reconcile the Case Plan as a brownfield stable-ID merge**
+
+Treat the fresh cloud Case Plan as the preservation baseline. Retain every existing cloud stage/task ID and all unrelated task configuration. Add the Flow evidence task and hospice-only BPMN provider-record task at the relevant stages. Any preserved IXP, RPA, or automated-email task must be made unreachable/dormant without deleting its node or reactivating that integration. Preserve the current manual trigger, Data Fabric intake, human intervention, agentic investigation, supervisor review, and closure persistence behavior.
+
+- [ ] **Step 5: Refresh resources and prove the local inventory is a superset**
+
+Run `uip solution resources refresh`, then list projects/resources for both the fresh cloud backup and local solution. Fail the task if any cloud project ID, resource key, Case stage ID, or Case task ID is missing, or if any `_1` copy is introduced. The local solution may contain net-new Flow/BPMN dependencies.
+
+- [ ] **Step 6: Validate and package without touching Studio Web history**
+
+Run all repository tests and validators, pack version `1.0.1`, and inspect the ZIP. Do not run `uip solution upload` and never pass `--force`. The packed inventory must remain a superset of the cloud baseline and contain the exact Beeceptor GET routes plus the Flow/BPMN Case bindings.
+
+- [ ] **Step 7: Commit the additive local reconciliation for review**
+
+Commit the preservation tests and reconciled solution artifacts. Do not publish, deploy, push, upload, or force-overwrite anything until the task review confirms that the resulting package is a cloud-inventory superset.
+
+### Task 9: Publish, Upgrade, and Push the Reviewed Additive Package
+
+**Files:**
+- No intended source edits; generated deployment configuration may live under `/private/tmp`
+
+**Interfaces:**
+- Consumes: the reviewed Task 8 commit and inspected version `1.0.1` package.
+- Produces: an active non-destructive upgrade of the existing deployment plus the updated GitHub branch and pull request.
+
+- [ ] **Step 1: Re-run the complete verification suite from the reviewed commit**
+
+Run all repository tests, Coded App tests/lint/build, UiPath validators, solution inventory comparisons, and ZIP inspection. Stop if any result differs from the reviewed Task 8 report.
+
+- [ ] **Step 2: Prove the supported in-place upgrade command before mutation**
+
+Inspect the installed CLI help/documentation and current deployment metadata. Confirm the command targets the existing deployment lineage/folder and will update without deleting cloud resources or creating `_1` copies. If the CLI cannot prove an in-place, non-destructive upgrade, stop before publication and report the exact blocker.
+
+- [ ] **Step 3: Publish and upgrade only through the versioned package/deployment path**
+
+Use `uip solution publish` and the supported non-destructive deployment upgrade path. Do not run `uip solution upload` and never pass `--force`. Verify the deployment is active, preserves all prior resources, contains the net-new Flow/BPMN behavior, and introduces no `_1` copy.
+
+- [ ] **Step 4: Push the reviewed branch**
+
+Push `codex/pi360-multiscenario-refit`, verify the remote head matches local HEAD, and report the existing pull request. Do not upload or force-overwrite the Studio Web solution.

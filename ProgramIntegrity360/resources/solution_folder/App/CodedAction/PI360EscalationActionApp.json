@@ -1,0 +1,37 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EscalationActionApp",
+    "kind": "app",
+    "type": "codedAction",
+    "apiVersion": "apps.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "Package",
+        "name": "ProgramIntegrity360.AppV2.PI360EscalationActionApp"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360EscalationActionApp",
+      "description": "Drafts investigator- and supervisor-facing case narratives with cited facts and labeled inferences.",
+      "routingName": "action-bbc93c64910748d1a76b07ef52b",
+      "version": "1.0.0",
+      "package": {
+        "name": "ProgramIntegrity360.AppV2.PI360EscalationActionApp",
+        "key": "ProgramIntegrity360.AppV2.PI360EscalationActionApp:1.0.0"
+      },
+      "externalClientId": "",
+      "appSystemName": "IDaac7a675d516429eaf070fedcc4f5a34"
+    },
+    "locks": [],
+    "key": "47ac3d84-e9d4-4023-93e5-d8c0b955bd83",
+    "files": []
+  }
+}
