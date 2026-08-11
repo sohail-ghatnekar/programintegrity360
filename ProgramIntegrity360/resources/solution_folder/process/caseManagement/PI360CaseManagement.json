@@ -46,6 +46,34 @@
         "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
         "resourceName": "pi360-escalation-action-app",
         "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
+      },
+      {
+        "bindingType": "process",
+        "bindingKey": "8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
+        "bindingValues": {},
+        "bindingMetadata": {
+          "activityName": "Flow - acquire and validate claim evidence",
+          "bindingsVersion": "2.2",
+          "solutionsSupport": "true"
+        },
+        "resourceKind": "Process",
+        "resourceKey": "8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
+        "resourceName": "PI360CaseManagerFlow",
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
+      },
+      {
+        "bindingType": "process",
+        "bindingKey": "5fb67ceb-1d49-475b-96a3-1037eb152b2d",
+        "bindingValues": {},
+        "bindingMetadata": {
+          "activityName": "BPMN - request and await hospital record",
+          "bindingsVersion": "2.2",
+          "solutionsSupport": "true"
+        },
+        "resourceKind": "Process",
+        "resourceKey": "5fb67ceb-1d49-475b-96a3-1037eb152b2d",
+        "resourceName": "PI360AdHocReviewBpmn",
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       }
     ],
     "folders": [
