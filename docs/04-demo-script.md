@@ -84,7 +84,7 @@ documentInput = {
 | 4:15–5:45 | Rules and Caseworker | 360-minute conflict and grounded first pass |
 | 5:45–7:45 | Coded app and investigator task | Human confirmation to open a true investigation |
 | 7:45–9:30 | Supervisor review | Investigator Findings and Agentic Evidence |
-| 9:30–11:00 | Closure | Audit trail, reviewed disposition, email, next steps |
+| 9:30–11:00 | Closure | Audit trail, reviewed disposition, and next steps |
 
 ### 1. Intake and triage
 
