@@ -1,10 +1,10 @@
 {
   "docVersion": "1.0.0",
   "resource": {
-    "name": "PI360CaseManagerAgent",
+    "name": "PI360RecoveryAuthorizationActionApp",
     "kind": "package",
     "apiVersion": "orchestrator.uipath.com/v1",
-    "projectKey": "72209049-a669-4dee-af0f-f67a87df1253",
+    "projectKey": "ec7a30ac-2270-421a-b5f7-0d9676d3bbe4",
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
@@ -15,9 +15,12 @@
       }
     ],
     "spec": {
-      "name": "PI360CaseManagerAgent"
+      "fileName": null,
+      "fileReference": null,
+      "name": "PI360RecoveryAuthorizationActionApp",
+      "description": null
     },
     "locks": [],
-    "key": "7767e490-7d90-4a12-80af-b567e63d4235"
+    "key": "eb0ebd1d-1112-4cac-8768-03575403b597"
   }
 }

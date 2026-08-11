@@ -8,16 +8,19 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
       }
     ],
     "spec": {
-      "name": "PI360EscalationActionApp"
+      "fileName": null,
+      "fileReference": null,
+      "name": "PI360EscalationActionApp",
+      "description": null
     },
     "locks": [],
-    "key": "90bf0179-33d4-484e-80f1-661a5bf2abe2",
-    "files": []
+    "key": "1358edb0-6f6c-4267-a180-2f862e29713d"
   }
 }

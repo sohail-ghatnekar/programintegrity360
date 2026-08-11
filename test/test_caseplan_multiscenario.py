@@ -43,6 +43,14 @@ CLOUD_TASK_IDS = {
     "thmyc7i2S",
 }
 DORMANT_CLOUD_TASK_IDS = {"tUeO6EGo3", "tH5yKJJef", "thmyc7i2S"}
+CLOUD_ONLY_TASK_CONFIG = {
+    "tUeO6EGo3": ("rpa", "IXP Extraction TimeSheet @Matt"),
+    "tQAC3rec": ("api-workflow", "Rules - validate threshold and evidence indicators"),
+    "tPRV6wait": ("wait-for-timer", "Timer - await hospital record (72 hours)"),
+    "tH5yKJJef": ("rpa", "IXP Extraction Medical Record @Matt"),
+    "tPKT7prep": ("api-workflow", "API - prepare investigator findings and agentic evidence"),
+    "thmyc7i2S": ("rpa", "RPA - send outlook to someone"),
+}
 
 
 def load_caseplan():
@@ -114,6 +122,37 @@ def test_preserved_ixp_rpa_and_email_tasks_are_present_but_unreachable():
 
     for task_id in DORMANT_CLOUD_TASK_IDS:
         assert is_deterministically_dormant(task_by_id(caseplan, task_id)), task_id
+
+
+def test_cloud_only_tasks_keep_their_ids_types_names_and_runtime_configuration():
+    caseplan = load_caseplan()
+
+    for task_id, (task_type, display_name) in CLOUD_ONLY_TASK_CONFIG.items():
+        task = task_by_id(caseplan, task_id)
+        assert (task["type"], task["displayName"]) == (task_type, display_name)
+
+    timesheet = task_by_id(caseplan, "tUeO6EGo3")
+    assert timesheet["data"]["name"] == "=bindings.b7DAhSveV"
+    assert timesheet["data"]["folderPath"] == "=bindings.bpqtM3QdN"
+    assert timesheet["data"]["outputs"][0]["id"] == "error"
+
+    validation = task_by_id(caseplan, "tQAC3rec")
+    assert validation["data"]["inputs"][0]["value"] == (
+        "ValidateEvidenceByCaseType"
+    )
+    assert [item["name"] for item in validation["data"]["inputs"]] == [
+        "workflowName",
+        "caseType",
+        "caseId",
+        "claimTotalBilled",
+        "hospitalRecordAvailable",
+    ]
+
+    timer = task_by_id(caseplan, "tPRV6wait")
+    assert timer["data"] == {"timerType": "timeDuration", "timeDuration": "P3D"}
+
+    packet = task_by_id(caseplan, "tPKT7prep")
+    assert packet["data"]["inputs"][0]["value"] == "PrepareSupervisorPacket"
 
 
 def assert_first_intake_contract(caseplan):

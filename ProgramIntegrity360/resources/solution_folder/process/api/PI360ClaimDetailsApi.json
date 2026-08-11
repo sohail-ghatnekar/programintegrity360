@@ -9,11 +9,12 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360ClaimDetailsApi"
+        "name": "PI360ClaimDetailsApi",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -34,7 +35,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
-    "files": []
+    "key": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4"
   }
 }

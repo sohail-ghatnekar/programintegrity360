@@ -9,11 +9,12 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360EvidenceSnapshotAutomation"
+        "name": "PI360EvidenceSnapshotAutomation",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -46,7 +47,6 @@
       "tags": []
     },
     "locks": [],
-    "key": "58e4aa89-7358-47ee-a0d4-6711e9792208",
-    "files": []
+    "key": "58e4aa89-7358-47ee-a0d4-6711e9792208"
   }
 }

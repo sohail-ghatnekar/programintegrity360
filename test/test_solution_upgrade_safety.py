@@ -13,6 +13,7 @@ PROGRAM_INTEGRITY_FABRIC_RESOURCE_KEY = "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
 CASE_MANAGER_FLOW_RESOURCE_KEY = "8dd7c4ad-7050-4e54-b915-854f29fa5fd6"
 AD_HOC_REVIEW_BPMN_RESOURCE_KEY = "5fb67ceb-1d49-475b-96a3-1037eb152b2d"
 API_WORKFLOWS_RESOURCE_KEY = "9c77c6aa-3a07-4053-a559-28c98f2520a3"
+IXP_TIMESHEET_RESOURCE_KEY = "da8d33bc-864b-4ac0-ad48-220a77834bbd"
 BPMN_PATH = SOLUTION_ROOT / "PI360AdHocReviewBpmn" / "PI360AdHocReviewBpmn.bpmn"
 CLOUD_PROJECTS = {
     "PI360SummaryAgent": "734cac0b-a987-4ec4-8cd4-dc5d3b1e6d4c",
@@ -252,6 +253,7 @@ def test_owned_sibling_bindings_are_pinned_to_solution_resource_keys():
             ("app", ESCALATION_APP_RESOURCE_KEY),
             ("process", CASE_MANAGER_FLOW_RESOURCE_KEY),
             ("process", AD_HOC_REVIEW_BPMN_RESOURCE_KEY),
+            ("process", IXP_TIMESHEET_RESOURCE_KEY),
         },
         SOLUTION_ROOT / "PI360CaseManagerAgent" / "bindings_v2.json": {
             ("app", ESCALATION_APP_RESOURCE_KEY),

@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -17,7 +18,6 @@
       "name": "PI360InvestigationPlanningAgent"
     },
     "locks": [],
-    "key": "c5a54f6f-1c99-4153-8078-7c70c0e1d861",
-    "files": []
+    "key": "c5a54f6f-1c99-4153-8078-7c70c0e1d861"
   }
 }

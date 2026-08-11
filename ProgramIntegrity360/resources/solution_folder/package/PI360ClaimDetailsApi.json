@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -17,7 +18,6 @@
       "name": "PI360ClaimDetailsApi"
     },
     "locks": [],
-    "key": "d4fc01a6-9cba-4245-bfca-2bfc9e0726a9",
-    "files": []
+    "key": "d4fc01a6-9cba-4245-bfca-2bfc9e0726a9"
   }
 }

@@ -9,8 +9,8 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360ApiWorkflows"
+        "name": "PI360ApiWorkflows",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [
@@ -26,8 +26,7 @@
         "bindingMetadata": {
           "activityName": "PI360 Program Integrity Case Upsert",
           "bindingsVersion": "2.2",
-          "connector": "uipath-uipath-dataservice",
-          "useConnectionService": "true"
+          "isSolutionResource": true
         },
         "resourceKind": "Connection",
         "resourceType": "uipath-uipath-dataservice",
@@ -36,6 +35,7 @@
         "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4"
       }
     ],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -55,7 +55,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "9c77c6aa-3a07-4053-a559-28c98f2520a3",
-    "files": []
+    "key": "9c77c6aa-3a07-4053-a559-28c98f2520a3"
   }
 }

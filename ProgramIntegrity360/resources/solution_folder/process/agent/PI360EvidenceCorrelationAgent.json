@@ -9,11 +9,12 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360EvidenceCorrelationAgent"
+        "name": "PI360EvidenceCorrelationAgent",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -33,7 +34,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "d7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f",
-    "files": []
+    "key": "d7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f"
   }
 }

@@ -9,31 +9,12 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360AdHocReviewBpmn"
+        "name": "PI360AdHocReviewBpmn",
+        "kind": "package"
       }
     ],
-    "runtimeDependencies": [
-      {
-        "bindingType": "process",
-        "bindingKey": "9c77c6aa-3a07-4053-a559-28c98f2520a3",
-        "bindingValues": {
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
-        "bindingMetadata": {
-          "activityName": "PI360 provider record request and intake",
-          "bindingsVersion": "2.2",
-          "solutionsSupport": "true"
-        },
-        "resourceKind": "Process",
-        "resourceKey": "9c77c6aa-3a07-4053-a559-28c98f2520a3",
-        "resourceName": "PI360ApiWorkflows",
-        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
-      }
-    ],
+    "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -53,7 +34,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "5fb67ceb-1d49-475b-96a3-1037eb152b2d",
-    "files": []
+    "key": "5fb67ceb-1d49-475b-96a3-1037eb152b2d"
   }
 }

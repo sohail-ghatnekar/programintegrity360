@@ -7,6 +7,15 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [
+      {
+        "name": "pi360-escalation-action-app.0.2.0.nupkg",
+        "kind": "Package",
+        "version": "0.2.0",
+        "url": "https://cloud.uipath.com/uipathlabs/Playground/orchestrator_/odata/Processes/UiPath.Server.Configuration.OData.DownloadPackage(key=\u0027pi360-escalation-action-app:0.2.0\u0027)?feedId=93949a13-9388-45bb-af90-5783a67e1b33",
+        "key": "pi360-escalation-action-app_0.2.0"
+      }
+    ],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -18,15 +27,6 @@
       "name": "pi360-escalation-action-app"
     },
     "locks": [],
-    "key": "pi360-escalation-action-app:0.2.0",
-    "files": [
-      {
-        "key": "pi360-escalation-action-app_0.2.0",
-        "name": "pi360-escalation-action-app.0.2.0.nupkg",
-        "url": "https://cloud.uipath.com/uipathlabs/Playground/orchestrator_/odata/Processes/UiPath.Server.Configuration.OData.DownloadPackage(key='pi360-escalation-action-app:0.2.0')?feedId=93949a13-9388-45bb-af90-5783a67e1b33",
-        "kind": "Package",
-        "version": "0.2.0"
-      }
-    ]
+    "key": "pi360-escalation-action-app:0.2.0"
   }
 }

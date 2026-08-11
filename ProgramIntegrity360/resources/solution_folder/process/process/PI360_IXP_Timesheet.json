@@ -5,27 +5,39 @@
     "kind": "process",
     "type": "process",
     "apiVersion": "orchestrator.uipath.com/v1",
-    "projectKey": "79fb4fb4-73e6-4c82-aa3d-4548ca62d677",
+    "projectKey": "616518cc-4755-4790-a5ad-3f2c7b4191a5",
+    "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360 IXP Timesheet"
+        "name": "PI360 IXP Timesheet",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
       }
     ],
     "spec": {
+      "entryPointUniqueId": null,
+      "inputArgumentsSchema": null,
+      "inputArgumentsSchemaV2": null,
       "type": "Process",
       "name": "PI360 IXP Timesheet",
+      "description": null,
       "package": {
-        "key": "4ee71527-4a70-4bff-b216-6b520fe71d30"
+        "key": "d8a8ac1a-bcb8-4342-926c-c15664b5d225"
       },
-      "inputArguments": "{}",
+      "packageName": "ProgramIntegrity360.process.PI360.IXP.Timesheet",
+      "packageVersion": null,
+      "entryPointName": null,
+      "inputArguments": null,
       "jobPriority": "Medium",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
       "jobRecording": "Disabled",
       "targetFrameworkValue": "Portable",
       "duration": 40,
@@ -34,11 +46,15 @@
       "remoteControlAccess": "None",
       "retentionAction": "Delete",
       "retentionPeriod": 30,
+      "retentionBucketRef": null,
       "staleRetentionAction": "Delete",
-      "staleRetentionPeriod": 180
+      "staleRetentionPeriod": 180,
+      "staleRetentionBucketRef": null,
+      "entryPoints": null,
+      "connections": null,
+      "tags": []
     },
     "locks": [],
-    "key": "fa5b106f-e39c-47e9-871c-747728fd58c0",
-    "files": []
+    "key": "da8d33bc-864b-4ac0-ad48-220a77834bbd"
   }
 }

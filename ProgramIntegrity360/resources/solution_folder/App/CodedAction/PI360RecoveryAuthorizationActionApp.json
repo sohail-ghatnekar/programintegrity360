@@ -1,15 +1,15 @@
 {
   "docVersion": "1.0.0",
   "resource": {
-    "name": "PI360EscalationActionApp",
+    "name": "PI360RecoveryAuthorizationActionApp",
     "kind": "app",
     "type": "codedAction",
     "apiVersion": "apps.uipath.com/v1",
-    "projectKey": "e0eab46c-4d80-4aac-8ef9-47644098ceaf",
+    "projectKey": "ec7a30ac-2270-421a-b5f7-0d9676d3bbe4",
     "isOverridable": true,
     "dependencies": [
       {
-        "name": "PI360EscalationActionApp",
+        "name": "PI360RecoveryAuthorizationActionApp",
         "kind": "package"
       }
     ],
@@ -21,18 +21,18 @@
       }
     ],
     "spec": {
-      "name": "PI360EscalationActionApp",
+      "name": "PI360RecoveryAuthorizationActionApp",
       "description": null,
       "version": "1.0.0",
       "routingName": null,
       "appSystemName": null,
       "package": {
-        "key": "1358edb0-6f6c-4267-a180-2f862e29713d"
+        "key": "eb0ebd1d-1112-4cac-8768-03575403b597"
       },
       "externalClientId": null,
       "actionSchema": null
     },
     "locks": [],
-    "key": "03d46443-0ae3-460a-8ad5-dce6e8fdea62"
+    "key": "cc65fd9e-f779-447e-a45d-24fda4ee318e"
   }
 }

@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -17,7 +18,6 @@
       "name": "PI360SummaryAgent"
     },
     "locks": [],
-    "key": "165318d1-7e06-4a0d-8827-18158c01bddb",
-    "files": []
+    "key": "165318d1-7e06-4a0d-8827-18158c01bddb"
   }
 }

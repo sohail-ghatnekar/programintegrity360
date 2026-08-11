@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -17,7 +18,6 @@
       "name": "PI360AdHocReviewBpmn"
     },
     "locks": [],
-    "key": "4dafc4c7-2090-4d24-bbc2-7a51f0b539ca",
-    "files": []
+    "key": "4dafc4c7-2090-4d24-bbc2-7a51f0b539ca"
   }
 }
