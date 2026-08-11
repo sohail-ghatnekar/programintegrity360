@@ -113,3 +113,18 @@ def test_flow_has_explicit_hospice_provider_route_and_no_risk_only_default():
     provider_expression = nodes["needsProviderResponse"]["inputs"]["expression"]
     assert "Stage_Prreq6" in provider_expression
     assert "riskScore" not in provider_expression
+
+
+def test_provider_route_reason_distinguishes_deterministic_hospice_from_agent_selection():
+    flow = load_flow()
+    nodes = {node["id"]: node for node in flow["nodes"]}
+
+    provider_expression = nodes["needsProviderResponse"]["inputs"]["expression"]
+    provider_script = nodes["routeProviderResponse"]["inputs"]["script"]
+
+    assert "StateMedicaidHospice" in provider_expression
+    assert "Stage_Prreq6" in provider_expression
+    assert "const deterministicHospiceProviderRequest =" in provider_script
+    assert "deterministicHospiceProviderRequest ?" in provider_script
+    assert ": String(route.routeReason" in provider_script
+    assert "hospital record is not yet available" in provider_script

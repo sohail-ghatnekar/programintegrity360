@@ -473,7 +473,7 @@
         "label": "Route to provider response"
       },
       "inputs": {
-        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nconst claimDetails = $vars.claimDetailsByCaseType.output || {};\nconst deterministicReason = `StateMedicaidHospice billed total ${Number(claimDetails.totalBilled || 0)} meets the ${Number(claimDetails.claimThreshold || 2500)} threshold and the hospital record is not yet available.`;\nreturn { ...route, recommendedStageId: 'Stage_Prreq6', routeReason: String(deterministicReason) };"
+        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nconst normalized = $vars.normalizeCase.output || {};\nconst claimDetails = $vars.claimDetailsByCaseType.output || {};\nconst claimThreshold = Number(claimDetails.claimThreshold || 2500);\nconst totalBilled = Number(claimDetails.totalBilled || 0);\nconst deterministicHospiceProviderRequest = normalized.caseType === 'StateMedicaidHospice' && totalBilled >= claimThreshold && normalized.hospitalRecordAvailable !== true;\nconst deterministicReason = `StateMedicaidHospice billed total ${totalBilled} meets the ${claimThreshold} threshold and the hospital record is not yet available.`;\nconst routeReason = deterministicHospiceProviderRequest ? deterministicReason : String(route.routeReason || 'The Case Manager agent selected Provider Request based on grounded evidence requirements.');\nreturn { ...route, recommendedStageId: 'Stage_Prreq6', routeReason };"
       },
       "outputs": {
         "output": {
