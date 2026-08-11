@@ -197,7 +197,6 @@ def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity
     root = ET.parse(BPMN_PATH).getroot()
     process = root.find("bpmn:process", namespaces)
     assert process is not None
-    process_children = list(process)
     service_tasks = process.findall("bpmn:serviceTask", namespaces)
 
     def api_task(workflow_name):
@@ -225,8 +224,28 @@ def test_bpmn_provider_request_contract_is_complete_and_contains_no_rpa_activity
         "bpmn:timerEventDefinition/bpmn:timeDuration", namespaces
     )
     assert timer_duration.text == "P3D"
-    assert process_children.index(request_task) < process_children.index(timer)
-    assert process_children.index(timer) < process_children.index(intake_task)
+
+    sequence_graph = {}
+    for sequence_flow in process.findall("bpmn:sequenceFlow", namespaces):
+        sequence_graph.setdefault(sequence_flow.attrib["sourceRef"], set()).add(
+            sequence_flow.attrib["targetRef"]
+        )
+
+    def reaches(source_id, target_id):
+        pending = [source_id]
+        visited = set()
+        while pending:
+            current = pending.pop()
+            if current == target_id:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            pending.extend(sequence_graph.get(current, ()))
+        return False
+
+    assert reaches(request_task.attrib["id"], timer.attrib["id"])
+    assert reaches(timer.attrib["id"], intake_task.attrib["id"])
 
     activities = root.findall(".//uipath:activity", namespaces)
     activity_types = [
