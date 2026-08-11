@@ -20,7 +20,7 @@ Total: 59.
 
 ## Case
 
-`PI360ProgramIntegrityCase` is the aggregate root. Existing lifecycle, assignment, exposure, and audit fields remain unchanged. Version 0.6.1 adds:
+`PI360ProgramIntegrityCase` is the lifecycle aggregate root and the authoritative Case record. Intake writes the Case record; the Case lifecycle controls investigator and supervisor boundaries; closure persists the approved disposition to the Case. Existing lifecycle, assignment, exposure, and audit fields remain unchanged. Version 0.6.1 adds:
 
 | Field | Type | Hospice example |
 |---|---|---|
@@ -34,6 +34,21 @@ Total: 59.
 | `claim_threshold` | Decimal(2) | 2500.00 |
 
 `case_type` is a string because the tenant cap prevents creation of `PI360CaseType`. The application contract still allows only `MedicaidPCS` and `StateMedicaidHospice`.
+
+## Logical relationships
+
+The C-light model contains no new Data Fabric relationship entities or enforced foreign keys. It uses stable identifier fields as logical joins:
+
+| From | Logical join | To | Meaning |
+|---|---|---|---|
+| Case | `provider_id` | Provider | Provider under review |
+| Case | `attendant_id` | Attendant | PCS attendant or hospice caregiver context |
+| Claim | `case_id` | Case | Claim evidence for a Case lifecycle |
+| Claim | `provider_id`, `attendant_id`, `member_id` | Provider, Attendant, member identity | Claim participants and beneficiary context |
+| Risk signal, Evidence document, Investigation action, Decision | `case_id` | Case | Evidence, audit, and decision records for that Case |
+| EVV visit | `attendant_id`, `member_id` | Attendant and member identity | PCS service evidence; it does not carry a `case_id` field |
+
+The hospice Case has one aggregate Claim header containing the three source lines. Its hospital packet is a `PI360EvidenceDocument` row joined by `case_id`; the Observation encounter fields are attributes of that evidence row, not a separate encounter entity.
 
 ## Claim
 
@@ -73,18 +88,20 @@ Existing extraction fields and validation status remain. Version 0.6.1 adds:
 | `encounter_discharge_at` | DateTime with timezone | 2026-07-16T10:00:00-05:00 |
 | `encounter_disposition` | String | Home, self-care |
 
-Institutional fields are normalized onto the hospital evidence row. The full extraction payload remains in `extracted_fields`.
+Institutional fields are normalized onto the hospital evidence row. The full extraction payload remains in `extracted_fields`. The `ixp_model` and `ixp_model_version` columns preserve provenance for existing/deferred content; no IXP runtime extraction is invoked in this build.
 
 ## Other entities
 
 - `PI360Provider`: shared provider enrollment context.
 - `PI360Attendant`: Jordan Ellis for PCS and Taylor Brooks for hospice.
 - `PI360EvvVisit`: PCS EVV evidence.
-- `PI360RiskSignal`: deterministic rule, inputs, output, severity, version, and timestamp. `RS-HSP-01` records the 360-minute location/time conflict.
+- `PI360RiskSignal`: deterministic rule, inputs, output, severity, version, and timestamp. `RS-HSP-01` records the 360-minute location/time conflict; it is a review indicator only.
 - `PI360InvestigationAction`: shared audit stream distinguishing system, agent, and human actions.
 - `PI360Decision`: investigator and supervisor decisions; adverse or financial action remains human-gated.
 
 `PI360DocType` includes Timesheet, Plan of Care, Service Note, Personnel Packet, Correspondence, Hospital Record, Policy Reference, and Hospice Service Record.
+
+The Case, Flow, and BPMN do not invoke IXP, RPA automation, or automated email. Those assets may remain packaged, but they do not create or update the records described here.
 
 ## Idempotency
 

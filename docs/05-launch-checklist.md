@@ -10,20 +10,21 @@ Target: `cloud.uipath.com / uipathlabs / Playground / AMER Presales/Public Secto
 - [x] Confirm the active folder key is `5db31dd1-1073-4f9e-b44b-76f5484e03c4`.
 - [x] Confirm the hosted coded app responds at `https://uipathlabs.uipath.host/pi360-coded-app`.
 - [x] Do not publish a coded-app release in this pass; preserve its visual design and PCS demo-data fallback.
+- [ ] Regenerate `caseplan.json.bpmn` from the current Case plan before packaging.
+- [ ] Confirm the Case Evidence task is bound to `solution_folder.PI360CaseManagerFlow` and the hospice Provider task is bound to `solution_folder.PI360AdHocReviewBpmn`.
+- [ ] Confirm no Case, Flow, or BPMN binding resolves to a `_1` resource.
 
 ## External fixtures
 
-- [ ] `https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS` returns `caseType = MedicaidPCS` and nine claims.
-- [ ] `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice` returns `caseType = StateMedicaidHospice`, 52 units, and $3,250.
+- [ ] `PI360ClaimDetailsApi` uses HTTP `GET` to `https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS` and returns `caseType = MedicaidPCS` and nine claims.
+- [ ] `PI360ClaimDetailsApi` uses HTTP `GET` to `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice` and returns `caseType = StateMedicaidHospice`, 52 units, and $3,250.
 - [ ] Neither Beeceptor response supplies timesheet or hospital-derived conclusions.
 
-## IXP
+## Deferred IXP, RPA, and email integrations
 
-- [ ] `PI360 Service Evidence Extractor` is pinned and tagged `live` at model 12.
-- [ ] `PI360 Institutional Encounter Extractor` is pinned and tagged `live` at model 9.
-- [ ] The service extractor preserves the July 14 09:00–15:00 line and 24 units.
-- [ ] The institutional extractor preserves `Observation` and routes omitted encounter/discharge fields to human review.
-- [ ] Until the two projects appear in the authenticated Maestro node registry, identify the two Flow nodes as swap-ready mocks rather than live IXP calls.
+- [ ] Confirm no active Case, Flow, or BPMN node invokes IXP extraction, RPA automation, or automated email.
+- [ ] Confirm `PI360 Service Evidence Extractor` model 12 and `PI360 Institutional Encounter Extractor` model 9 are identified only as deferred packaged assets.
+- [ ] Confirm no demo output presents deferred IXP/RPA/email work as completed, queued, or sent.
 
 ## Storage buckets
 
@@ -42,7 +43,8 @@ Playground is at its 500-object cap. Do not create replacement entities or choic
 - [ ] Confirm one `PI-PCS-2026-0041` row and one `PI-HSP-2026-0042` row.
 - [ ] Confirm the hospice case stores Jordan Ellis as member and Taylor Brooks as caregiver.
 - [ ] Confirm the hospice claim stores 52 units, $3,250, `LINE-0714-01`, place of service 12, and the three lines in `claim_lines_json`.
-- [ ] Confirm the hospital evidence row stores `Observation`, the exact arrival/discharge interval, and IXP model 9.
+- [ ] Confirm the hospital evidence row stores `Observation`, the exact arrival/discharge interval, and deferred IXP model-9 provenance (not a runtime IXP call).
+- [ ] Confirm logical joins use `case_id` for Case-linked claims, signals, evidence documents, actions, and decisions; `provider_id` for Provider context; and `attendant_id`/`member_id` for service context. Do not create relationship entities at the tenant cap.
 
 ## Local verification
 
@@ -56,20 +58,22 @@ Playground is at its 500-object cap. Do not create replacement entities or choic
 - [ ] Supply all six manual-trigger objects separately.
 - [ ] Confirm `CaseType = StateMedicaidHospice` selects the hospice profile.
 - [ ] Confirm $3,250 exceeds the $2,500 threshold.
-- [ ] Confirm the claim API selects `/StateMedicaidHospice`.
-- [ ] Confirm service-evidence extraction precedes the institutional record.
-- [ ] Confirm the missing hospital record opens `Provider record request` with a 72-hour timer.
+- [ ] Confirm the Evidence Case task invokes `PI360CaseManagerFlow`, which uses `PI360ClaimDetailsApi` with HTTP `GET` to `/StateMedicaidHospice`, then QuickRules and CaseManager agents.
+- [ ] Confirm the hospice Flow recommendation opens `Provider record request` and invokes `PI360AdHocReviewBpmn`.
+- [ ] Confirm the BPMN's investigator-proceed gateway occurs before `API: Request hospital record` and its visible timer is `P3D` (72 hours).
+- [ ] Confirm a missing hospital record remains awaiting provider without claiming analysis; a returned record is intaken before return to Investigation.
 - [ ] Confirm the returned record preserves patient class `Observation`.
 - [ ] Confirm deterministic rules return 360 overlap minutes and `reviewIndicatorOnly = true`.
 - [ ] Confirm Agentic Caseworker recommends but does not open the true investigation.
 - [ ] Confirm an investigator task is required before supervisor review.
 - [ ] Confirm supervisor review exposes Investigator Findings and Agentic Evidence.
-- [ ] Confirm closure and summary email remain blocked until human approval.
+- [ ] Confirm closure persists the human-approved disposition and audit trail; no automated closure email is sent or queued.
 
 ## PCS fallback smoke path
 
-- [ ] Confirm `CaseType = MedicaidPCS` selects `/MedicaidPCS`.
+- [ ] Confirm `CaseType = MedicaidPCS` selects `PI360ClaimDetailsApi` HTTP `GET` route `/MedicaidPCS`.
 - [ ] Confirm PCS retains its five deterministic signals and existing evidence.
+- [ ] Confirm the PCS overlapping-visit signal remains 90 minutes; the 360-minute location/time conflict is hospice `RS-HSP-01`.
 - [ ] Confirm PCS skips the automatic hospital-record request.
 - [ ] Confirm the coded app's `Demo data` state is described as PCS fallback, never as live hospice data.
 
@@ -79,5 +83,5 @@ Playground is at its 500-object cap. Do not create replacement entities or choic
 - [ ] Preserve the printed patient class Observation without recasting it as a different hospital status.
 - [ ] Call automated outputs review indicators or risk signals, not fraud findings.
 - [ ] Do not complete a real adverse or financial task.
-- [ ] Do not claim IXP runtime binding until the Maestro registry exposes the models.
+- [ ] Do not claim IXP runtime binding, RPA execution, or automated email delivery; all are deferred in this build.
 - [ ] Keep Jordan's member role and attendant role separated by case ID.

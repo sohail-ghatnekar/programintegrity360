@@ -10,6 +10,8 @@ Say:
 
 The primary walkthrough is `PI-HSP-2026-0042`, State Medicaid Hospice. The current coded-app visual design is unchanged. Use the live hospice record only when the app badge says `Live UiPath` and the record is visible. If the badge says `Demo data`, use the separate PCS fallback below and do not represent it as the hospice case.
 
+The Case plan owns lifecycle and human checkpoints; Data Fabric is the persistent system of record. In this build, Evidence invokes `PI360CaseManagerFlow`, and the hospice provider-record stage invokes `PI360AdHocReviewBpmn`. IXP extraction, RPA automation, and automated email are deferred and are not executed.
+
 ## Manual-trigger inputs
 
 Enter these as six separate JSON inputs, not as one wrapper object:
@@ -77,8 +79,8 @@ documentInput = {
 | Time | Surface | Story point |
 |---|---|---|
 | 0:00–1:15 | Manual trigger and Intake | CaseType routing and threshold |
-| 1:15–2:45 | Evidence acquisition | Beeceptor claim plus service-timesheet extraction |
-| 2:45–4:15 | Provider record request | Hospice-only 72-hour wait and hospital response |
+| 1:15–2:45 | Evidence acquisition | Case invokes Flow: Beeceptor GET, QuickRules, and Caseworker routing |
+| 2:45–4:15 | Provider record request | Hospice BPMN investigator gate and visible `P3D` wait |
 | 4:15–5:45 | Rules and Caseworker | 360-minute conflict and grounded first pass |
 | 5:45–7:45 | Coded app and investigator task | Human confirmation to open a true investigation |
 | 7:45–9:30 | Supervisor review | Investigator Findings and Agentic Evidence |
@@ -86,39 +88,39 @@ documentInput = {
 
 ### 1. Intake and triage
 
-Show the six inputs and `CaseType = StateMedicaidHospice`.
+Show the six inputs and `CaseType = StateMedicaidHospice`, then point out the corresponding Case row in Data Fabric.
 
 Say:
 
-> "CaseType is the first routing decision. The deterministic rule compares the $3,250 claim total with the $2,500 demo threshold. Because the threshold is exceeded, the case advances to evidence acquisition. An unknown CaseType is rejected rather than guessed."
+> "CaseType is the first routing decision. The deterministic rule compares the $3,250 claim total with the $2,500 demo threshold. Because the threshold is exceeded, the Case invokes its evidence-routing Flow. The Case record is the lifecycle authority; Data Fabric persists the Case and its linked evidence, actions, and decisions. An unknown CaseType is rejected rather than guessed."
 
 ### 2. Evidence acquisition and validation
 
-Show `PI360ClaimDetailsApi` calling:
+Show the Case task `Flow - acquire and validate claim evidence`, then show `PI360CaseManagerFlow` calling `PI360ClaimDetailsApi` with HTTP `GET`:
 
 `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice`
 
-Point to the three claim lines, 52 units, and $3,250 total. Then show the Timesheets bucket path and the service extraction contract.
+Point to the three claim lines, 52 units, and $3,250 total. Then show the Timesheets bucket path as supplied evidence and the Flow's `PI360QuickRulesCodedAgent` and `PI360CaseManagerAgent` steps.
 
 Say:
 
-> "The API supplies claim facts only. The timesheet is separate evidence. PI360 Service Evidence Extractor reads the service dates, intervals, units, member, and caregiver. The model is published as live version 12; the current Flow node is explicitly marked as a swap-ready mock until the project appears in the Maestro IXP registry."
+> "The API supplies claim facts only. The timesheet is separate supplied evidence. The Flow uses QuickRules for deterministic routing and the Agentic Caseworker for a cited recommendation; neither decides fraud or opens an investigation. IXP extraction is deferred in this build, so no IXP result is presented as a runtime action."
 
 Do not say the Beeceptor response contains hospital or timesheet facts.
 
 ### 3. Provider record request
 
-Show the hospice-only branch and the 72-hour timer. Then change `hospitalRecordAvailable` to true or show the returned hospital packet in the Hospital Records bucket.
+Show the hospice-only Case task `BPMN - request and await hospital record` and the `PI360AdHocReviewBpmn` diagram. Point first to `Investigator proceed?`, then to `API: Request hospital record`, `Await response (P3D)`, and `API: Intake hospital record`. Show the supplied hospital packet in the Hospital Records bucket only as the provider response becomes available.
 
 Say:
 
-> "Hospice adds an ad-hoc provider-record stage. The case waits up to 72 hours for the hospital packet. When the response arrives, the institutional extractor records the encounter identity, facility, patient class, and interval. The printed patient class is Observation, not inpatient."
+> "Hospice adds a BPMN-owned provider-record stage. The investigator-proceed gateway blocks the request until approval. Once approved, the BPMN visibly waits `P3D`, or 72 hours, for the provider response. A returned record is intaken and control returns to Investigation; a missing record remains awaiting provider and no analysis is claimed. The printed patient class is Observation, not inpatient."
 
-Point to live model 9 for `PI360 Institutional Encounter Extractor` and repeat the registry/mock disclosure if demonstrating the current Flow node.
+Do not present an institutional IXP extraction as executed; that integration is deferred.
 
 ### 4. Deterministic conflict and Agentic Caseworker
 
-Show `RS-HSP-01`:
+Show `RS-HSP-01` and its persisted evidence references:
 
 - Claimed member-home service: July 14, 09:00–15:00.
 - Observation encounter: July 14 at 08:20 through July 16 at 10:00.
@@ -126,7 +128,9 @@ Show `RS-HSP-01`:
 
 Say:
 
-> "Deterministic code compares the two intervals and records a six-hour location/time conflict. That result is a review indicator only. The Agentic Caseworker receives the cited claim, timesheet, hospital record, policy reference, and rule output. It organizes facts and recommends whether an investigator should open a true investigation; it does not make that decision."
+> "Deterministic code compares the two intervals and records a six-hour location/time conflict. That result is a review indicator only. The Agentic Caseworker receives cited claim facts, supplied evidence, policy reference, and rule output. It organizes facts and recommends whether an investigator should open a true investigation; it does not make that decision."
+
+Say explicitly that Jordan's record says `Observation`. The policy's inpatient restriction cannot be applied as if Jordan were inpatient.
 
 ### 5. Coded app and investigator intervention
 
@@ -147,7 +151,7 @@ Open the investigator task and show the brief that asks the person to confirm wh
 
 Say:
 
-> "The coded app assembles the pulled evidence and agentic recommendation in the existing workbench. The investigator can validate, edit, and decide. Closing a drawer or receiving an agent response does not complete the task; only the Tasks API `Completed` state does."
+> "The coded app assembles the persisted evidence and agentic recommendation in the existing workbench. The investigator can validate, edit, and decide whether to open a true investigation. Closing a drawer or receiving an agent response does not complete the task; only the Tasks API `Completed` state does."
 
 Do not complete a real operational task during the demo.
 
@@ -161,11 +165,11 @@ Say:
 
 ### 7. Closure and communication
 
-Show `Closure and communication` in the six-stage strip and the API workflow contracts for closing the case and preparing the summary email.
+Show `Closure and communication` in the six-stage strip and the API workflow that closes the Case and persists the approved disposition.
 
 Say:
 
-> "Closure occurs only after the required human review. The final communication identifies the CaseType, claim totals, reviewed evidence, investigator findings, supervisor disposition, and next steps. It preserves Observation exactly and never labels the automated indicator as a fraud determination."
+> "Closure occurs only after the required human review. The Case persists the supervisor-approved disposition and audit trail in Data Fabric. It preserves Observation exactly and never labels the review indicator as a fraud determination. Automated closure email is deferred and is not sent or queued in this build."
 
 ## PCS fallback
 
@@ -175,7 +179,7 @@ Open `PI-PCS-2026-0041` and state clearly:
 
 > "This is the retained Medicaid PCS fallback, not the hospice patient story. Jordan Ellis is the attendant in this separate synthetic case."
 
-Show the existing 90-minute overlapping visit, 24 unsupported units, timesheet validation, investigator decision, provider response, supervisor gate, and audit timeline. PCS skips the automatic hospital-record request.
+Show the existing 90-minute overlapping visit, 24 unsupported units, timesheet evidence, investigator decision, supervisor gate, and audit timeline. PCS uses `PI360ClaimDetailsApi` with HTTP `GET` to `https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS` and skips the hospice provider-record BPMN.
 
 ## Presenter guardrails
 
@@ -183,6 +187,6 @@ Show the existing 90-minute overlapping visit, 24 unsupported units, timesheet v
 - Preserve the printed patient class `Observation`; do not recast it as a different hospital status.
 - Call the 360-minute result a review indicator or location/time conflict, not fraud.
 - Do not imply the policy automatically denies the claim.
-- Do not describe the two current Flow mocks as live IXP runtime calls.
+- Do not describe IXP, RPA automation, or automated email as active runtime work; all are deferred.
 - Do not claim task completion without the explicit Tasks API `Completed` confirmation.
 - Keep Jordan's roles separated by case ID.

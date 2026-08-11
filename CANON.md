@@ -77,7 +77,11 @@ The July 14 claimed home-service interval overlaps the observation encounter by 
 
 ### Hospice route
 
-The $3,250 claim exceeds the $2,500 threshold, so evidence acquisition continues. The service timesheet is extracted first. Because `CaseType = StateMedicaidHospice`, an ad-hoc provider record request opens a 72-hour wait for the hospital packet. Institutional extraction and deterministic interval comparison then precede the Agentic Caseworker recommendation and investigator decision.
+The $3,250 claim exceeds the $2,500 threshold, so the Case's Evidence acquisition and validation stage invokes `PI360CaseManagerFlow`. The Flow calls `PI360ClaimDetailsApi` by HTTP `GET` on the hospice route, then uses `PI360QuickRulesCodedAgent` and `PI360CaseManagerAgent` to return a routing recommendation.
+
+When the Flow recommends `Stage_Prreq6`, the hospice-only Case Provider record request stage invokes `PI360AdHocReviewBpmn`. Its `InvestigatorProceed` gateway is the pre-request investigator gate: without approval, the provider request is blocked and no analysis occurs. With approval, the BPMN requests the hospital record, waits `P3D` (72 hours), intakes a returned record, and returns the Case to Investigation. If no record is available at the timer, it remains awaiting provider and does not claim analysis occurred.
+
+The source packet's patient class remains `Observation`. The PCS policy's inpatient restriction must not be applied as though Jordan Ellis were inpatient.
 
 ## Fallback case: Medicaid PCS
 
@@ -105,20 +109,21 @@ The reviewed-sample basis is $172.80; the reviewed-period estimate is about $1,6
 | Stage | Required behavior |
 |---|---|
 | Intake and triage | Validate six inputs, select profile by CaseType, apply deterministic threshold routing |
-| Evidence acquisition and validation | Call the CaseType-specific Beeceptor route and extract service evidence |
-| Provider record request | Hospice-only ad-hoc branch; wait up to 72 hours and extract the institutional encounter |
+| Evidence acquisition and validation | Invoke `PI360CaseManagerFlow`, which calls the CaseType-specific Beeceptor route by HTTP `GET`, runs QuickRules, and gets an Agentic Caseworker routing recommendation |
+| Provider record request | Hospice-only `PI360AdHocReviewBpmn`; investigator-proceed gate, provider request, visible `P3D` wait, record intake, then return to Investigation |
 | Investigation | Agentic Caseworker first pass, coded-app brief, mandatory investigator decision |
 | Supervisor review | Investigator Findings and Agentic Evidence views, mandatory human disposition |
-| Closure and communication | Persist reviewed outcome, audit trail, closure summary email, and next steps |
+| Closure and communication | Persist the human-approved disposition and audit trail; automated closure email is deferred |
 
-## Endpoints and IXP
+## Endpoints and deferred extraction assets
 
 - PCS: `https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS`
 - Hospice: `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice`
-- Service extractor: `PI360 Service Evidence Extractor`, project `pi360_timesheets-46b073f4-ixp`, live model 12.
-- Institutional extractor: `PI360 Institutional Encounter Extractor`, project `pi360-institutional-encounter-extractor-53d63c92-ixp`, live model 9.
+- `PI360ClaimDetailsApi` uses HTTP `GET` and faults rather than silently switching CaseTypes when a response is malformed or mismatched.
+- `PI360 Service Evidence Extractor`, project `pi360_timesheets-46b073f4-ixp`, live model 12, is deferred and not invoked.
+- `PI360 Institutional Encounter Extractor`, project `pi360-institutional-encounter-extractor-53d63c92-ixp`, live model 9, is deferred and not invoked.
 
-The current authenticated Maestro registry does not expose those two IXP projects as selectable nodes. The Flow therefore uses explicitly labeled swap-ready mocks carrying the real model metadata. Do not describe those nodes as active IXP runtime calls until registry binding is verified.
+The current authenticated Maestro registry does not expose those two IXP projects as selectable nodes. The active Flow contains neither IXP nodes nor swap-ready extraction mocks. RPA automation and automated closure email are likewise deferred and are not invoked by the active Case, Flow, or BPMN.
 
 ## Data Fabric C-light model
 
@@ -128,6 +133,8 @@ Playground is at its 500-object Data Fabric cap. Version 0.6.0 therefore preserv
 - The hospice claim is one `PI360Claim` header; all three source lines remain in `claim_lines_json`.
 - Institutional encounter columns live on the hospital `PI360EvidenceDocument` row.
 - There are 59 records total: 2 cases, 1 provider, 2 attendants, 10 claims, 12 EVV visits, 6 signals, 9 evidence documents, 15 actions, and 2 decisions.
+
+Data Fabric uses logical identifier relationships, not new tenant relationship entities: `case_id` joins a Case to claims, risk signals, evidence documents, actions, and decisions; `provider_id` joins Case, Claim, and Attendant to Provider; and `attendant_id`/`member_id` connect claims and EVV visits to their people. The Case is the lifecycle authority, while Data Fabric is the persistent system of record.
 
 No entity or choice-set deletion, rename, or replacement is permitted.
 
