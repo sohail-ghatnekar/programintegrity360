@@ -15,6 +15,32 @@ def load_flow():
     return json.loads(FLOW_PATH.read_text())
 
 
+def test_flow_resource_definition_bindings_are_packager_resolvable():
+    flow = load_flow()
+    expected = {
+        "uipath.core.api-workflow.6d04d330-e36f-4da8-a0ae-b74fef97f1b4": {
+            "name": "PI360ClaimDetailsApi",
+            "folderPath": "",
+        },
+        "uipath.core.agent.fabc409c-d468-4964-92e0-2171e0ced3ba": {
+            "name": "PI360QuickRulesCodedAgent",
+            "folderPath": "",
+        },
+    }
+    definitions = [
+        definition
+        for definition in flow["definitions"]
+        if definition.get("nodeType") in expected
+    ]
+
+    assert len(definitions) == 2
+    assert {definition["nodeType"] for definition in definitions} == set(expected)
+    for definition in definitions:
+        assert definition["model"]["bindings"]["values"] == expected[
+            definition["nodeType"]
+        ]
+
+
 def test_flow_exposes_six_separate_manual_trigger_objects():
     flow = load_flow()
     inputs = {

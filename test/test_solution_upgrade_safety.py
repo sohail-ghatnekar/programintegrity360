@@ -34,6 +34,19 @@ def _deployment_resources() -> list[dict]:
     ]
 
 
+def test_case_project_keeps_packager_inputs_at_root_with_content_mappings():
+    project_root = SOLUTION_ROOT / "PI360CaseManagement"
+    package_files = json.loads(
+        (project_root / "package-descriptor.json").read_text()
+    )["files"]
+
+    assert (project_root / "caseplan.json").is_file()
+    assert (project_root / "caseplan.json.bpmn").is_file()
+    assert not (project_root / "content" / "caseplan.json").exists()
+    assert package_files["caseplan.json"] == "content/caseplan.json"
+    assert package_files["caseplan.json.bpmn"] == "content/caseplan.json.bpmn"
+
+
 def test_solution_has_no_shadow_copies_of_owned_deployment_resources():
     resources = _deployment_resources()
     identities = {

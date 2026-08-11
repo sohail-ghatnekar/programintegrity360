@@ -12,7 +12,6 @@ CASEPLAN_PATH = (
     ROOT
     / "ProgramIntegrity360"
     / "PI360CaseManagement"
-    / "content"
     / "caseplan.json"
 )
 FLOW_RESOURCE_KEY = "solution_folder.PI360CaseManagerFlow"

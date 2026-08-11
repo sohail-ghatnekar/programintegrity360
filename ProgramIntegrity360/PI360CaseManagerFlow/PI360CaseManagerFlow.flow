@@ -1207,18 +1207,10 @@
           "resourceSubType": "Api",
           "resourceKey": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
           "orchestratorType": "api",
-          "values": [
-            {
-              "name": "name",
-              "propertyAttribute": "name",
-              "default": "PI360ClaimDetailsApi"
-            },
-            {
-              "name": "folderPath",
-              "propertyAttribute": "folderPath",
-              "default": ""
-            }
-          ]
+          "values": {
+            "name": "PI360ClaimDetailsApi",
+            "folderPath": ""
+          }
         },
         "projectId": "2b115f5e-5658-4c0e-b9b3-8abc0b169713",
         "projectName": "PI360ClaimDetailsApi",
@@ -1537,18 +1529,10 @@
           "resourceSubType": "Agent",
           "resourceKey": "fabc409c-d468-4964-92e0-2171e0ced3ba",
           "orchestratorType": "agent",
-          "values": [
-            {
-              "name": "name",
-              "propertyAttribute": "name",
-              "default": "PI360QuickRulesCodedAgent"
-            },
-            {
-              "name": "folderPath",
-              "propertyAttribute": "folderPath",
-              "default": ""
-            }
-          ]
+          "values": {
+            "name": "PI360QuickRulesCodedAgent",
+            "folderPath": ""
+          }
         },
         "projectId": "47fa13a5-3cc9-40ee-a687-b9a8fd53b216",
         "projectName": "PI360QuickRulesCodedAgent",
