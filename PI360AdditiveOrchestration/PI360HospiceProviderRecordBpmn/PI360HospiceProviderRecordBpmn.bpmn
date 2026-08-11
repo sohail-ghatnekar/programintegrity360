@@ -22,6 +22,7 @@
         <uipath:output id="Var_NextStageId" name="NextStageId" type="string" elementId="Event_Start" />
         <uipath:output id="Var_AuditMessage" name="AuditMessage" type="string" elementId="Event_Start" />
         <uipath:inputOutput id="Var_RequestResponse" name="RequestHospitalRecordResponse" type="Orchestrator.RunJob" elementId="Task_RequestHospitalRecord" />
+        <uipath:inputOutput id="Var_ProviderRecordMessageResponse" name="ProviderRecordMessageResponse" type="Maestro.ReceiveMessageEvent" elementId="Event_ProviderRecordReceived" />
         <uipath:inputOutput id="Var_IntakeResponse" name="IntakeHospitalRecordResponse" type="Orchestrator.RunJob" elementId="Task_IntakeHospitalRecord" />
       </uipath:variables>
       <uipath:bindings version="v1">
@@ -37,7 +38,7 @@
       </bpmn:extensionElements>
       <bpmn:outgoing>Flow_Start_ProceedGate</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:exclusiveGateway id="Gateway_InvestigatorProceed" name="Investigator proceed?" default="Flow_Proceed_Blocked">
+    <bpmn:exclusiveGateway id="Gateway_InvestigatorProceed" name="Hospice case and investigator authorization?" default="Flow_Proceed_Blocked">
       <bpmn:incoming>Flow_Start_ProceedGate</bpmn:incoming>
       <bpmn:outgoing>Flow_Proceed_Request</bpmn:outgoing>
       <bpmn:outgoing>Flow_Proceed_Blocked</bpmn:outgoing>
@@ -57,20 +58,36 @@
         </uipath:activity>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_Proceed_Request</bpmn:incoming>
-      <bpmn:outgoing>Flow_Request_Timer</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Request_ResponseRace</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:intermediateCatchEvent id="Event_AwaitProviderResponse" name="Await response (P3D)">
-      <bpmn:incoming>Flow_Request_Timer</bpmn:incoming>
-      <bpmn:outgoing>Flow_Timer_RecordGate</bpmn:outgoing>
+    <bpmn:eventBasedGateway id="Gateway_ProviderResponseRace" name="Provider response or P3D timeout">
+      <bpmn:incoming>Flow_Request_ResponseRace</bpmn:incoming>
+      <bpmn:outgoing>Flow_Race_Received</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Race_Timeout</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Event_ProviderRecordReceived" name="PI360ProviderRecordReceived">
+      <bpmn:extensionElements>
+        <uipath:event version="v1">
+          <uipath:type value="Maestro.ReceiveMessageEvent" version="v1" />
+          <uipath:context>
+            <uipath:input name="name" value="PI360ProviderRecordReceived" />
+            <uipath:input name="_label" value="Provider record received" />
+          </uipath:context>
+          <uipath:input name="Reference" type="string" value="=vars.Var_CaseId" target="bodyField" />
+          <uipath:output name="response" type="Maestro.ReceiveMessageEvent" var="Var_ProviderRecordMessageResponse" />
+        </uipath:event>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Race_Received</bpmn:incoming>
+      <bpmn:outgoing>Flow_Received_Intake</bpmn:outgoing>
+      <bpmn:messageEventDefinition />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Event_AwaitProviderResponse" name="Provider response timeout (P3D)">
+      <bpmn:incoming>Flow_Race_Timeout</bpmn:incoming>
+      <bpmn:outgoing>Flow_Timeout_Awaiting</bpmn:outgoing>
       <bpmn:timerEventDefinition>
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P3D</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
-    <bpmn:exclusiveGateway id="Gateway_HospitalRecordAvailable" name="Hospital record available?" default="Flow_Record_Awaiting">
-      <bpmn:incoming>Flow_Timer_RecordGate</bpmn:incoming>
-      <bpmn:outgoing>Flow_Record_Intake</bpmn:outgoing>
-      <bpmn:outgoing>Flow_Record_Awaiting</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
     <bpmn:serviceTask id="Task_IntakeHospitalRecord" name="API: Intake hospital record">
       <bpmn:extensionElements>
         <uipath:activity version="v1">
@@ -81,21 +98,21 @@
             <uipath:input name="folderPath" value="=bindings.Bind_ApiFolder" />
             <uipath:input name="name" value="=bindings.Bind_ApiName" />
           </uipath:context>
-          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"IntakeHospitalRecord","caseType":"=vars.Var_CaseType","caseId":"=vars.Var_CaseId","providerId":"=vars.Var_ProviderId","hospitalRecordAvailable":"=vars.Var_HospitalRecordAvailable","investigatorProceed":"=vars.Var_InvestigatorProceed"}]]></uipath:input>
+          <uipath:input name="JobArguments" type="json" target="bodyField"><![CDATA[{"workflowName":"IntakeHospitalRecord","caseType":"=vars.Var_CaseType","caseId":"=vars.Var_CaseId","providerId":"=vars.Var_ProviderId","hospitalRecordAvailable":true,"investigatorProceed":"=vars.Var_InvestigatorProceed"}]]></uipath:input>
           <uipath:output name="Process response" type="Orchestrator.RunJob" var="Var_IntakeResponse" />
         </uipath:activity>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Record_Intake</bpmn:incoming>
+      <bpmn:incoming>Flow_Received_Intake</bpmn:incoming>
       <bpmn:outgoing>Flow_Intake_Investigation</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:endEvent id="Event_EndBlocked" name="Blocked: investigator approval required">
+    <bpmn:endEvent id="Event_EndBlocked" name="Blocked: hospice case and investigator authorization required">
       <bpmn:extensionElements>
         <uipath:mapping version="v1">
           <uipath:type value="BPMN.Variables" version="v1" />
           <uipath:output name="ProviderRequestStatus" type="string" source="Blocked" var="Var_ProviderRequestStatus" />
           <uipath:output name="HospitalRecordAvailable" type="boolean" source="=vars.Var_HospitalRecordAvailable" var="Var_HospitalRecordAvailable" />
           <uipath:output name="NextStageId" type="string" source="Stage_Prreq6" var="Var_NextStageId" />
-          <uipath:output name="AuditMessage" type="string" source="Provider record request blocked until investigator approval; no analysis was performed." var="Var_AuditMessage" />
+          <uipath:output name="AuditMessage" type="string" source="Provider record request blocked: CaseType must be StateMedicaidHospice and investigator authorization is required; no request or analysis was performed." var="Var_AuditMessage" />
         </uipath:mapping>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_Proceed_Blocked</bpmn:incoming>
@@ -105,19 +122,19 @@
         <uipath:mapping version="v1">
           <uipath:type value="BPMN.Variables" version="v1" />
           <uipath:output name="ProviderRequestStatus" type="string" source="TimedOutAwaitingProvider" var="Var_ProviderRequestStatus" />
-          <uipath:output name="HospitalRecordAvailable" type="boolean" source="=vars.Var_HospitalRecordAvailable" var="Var_HospitalRecordAvailable" />
+          <uipath:output name="HospitalRecordAvailable" type="boolean" source="false" var="Var_HospitalRecordAvailable" />
           <uipath:output name="NextStageId" type="string" source="Stage_Prreq6" var="Var_NextStageId" />
           <uipath:output name="AuditMessage" type="string" source="Provider response window expired after P3D without a hospital record; no analysis was performed." var="Var_AuditMessage" />
         </uipath:mapping>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_Record_Awaiting</bpmn:incoming>
+      <bpmn:incoming>Flow_Timeout_Awaiting</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:endEvent id="Event_EndInvestigation" name="Return to Investigation">
       <bpmn:extensionElements>
         <uipath:mapping version="v1">
           <uipath:type value="BPMN.Variables" version="v1" />
           <uipath:output name="ProviderRequestStatus" type="string" source="Completed" var="Var_ProviderRequestStatus" />
-          <uipath:output name="HospitalRecordAvailable" type="boolean" source="=vars.Var_HospitalRecordAvailable" var="Var_HospitalRecordAvailable" />
+          <uipath:output name="HospitalRecordAvailable" type="boolean" source="true" var="Var_HospitalRecordAvailable" />
           <uipath:output name="NextStageId" type="string" source="Stage_Corr4a" var="Var_NextStageId" />
           <uipath:output name="AuditMessage" type="string" source="Hospital record received and intake completed; return to Investigation." var="Var_AuditMessage" />
         </uipath:mapping>
@@ -126,15 +143,14 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_Start_ProceedGate" sourceRef="Event_Start" targetRef="Gateway_InvestigatorProceed" />
     <bpmn:sequenceFlow id="Flow_Proceed_Request" sourceRef="Gateway_InvestigatorProceed" targetRef="Task_RequestHospitalRecord">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=vars.Var_InvestigatorProceed == true</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=vars.Var_CaseType == "StateMedicaidHospice" &amp;&amp; vars.Var_InvestigatorProceed == true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_Proceed_Blocked" sourceRef="Gateway_InvestigatorProceed" targetRef="Event_EndBlocked" />
-    <bpmn:sequenceFlow id="Flow_Request_Timer" sourceRef="Task_RequestHospitalRecord" targetRef="Event_AwaitProviderResponse" />
-    <bpmn:sequenceFlow id="Flow_Timer_RecordGate" sourceRef="Event_AwaitProviderResponse" targetRef="Gateway_HospitalRecordAvailable" />
-    <bpmn:sequenceFlow id="Flow_Record_Intake" sourceRef="Gateway_HospitalRecordAvailable" targetRef="Task_IntakeHospitalRecord">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=vars.Var_HospitalRecordAvailable == true</bpmn:conditionExpression>
-    </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_Record_Awaiting" sourceRef="Gateway_HospitalRecordAvailable" targetRef="Event_EndAwaitingProvider" />
+    <bpmn:sequenceFlow id="Flow_Request_ResponseRace" sourceRef="Task_RequestHospitalRecord" targetRef="Gateway_ProviderResponseRace" />
+    <bpmn:sequenceFlow id="Flow_Race_Received" sourceRef="Gateway_ProviderResponseRace" targetRef="Event_ProviderRecordReceived" />
+    <bpmn:sequenceFlow id="Flow_Race_Timeout" sourceRef="Gateway_ProviderResponseRace" targetRef="Event_AwaitProviderResponse" />
+    <bpmn:sequenceFlow id="Flow_Received_Intake" sourceRef="Event_ProviderRecordReceived" targetRef="Task_IntakeHospitalRecord" />
+    <bpmn:sequenceFlow id="Flow_Timeout_Awaiting" sourceRef="Event_AwaitProviderResponse" targetRef="Event_EndAwaitingProvider" />
     <bpmn:sequenceFlow id="Flow_Intake_Investigation" sourceRef="Task_IntakeHospitalRecord" targetRef="Event_EndInvestigation" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="Diagram_1">
@@ -142,20 +158,22 @@
       <bpmndi:BPMNShape id="Shape_Start" bpmnElement="Event_Start"><dc:Bounds x="120" y="220" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Shape_ProceedGate" bpmnElement="Gateway_InvestigatorProceed"><dc:Bounds x="220" y="213" width="50" height="50" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Shape_Request" bpmnElement="Task_RequestHospitalRecord"><dc:Bounds x="340" y="198" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_Timer" bpmnElement="Event_AwaitProviderResponse"><dc:Bounds x="570" y="220" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_RecordGate" bpmnElement="Gateway_HospitalRecordAvailable"><dc:Bounds x="670" y="213" width="50" height="50" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_Intake" bpmnElement="Task_IntakeHospitalRecord"><dc:Bounds x="790" y="198" width="160" height="80" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_InvestigationEnd" bpmnElement="Event_EndInvestigation"><dc:Bounds x="1020" y="220" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ResponseRace" bpmnElement="Gateway_ProviderResponseRace"><dc:Bounds x="570" y="213" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Received" bpmnElement="Event_ProviderRecordReceived"><dc:Bounds x="690" y="150" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Timer" bpmnElement="Event_AwaitProviderResponse"><dc:Bounds x="690" y="315" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Intake" bpmnElement="Task_IntakeHospitalRecord"><dc:Bounds x="790" y="128" width="160" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_InvestigationEnd" bpmnElement="Event_EndInvestigation"><dc:Bounds x="1020" y="150" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Shape_BlockedEnd" bpmnElement="Event_EndBlocked"><dc:Bounds x="340" y="350" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Shape_AwaitingEnd" bpmnElement="Event_EndAwaitingProvider"><dc:Bounds x="790" y="350" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_AwaitingEnd" bpmnElement="Event_EndAwaitingProvider"><dc:Bounds x="790" y="315" width="36" height="36" /></bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Edge_Start_ProceedGate" bpmnElement="Flow_Start_ProceedGate"><di:waypoint x="156" y="238" /><di:waypoint x="220" y="238" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_Proceed_Request" bpmnElement="Flow_Proceed_Request"><di:waypoint x="270" y="238" /><di:waypoint x="340" y="238" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_Proceed_Blocked" bpmnElement="Flow_Proceed_Blocked"><di:waypoint x="245" y="263" /><di:waypoint x="245" y="368" /><di:waypoint x="340" y="368" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Request_Timer" bpmnElement="Flow_Request_Timer"><di:waypoint x="500" y="238" /><di:waypoint x="570" y="238" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Timer_RecordGate" bpmnElement="Flow_Timer_RecordGate"><di:waypoint x="606" y="238" /><di:waypoint x="670" y="238" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Record_Intake" bpmnElement="Flow_Record_Intake"><di:waypoint x="720" y="238" /><di:waypoint x="790" y="238" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Record_Awaiting" bpmnElement="Flow_Record_Awaiting"><di:waypoint x="695" y="263" /><di:waypoint x="695" y="368" /><di:waypoint x="790" y="368" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_Intake_Investigation" bpmnElement="Flow_Intake_Investigation"><di:waypoint x="950" y="238" /><di:waypoint x="1020" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Request_ResponseRace" bpmnElement="Flow_Request_ResponseRace"><di:waypoint x="500" y="238" /><di:waypoint x="570" y="238" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Race_Received" bpmnElement="Flow_Race_Received"><di:waypoint x="595" y="213" /><di:waypoint x="595" y="168" /><di:waypoint x="690" y="168" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Race_Timeout" bpmnElement="Flow_Race_Timeout"><di:waypoint x="595" y="263" /><di:waypoint x="595" y="333" /><di:waypoint x="690" y="333" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Received_Intake" bpmnElement="Flow_Received_Intake"><di:waypoint x="726" y="168" /><di:waypoint x="790" y="168" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Timeout_Awaiting" bpmnElement="Flow_Timeout_Awaiting"><di:waypoint x="726" y="333" /><di:waypoint x="790" y="333" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_Intake_Investigation" bpmnElement="Flow_Intake_Investigation"><di:waypoint x="950" y="168" /><di:waypoint x="1020" y="168" /></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

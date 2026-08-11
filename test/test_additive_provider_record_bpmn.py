@@ -107,26 +107,32 @@ def test_provider_bpmn_has_exact_blocked_received_and_timed_out_paths():
     )
     _assert_flow(
         flows,
-        "Flow_Request_Timer",
+        "Flow_Request_ResponseRace",
         "Task_RequestHospitalRecord",
+        "Gateway_ProviderResponseRace",
+    )
+    _assert_flow(
+        flows,
+        "Flow_Race_Received",
+        "Gateway_ProviderResponseRace",
+        "Event_ProviderRecordReceived",
+    )
+    _assert_flow(
+        flows,
+        "Flow_Race_Timeout",
+        "Gateway_ProviderResponseRace",
         "Event_AwaitProviderResponse",
     )
     _assert_flow(
         flows,
-        "Flow_Timer_RecordGate",
-        "Event_AwaitProviderResponse",
-        "Gateway_HospitalRecordAvailable",
-    )
-    received = _assert_flow(
-        flows,
-        "Flow_Record_Intake",
-        "Gateway_HospitalRecordAvailable",
+        "Flow_Received_Intake",
+        "Event_ProviderRecordReceived",
         "Task_IntakeHospitalRecord",
     )
     _assert_flow(
         flows,
-        "Flow_Record_Awaiting",
-        "Gateway_HospitalRecordAvailable",
+        "Flow_Timeout_Awaiting",
+        "Event_AwaitProviderResponse",
         "Event_EndAwaitingProvider",
     )
     _assert_flow(
@@ -139,19 +145,22 @@ def test_provider_bpmn_has_exact_blocked_received_and_timed_out_paths():
     proceed_gate = process.find(
         "./bpmn:exclusiveGateway[@id='Gateway_InvestigatorProceed']", NS
     )
-    record_gate = process.find(
-        "./bpmn:exclusiveGateway[@id='Gateway_HospitalRecordAvailable']", NS
+    response_race = process.find(
+        "./bpmn:eventBasedGateway[@id='Gateway_ProviderResponseRace']", NS
     )
     assert proceed_gate is not None
-    assert record_gate is not None
+    assert response_race is not None
     assert proceed_gate.attrib["default"] == "Flow_Proceed_Blocked"
-    assert record_gate.attrib["default"] == "Flow_Record_Awaiting"
     assert proceed.findtext("./bpmn:conditionExpression", namespaces=NS) == (
-        "=vars.Var_InvestigatorProceed == true"
+        '=vars.Var_CaseType == "StateMedicaidHospice" '
+        "&& vars.Var_InvestigatorProceed == true"
     )
-    assert received.findtext("./bpmn:conditionExpression", namespaces=NS) == (
-        "=vars.Var_HospitalRecordAvailable == true"
-    )
+    assert process.find(
+        "./bpmn:exclusiveGateway[@id='Gateway_HospitalRecordAvailable']", NS
+    ) is None
+    assert {
+        outgoing.text for outgoing in response_race.findall("./bpmn:outgoing", NS)
+    } == {"Flow_Race_Received", "Flow_Race_Timeout"}
 
     duration = process.findtext(
         "./bpmn:intermediateCatchEvent[@id='Event_AwaitProviderResponse']"
@@ -159,6 +168,59 @@ def test_provider_bpmn_has_exact_blocked_received_and_timed_out_paths():
         namespaces=NS,
     )
     assert duration == "P3D"
+
+
+def test_provider_bpmn_correlates_the_received_message_by_case_id():
+    _, process = _root_and_process()
+    variables = _variables(process)
+    response_variable = variables.find(
+        "./uipath:inputOutput[@id='Var_ProviderRecordMessageResponse']", NS
+    )
+    received = process.find(
+        "./bpmn:intermediateCatchEvent[@id='Event_ProviderRecordReceived']", NS
+    )
+
+    assert response_variable is not None
+    assert response_variable.attrib == {
+        "id": "Var_ProviderRecordMessageResponse",
+        "name": "ProviderRecordMessageResponse",
+        "type": "Maestro.ReceiveMessageEvent",
+        "elementId": "Event_ProviderRecordReceived",
+    }
+    assert received is not None
+    assert received.attrib["name"] == "PI360ProviderRecordReceived"
+    event = received.find("./bpmn:extensionElements/uipath:event", NS)
+    assert event is not None
+    event_type = event.find("./uipath:type", NS)
+    assert event_type is not None
+    assert event_type.attrib == {
+        "value": "Maestro.ReceiveMessageEvent",
+        "version": "v1",
+    }
+    context = {
+        item.attrib["name"]: item.attrib.get("value")
+        for item in event.findall("./uipath:context/uipath:input", NS)
+    }
+    assert context == {
+        "name": "PI360ProviderRecordReceived",
+        "_label": "Provider record received",
+    }
+    reference = event.find("./uipath:input[@name='Reference']", NS)
+    assert reference is not None
+    assert reference.attrib == {
+        "name": "Reference",
+        "type": "string",
+        "value": "=vars.Var_CaseId",
+        "target": "bodyField",
+    }
+    response = event.find("./uipath:output[@name='response']", NS)
+    assert response is not None
+    assert response.attrib == {
+        "name": "response",
+        "type": "Maestro.ReceiveMessageEvent",
+        "var": "Var_ProviderRecordMessageResponse",
+    }
+    assert received.find("./bpmn:messageEventDefinition", NS) is not None
 
 
 def test_provider_bpmn_maps_each_distinct_outcome():
@@ -175,6 +237,14 @@ def test_provider_bpmn_maps_each_distinct_outcome():
     assert received["ProviderRequestStatus"]["source"] == "Completed"
     assert received["NextStageId"]["source"] == "Stage_Corr4a"
 
+    assert blocked["HospitalRecordAvailable"]["source"] == (
+        "=vars.Var_HospitalRecordAvailable"
+    )
+    assert timed_out["HospitalRecordAvailable"]["source"] == "false"
+    assert received["HospitalRecordAvailable"]["source"] == "true"
+    assert "StateMedicaidHospice" in blocked["AuditMessage"]["source"]
+    assert "investigator authorization" in blocked["AuditMessage"]["source"]
+
     for outputs in (blocked, timed_out, received):
         assert set(outputs) == {
             "ProviderRequestStatus",
@@ -182,9 +252,6 @@ def test_provider_bpmn_maps_each_distinct_outcome():
             "NextStageId",
             "AuditMessage",
         }
-        assert outputs["HospitalRecordAvailable"]["source"] == (
-            "=vars.Var_HospitalRecordAvailable"
-        )
         assert outputs["AuditMessage"]["source"]
 
 
@@ -252,6 +319,16 @@ def test_provider_bpmn_uses_only_the_discovered_api_workflow_binding():
         assert arguments is not None
         assert json.loads(arguments.text)["workflowName"] == workflow_name
 
+    intake = process.find("./bpmn:serviceTask[@id='Task_IntakeHospitalRecord']", NS)
+    assert intake is not None
+    intake_arguments = intake.find(
+        "./bpmn:extensionElements/uipath:activity/"
+        "uipath:input[@name='JobArguments']",
+        NS,
+    )
+    assert intake_arguments is not None
+    assert json.loads(intake_arguments.text)["hospitalRecordAvailable"] is True
+
     raw = BPMN_PATH.read_text().lower()
     assert "9c77c6aa-3a07-4053-a559-28c98f2520a3" not in raw
     for forbidden in (
@@ -271,6 +348,7 @@ def test_provider_bpmn_diagram_has_exact_node_and_flow_parity():
         f"{{{NS['bpmn']}}}endEvent",
         f"{{{NS['bpmn']}}}serviceTask",
         f"{{{NS['bpmn']}}}exclusiveGateway",
+        f"{{{NS['bpmn']}}}eventBasedGateway",
         f"{{{NS['bpmn']}}}intermediateCatchEvent",
     }
     node_ids = {
@@ -291,8 +369,9 @@ def test_provider_bpmn_diagram_has_exact_node_and_flow_parity():
         "Event_Start",
         "Gateway_InvestigatorProceed",
         "Task_RequestHospitalRecord",
+        "Gateway_ProviderResponseRace",
+        "Event_ProviderRecordReceived",
         "Event_AwaitProviderResponse",
-        "Gateway_HospitalRecordAvailable",
         "Task_IntakeHospitalRecord",
         "Event_EndBlocked",
         "Event_EndAwaitingProvider",
@@ -354,8 +433,8 @@ def test_provider_bpmn_generated_metadata_matches_the_reviewed_contract():
             }
         ],
     }
-    assert operate["main"].startswith(
-        "/content/PI360HospiceProviderRecordBpmn.bpmn#"
+    assert operate["main"] == (
+        "/content/PI360HospiceProviderRecordBpmn.bpmn#Event_Start"
     )
     assert descriptor["files"]["PI360HospiceProviderRecordBpmn.bpmn"] == (
         "PI360HospiceProviderRecordBpmn.bpmn"
