@@ -1,0 +1,49 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 Send Outlook Email",
+    "kind": "process",
+    "type": "process",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "163e84d2-8d80-407a-80a5-5e739348a3fa",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "name": "PI360 Send Outlook Email",
+        "kind": "package"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Process",
+      "name": "PI360 Send Outlook Email",
+      "package": {
+        "key": "e4153b84-c150-4a1d-a70d-76e1a2c86b38"
+      },
+      "packageName": "ProgramIntegrity360.process.PI360.Send.Outlook.Email",
+      "jobPriority": "Medium",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
+      "jobRecording": "Disabled",
+      "targetFrameworkValue": "Portable",
+      "duration": 40,
+      "frequency": 500,
+      "quality": 100,
+      "remoteControlAccess": "None",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180,
+      "tags": []
+    },
+    "locks": [],
+    "key": "81823fe7-f177-4719-9dcf-468d15aeb72d",
+    "files": []
+  }
+}

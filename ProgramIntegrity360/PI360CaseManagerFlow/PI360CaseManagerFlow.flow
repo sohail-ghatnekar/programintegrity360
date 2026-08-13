@@ -894,6 +894,335 @@
       "model": {
         "type": "bpmn:EndEvent"
       }
+    },
+    {
+      "id": "dataFabricCreateProvider1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create provider"
+      },
+      "inputs": {
+        "errorHandlingEnabled": true,
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "provider_id": "=js:String($vars.normalizeCase.output.providerInput.providerId || $vars.normalizeCase.output.providerInput.provider_id || $vars.claimDetailsByCaseType.output.payload.provider.providerId || $vars.normalizeCase.output.caseId + \"-PROVIDER\")",
+            "name": "=js:String($vars.normalizeCase.output.providerInput.name || $vars.normalizeCase.output.providerInput.providerName || $vars.normalizeCase.output.providerInput.provider_name || $vars.claimDetailsByCaseType.output.payload.provider.providerName || \"Harbor Home Support Services\")",
+            "medicaid_provider_id": "=js:String($vars.normalizeCase.output.providerInput.medicaidProviderId || $vars.normalizeCase.output.providerInput.medicaid_provider_id || $vars.claimDetailsByCaseType.output.payload.provider.medicaidProviderId || \"\")",
+            "npi": "=js:String($vars.normalizeCase.output.providerInput.npi || $vars.claimDetailsByCaseType.output.payload.provider.npi || \"\")",
+            "address": "=js:String($vars.normalizeCase.output.providerInput.address || \"\")",
+            "enrollment_status": "=js:String($vars.normalizeCase.output.providerInput.enrollmentStatus || $vars.normalizeCase.output.providerInput.enrollment_status || \"Active\")",
+            "watch_list": "=js:Boolean($vars.normalizeCase.output.providerInput.watchList || $vars.normalizeCase.output.providerInput.watch_list || false)",
+            "watch_list_reason": "=js:String($vars.normalizeCase.output.providerInput.watchListReason || $vars.normalizeCase.output.providerInput.watch_list_reason || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360Provider"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360Provider\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateAttendant1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create attendant"
+      },
+      "inputs": {
+        "errorHandlingEnabled": true,
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "attendant_id": "=js:String($vars.normalizeCase.output.serviceEventInput.attendantId || $vars.normalizeCase.output.serviceEventInput.attendant_id || $vars.normalizeCase.output.providerInput.attendantId || ($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0]?.renderingAttendantId || $vars.normalizeCase.output.caseId + \"-ATTENDANT\")",
+            "name": "=js:String($vars.normalizeCase.output.serviceEventInput.caregiverName || $vars.normalizeCase.output.serviceEventInput.caregiver_name || $vars.normalizeCase.output.providerInput.caregiverName || \"Assigned caregiver\")",
+            "provider_id": "=js:String($vars.normalizeCase.output.providerInput.providerId || $vars.normalizeCase.output.providerInput.provider_id || $vars.claimDetailsByCaseType.output.payload.provider.providerId || \"\")",
+            "role": "Personal Care Attendant",
+            "credential_id": "=js:String($vars.normalizeCase.output.providerInput.credentialId || $vars.normalizeCase.output.providerInput.credential_id || \"\")",
+            "personnel_docs_complete": "=js:Boolean($vars.normalizeCase.output.providerInput.personnelDocsComplete ?? $vars.normalizeCase.output.providerInput.personnel_docs_complete ?? true)",
+            "missing_docs": "=js:String($vars.normalizeCase.output.providerInput.missingDocs || $vars.normalizeCase.output.providerInput.missing_docs || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360Attendant"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360Attendant\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateClaim1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create claim"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "claim_id": "=js:String($vars.normalizeCase.output.claimInput.claimId || $vars.normalizeCase.output.claimInput.claim_id || $vars.normalizeCase.output.caseId + \"-\" + ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).claimId || \"CLAIM\"))",
+            "case_id": "=js:$vars.normalizeCase.output.caseId",
+            "provider_id": "=js:String($vars.normalizeCase.output.providerInput.providerId || $vars.normalizeCase.output.providerInput.provider_id || $vars.claimDetailsByCaseType.output.payload.provider.providerId || \"\")",
+            "attendant_id": "=js:String($vars.normalizeCase.output.serviceEventInput.attendantId || $vars.normalizeCase.output.serviceEventInput.attendant_id || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).renderingAttendantId || \"\"))",
+            "member_id": "=js:String($vars.normalizeCase.output.memberInput.memberId || $vars.normalizeCase.output.memberInput.member_id || $vars.claimDetailsByCaseType.output.payload.member.memberId || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).memberId || \"\"))",
+            "date_of_service": "=js:String($vars.normalizeCase.output.serviceEventInput.dateOfService || $vars.normalizeCase.output.serviceEventInput.date_of_service || $vars.normalizeCase.output.claimInput.dateOfService || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).dateOfService || \"\"))",
+            "units_billed": "=js:Number($vars.claimDetailsByCaseType.output.totalUnits || $vars.normalizeCase.output.claimInput.unitsBilled || $vars.normalizeCase.output.claimInput.units_billed || 0)",
+            "unit_rate": "=js:Number($vars.normalizeCase.output.claimInput.unitRate || $vars.normalizeCase.output.claimInput.unit_rate || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).unitRate || 0))",
+            "billed_amount": "=js:Number($vars.claimDetailsByCaseType.output.totalBilled || $vars.normalizeCase.output.claimTotalBilled || 0)",
+            "improper_units": "=js:Number($vars.normalizeCase.output.unsupportedUnits || 0)",
+            "program": "State Medicaid",
+            "case_type": "=js:$vars.normalizeCase.output.caseType",
+            "service_type": "=js:$vars.normalizeCase.output.isHospice ? \"Hospice\" : \"Personal Care Services\"",
+            "place_of_service_code": "=js:String($vars.normalizeCase.output.claimInput.placeOfServiceCode || $vars.normalizeCase.output.claimInput.place_of_service_code || ($vars.normalizeCase.output.isHospice ? \"12\" : \"12\"))",
+            "place_of_service_description": "Home",
+            "claimed_service_start_at": "=js:$vars.normalizeCase.output.claimedServiceStartAt",
+            "claimed_service_end_at": "=js:$vars.normalizeCase.output.claimedServiceEndAt",
+            "source_claim_status": "Submitted",
+            "status": 0
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360Claim"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360Claim\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateEvvVisit1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create EVV visit"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "evv_id": "=js:String($vars.normalizeCase.output.serviceEventInput.evvId || $vars.normalizeCase.output.serviceEventInput.evv_id || $vars.normalizeCase.output.caseId + \"-EVV\")",
+            "attendant_id": "=js:String($vars.normalizeCase.output.serviceEventInput.attendantId || $vars.normalizeCase.output.serviceEventInput.attendant_id || \"\")",
+            "member_id": "=js:String($vars.normalizeCase.output.memberInput.memberId || $vars.normalizeCase.output.memberInput.member_id || \"\")",
+            "service_date": "=js:String($vars.normalizeCase.output.serviceEventInput.dateOfService || $vars.normalizeCase.output.serviceEventInput.date_of_service || \"\")",
+            "start_time": "=js:String($vars.normalizeCase.output.serviceEventInput.startTime || $vars.normalizeCase.output.serviceEventInput.start_time || \"\")",
+            "end_time": "=js:String($vars.normalizeCase.output.serviceEventInput.endTime || $vars.normalizeCase.output.serviceEventInput.end_time || \"\")",
+            "units": "=js:Number($vars.normalizeCase.output.serviceEventInput.units || $vars.claimDetailsByCaseType.output.totalUnits || 0)",
+            "capture_method": 0,
+            "gps_confirmed": 0,
+            "overlaps_with": "=js:String($vars.normalizeCase.output.serviceEventInput.overlapsWith || $vars.normalizeCase.output.serviceEventInput.overlaps_with || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360EvvVisit"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360EvvVisit\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateRiskSignal1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create risk signal"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "signal_id": "=js:$vars.normalizeCase.output.caseId + \"-LOCATION-CONFLICT\"",
+            "case_id": "=js:$vars.normalizeCase.output.caseId",
+            "name": "=js:$vars.normalizeCase.output.isHospice ? \"Institutional encounter overlaps claimed home hospice service\" : \"PCS service evidence inconsistency\"",
+            "rule_expression": "=js:$vars.normalizeCase.output.isHospice ? \"claimed_home_service overlaps hospital encounter\" : \"claim units exceed corroborated service evidence\"",
+            "inputs": "=js:JSON.stringify({caseType:$vars.normalizeCase.output.caseType,claimTotal:$vars.claimDetailsByCaseType.output.totalBilled,claimThreshold:$vars.claimDetailsByCaseType.output.claimThreshold,claimedStart:$vars.normalizeCase.output.claimedServiceStartAt,claimedEnd:$vars.normalizeCase.output.claimedServiceEndAt,encounterArrival:$vars.normalizeCase.output.encounterArrivalAt,encounterDischarge:$vars.normalizeCase.output.encounterDischargeAt})",
+            "result_value": "=js:JSON.stringify({thresholdExceeded:$vars.claimDetailsByCaseType.output.thresholdExceeded,reviewIndicatorOnly:true,expectedOverlapMinutes:$vars.normalizeCase.output.isHospice?360:0})",
+            "severity": 0,
+            "computed_by": "PI360QuickRulesCodedAgent",
+            "computed_at": "=js:new Date().toISOString()"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360RiskSignal"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360RiskSignal\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateEvidenceDocument1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create evidence document"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "doc_id": "=js:String($vars.normalizeCase.output.documentInput.documentId || $vars.normalizeCase.output.documentInput.document_id || $vars.normalizeCase.output.caseId + \"-SERVICE-EVIDENCE\")",
+            "case_id": "=js:$vars.normalizeCase.output.caseId",
+            "doc_type": 0,
+            "source_system": "Orchestrator Storage Bucket",
+            "storage_uri": "=js:String($vars.normalizeCase.output.documentInput.storageUri || $vars.normalizeCase.output.documentInput.storage_uri || $vars.normalizeCase.output.documentInput.fileName || \"\")",
+            "extracted_fields": "=js:JSON.stringify($vars.evidenceSnapshotRpa.output || {})",
+            "extraction_confidence": "=js:Number($vars.normalizeCase.output.documentInput.extractionConfidence || $vars.normalizeCase.output.documentInput.extraction_confidence || 0)",
+            "validation_status": 0,
+            "validated_by": "=js:$vars.normalizeCase.output.documentInput.validatedBy || \"PI360 automation\"",
+            "note": "=js:$vars.normalizeCase.output.isHospice ? \"Claim and service evidence were staged; the provider hospital record is acquired by the ad-hoc BPMN before any location-conflict finding.\" : \"Timesheet evidence was processed for PCS validation.\"",
+            "ixp_model": "PI360 Timesheet Extraction",
+            "ixp_model_version": "live",
+            "reference_only": false,
+            "patient_class": "=js:$vars.normalizeCase.output.patientClass",
+            "encounter_id": "=js:String($vars.normalizeCase.output.documentInput.encounterId || $vars.normalizeCase.output.documentInput.encounter_id || \"\")",
+            "facility_name": "=js:String($vars.normalizeCase.output.documentInput.facilityName || $vars.normalizeCase.output.documentInput.facility_name || \"\")",
+            "care_area": "=js:String($vars.normalizeCase.output.documentInput.careArea || $vars.normalizeCase.output.documentInput.care_area || \"\")",
+            "encounter_arrival_at": "=js:$vars.normalizeCase.output.encounterArrivalAt",
+            "encounter_discharge_at": "=js:$vars.normalizeCase.output.encounterDischargeAt",
+            "encounter_disposition": "=js:String($vars.normalizeCase.output.documentInput.encounterDisposition || $vars.normalizeCase.output.documentInput.encounter_disposition || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360EvidenceDocument"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360EvidenceDocument\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "evidenceSnapshotRpa",
+      "type": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "RPA placeholder - extract service evidence"
+      },
+      "inputs": {
+        "in_CaseId": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseId",
+          "fieldType": "string"
+        },
+        "in_ClaimsAvailable": true,
+        "in_EvvAvailable": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseType === \"MedicaidPCS\"",
+          "fieldType": "boolean"
+        },
+        "in_PlanOfCareAvailable": true,
+        "in_EnrollmentAvailable": true,
+        "in_ProviderPacketAvailable": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseType === \"StateMedicaidHospice\" ? $vars.normalizeCase.output.hospitalRecordAvailable : true",
+          "fieldType": "boolean"
+        }
+      }
+    },
+    {
+      "id": "pcsEvidenceBranch1",
+      "type": "core.logic.decision",
+      "typeVersion": "1.2",
+      "display": {
+        "label": "PCS evidence branch?"
+      },
+      "inputs": {
+        "trueLabel": "PCS",
+        "falseLabel": "Hospice",
+        "expression": "$vars.normalizeCase.output.caseType === \"MedicaidPCS\""
+      }
+    },
+    {
+      "id": "mergeCaseTypeEvidenceWrites1",
+      "type": "core.logic.merge",
+      "typeVersion": "1.0",
+      "display": {
+        "label": "Merge case-type evidence writes"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "providerCreateOrExisting1",
+      "type": "core.logic.merge",
+      "typeVersion": "1.0",
+      "display": {
+        "label": "Provider create or existing"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "attendantCreateOrExisting1",
+      "type": "core.logic.merge",
+      "typeVersion": "1.0",
+      "display": {
+        "label": "Attendant create or existing"
+      },
+      "inputs": {}
     }
   ],
   "edges": [
@@ -909,13 +1238,6 @@
       "sourceNodeId": "normalizeCase",
       "sourcePort": "success",
       "targetNodeId": "claimDetailsByCaseType",
-      "targetPort": "input"
-    },
-    {
-      "id": "edge-claim-api-rules",
-      "sourceNodeId": "claimDetailsByCaseType",
-      "sourcePort": "output",
-      "targetNodeId": "quickRulesByCaseType",
       "targetPort": "input"
     },
     {
@@ -1028,6 +1350,111 @@
       "sourceNodeId": "routeInvestigation",
       "sourcePort": "success",
       "targetNodeId": "endInvestigation",
+      "targetPort": "input"
+    },
+    {
+      "id": "claimDetailsByCaseType-output-dataFabricCreateProvider1-input",
+      "sourceNodeId": "claimDetailsByCaseType",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateProvider1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateClaim1-output-evidenceSnapshotRpa-input",
+      "sourceNodeId": "dataFabricCreateClaim1",
+      "sourcePort": "output",
+      "targetNodeId": "evidenceSnapshotRpa",
+      "targetPort": "input"
+    },
+    {
+      "id": "evidenceSnapshotRpa-output-pcsEvidenceBranch1-input",
+      "sourceNodeId": "evidenceSnapshotRpa",
+      "sourcePort": "output",
+      "targetNodeId": "pcsEvidenceBranch1",
+      "targetPort": "input"
+    },
+    {
+      "id": "pcsEvidenceBranch1-true-dataFabricCreateAttendant1-input",
+      "sourceNodeId": "pcsEvidenceBranch1",
+      "sourcePort": "true",
+      "targetNodeId": "dataFabricCreateAttendant1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateEvvVisit1-output-mergeCaseTypeEvidenceWrites1-input",
+      "sourceNodeId": "dataFabricCreateEvvVisit1",
+      "sourcePort": "output",
+      "targetNodeId": "mergeCaseTypeEvidenceWrites1",
+      "targetPort": "input"
+    },
+    {
+      "id": "pcsEvidenceBranch1-false-mergeCaseTypeEvidenceWrites1-input",
+      "sourceNodeId": "pcsEvidenceBranch1",
+      "sourcePort": "false",
+      "targetNodeId": "mergeCaseTypeEvidenceWrites1",
+      "targetPort": "input"
+    },
+    {
+      "id": "mergeCaseTypeEvidenceWrites1-output-dataFabricCreateRiskSignal1-input",
+      "sourceNodeId": "mergeCaseTypeEvidenceWrites1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateRiskSignal1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateRiskSignal1-output-dataFabricCreateEvidenceDocument1-input",
+      "sourceNodeId": "dataFabricCreateRiskSignal1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateEvidenceDocument1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateEvidenceDocument1-output-quickRulesByCaseType-input",
+      "sourceNodeId": "dataFabricCreateEvidenceDocument1",
+      "sourcePort": "output",
+      "targetNodeId": "quickRulesByCaseType",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateProvider1-output-providerCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateProvider1",
+      "sourcePort": "output",
+      "targetNodeId": "providerCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateProvider1-error-providerCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateProvider1",
+      "sourcePort": "error",
+      "targetNodeId": "providerCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "providerCreateOrExisting1-output-dataFabricCreateClaim1-input",
+      "sourceNodeId": "providerCreateOrExisting1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateClaim1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateAttendant1-output-attendantCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateAttendant1",
+      "sourcePort": "output",
+      "targetNodeId": "attendantCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateAttendant1-error-attendantCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateAttendant1",
+      "sourcePort": "error",
+      "targetNodeId": "attendantCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "attendantCreateOrExisting1-output-dataFabricCreateEvvVisit1-input",
+      "sourceNodeId": "attendantCreateOrExisting1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateEvvVisit1",
       "targetPort": "input"
     }
   ],
@@ -2286,6 +2713,633 @@
           "api-function"
         ]
       }
+    },
+    {
+      "nodeType": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "version": "1.0.0",
+      "category": "connector.68444",
+      "tags": [
+        "connector",
+        "activity"
+      ],
+      "sortOrder": 515,
+      "supportsErrorHandling": true,
+      "description": "Creates a new record for the selected Entity in Data Fabric",
+      "display": {
+        "label": "Create Entity Record",
+        "description": "Creates a new record for the selected Entity in Data Fabric",
+        "icon": "https://cloud.uipath.com/a17c9af1-091d-4dd2-9cec-ed787c6601c8/studio_/typecache/icons/98381fa079bbcf73264f551006d6ef7580fb53992f3d9f94361eb5d9e06040cb.svg",
+        "sourceDisplayName": "UiPath Data Fabric"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input",
+              "label": ""
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output",
+              "label": ""
+            },
+            {
+              "id": "error",
+              "label": "Error",
+              "type": "source",
+              "handleType": "output",
+              "visible": "{inputs.errorHandlingEnabled}",
+              "constraints": {
+                "maxConnections": 1
+              }
+            }
+          ]
+        }
+      ],
+      "model": {
+        "type": "bpmn:SendTask",
+        "serviceType": "Intsvc.ActivityExecution",
+        "bindings": {
+          "resource": "connection",
+          "resourceKey": "",
+          "values": [
+            {
+              "name": "uipath-uipath-dataservice connection",
+              "propertyAttribute": "ConnectionId"
+            },
+            {
+              "name": "FolderKey",
+              "propertyAttribute": "FolderKey"
+            }
+          ]
+        },
+        "context": [
+          {
+            "name": "connectorKey",
+            "type": "string",
+            "value": "uipath-uipath-dataservice"
+          },
+          {
+            "name": "operation",
+            "type": "string"
+          },
+          {
+            "name": "objectName",
+            "value": "CreateEntityRecordCurated",
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "type": "string",
+            "value": "POST"
+          },
+          {
+            "name": "connection",
+            "type": "string",
+            "value": "<bindings.uipath-uipath-dataservice connection>"
+          },
+          {
+            "name": "folderKey",
+            "type": "string",
+            "value": "<bindings.FolderKey>"
+          },
+          {
+            "name": "activityConfigurationVersion",
+            "type": "string",
+            "value": "v1"
+          },
+          {
+            "name": "metadata",
+            "body": {
+              "telemetryData": {
+                "connectorKey": "uipath-uipath-dataservice",
+                "connectorName": "Create Entity Record"
+              },
+              "inputMetadata": {},
+              "errorState": {
+                "hasError": true
+              }
+            },
+            "type": "json"
+          }
+        ]
+      },
+      "form": {
+        "id": "connector-properties",
+        "title": "Connector configuration",
+        "sections": [
+          {
+            "id": "connector",
+            "title": "Connector",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "label": "",
+                "name": "inputs.detail",
+                "type": "custom",
+                "component": "dap-config",
+                "componentProps": {
+                  "connectorDetail": {
+                    "isAppActivity": false,
+                    "packageId": "68444",
+                    "svgIconUrl": "icons/98381fa079bbcf73264f551006d6ef7580fb53992f3d9f94361eb5d9e06040cb.svg",
+                    "displayName": "Create Entity Record",
+                    "assemblyQualifiedName": "UiPath.IntegrationService.Activities.Runtime.Activities.ConnectorActivity, UiPath.IntegrationService.Activities.Runtime, Version=1.30.0.0, Culture=neutral, PublicKeyToken=null",
+                    "description": "Creates a new record for the selected Entity in Data Fabric",
+                    "category": "",
+                    "activityColor": "#E56D5C",
+                    "configuration": "{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"}",
+                    "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                    "isExperimental": false,
+                    "helpUrlTemplate": "https://docs.uipath.com/{0}/activities/other/latest/integration-service/uipath-uipath-dataservice-Create-Entity-Record",
+                    "isEnabled": true,
+                    "targetPlatform": "CrossPlatform",
+                    "isAdvanced": false,
+                    "isRestricted": false,
+                    "hasWpfOnlyDesigner": false,
+                    "tags": [
+                      ""
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "inputDefinition": {},
+      "inputDefaults": {},
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "description": "The return value of the connector.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      }
+    },
+    {
+      "nodeType": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "version": "1.0.0",
+      "category": "rpa-workflow",
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      },
+      "description": "Builds a deterministic evidence-completeness snapshot for case routing.",
+      "tags": [],
+      "sortOrder": 530,
+      "supportsErrorHandling": true,
+      "display": {
+        "label": "PI360EvidenceSnapshotAutomation",
+        "icon": "rpa"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            },
+            {
+              "id": "error",
+              "label": "Error",
+              "type": "source",
+              "handleType": "output",
+              "visible": "{inputs.errorHandlingEnabled}",
+              "constraints": {
+                "maxConnections": 1
+              }
+            }
+          ]
+        }
+      ],
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartJob",
+        "version": "v2",
+        "section": "Published",
+        "listingVersion": "1.0.0",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Process",
+          "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+          "orchestratorType": "process",
+          "values": {
+            "name": "PI360EvidenceSnapshotAutomation",
+            "folderPath": "solution_folder"
+          }
+        },
+        "projectId": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+        "projectName": "PI360EvidenceSnapshotAutomation",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "<bindings.name>"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "<bindings.folderPath>"
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360EvidenceSnapshotAutomation"
+          }
+        ]
+      },
+      "form": {
+        "id": "activity-properties",
+        "title": "RPA workflow",
+        "sections": [
+          {
+            "id": "inputs",
+            "title": "Inputs",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.in_CaseId",
+                "type": "text",
+                "label": "in_CaseId"
+              },
+              {
+                "name": "inputs.in_ClaimsAvailable",
+                "type": "checkbox",
+                "label": "in_ClaimsAvailable",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.in_EvvAvailable",
+                "type": "checkbox",
+                "label": "in_EvvAvailable",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.in_PlanOfCareAvailable",
+                "type": "checkbox",
+                "label": "in_PlanOfCareAvailable",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.in_EnrollmentAvailable",
+                "type": "checkbox",
+                "label": "in_EnrollmentAvailable",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.in_ProviderPacketAvailable",
+                "type": "checkbox",
+                "label": "in_ProviderPacketAvailable",
+                "supportsDynamicValue": true
+              }
+            ]
+          }
+        ]
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "in_CaseId": {
+            "type": "string"
+          },
+          "in_ClaimsAvailable": {
+            "type": "boolean"
+          },
+          "in_EvvAvailable": {
+            "type": "boolean"
+          },
+          "in_PlanOfCareAvailable": {
+            "type": "boolean"
+          },
+          "in_EnrollmentAvailable": {
+            "type": "boolean"
+          },
+          "in_ProviderPacketAvailable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "inputDefaults": {
+        "in_CaseId": "",
+        "in_ClaimsAvailable": false,
+        "in_EvvAvailable": false,
+        "in_PlanOfCareAvailable": false,
+        "in_EnrollmentAvailable": false,
+        "in_ProviderPacketAvailable": false
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "source": "=this",
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "out_EvidenceReady": {
+                "type": "boolean"
+              },
+              "out_MissingEvidenceCsv": {
+                "type": "string"
+              },
+              "out_AutomationSummary": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      }
+    },
+    {
+      "nodeType": "core.logic.decision",
+      "version": "1.2",
+      "category": "control-flow",
+      "description": "Branch on a true or false condition",
+      "tags": [
+        "control-flow",
+        "if",
+        "loop",
+        "switch"
+      ],
+      "sortOrder": 21,
+      "display": {
+        "label": "Decision",
+        "icon": "trending-up-down"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "true",
+              "type": "source",
+              "handleType": "output",
+              "label": "{inputs.trueLabel}",
+              "constraints": {
+                "minConnections": 1
+              }
+            },
+            {
+              "id": "false",
+              "type": "source",
+              "handleType": "output",
+              "label": "{inputs.falseLabel}"
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "debug": {
+        "runtime": "clientScript"
+      },
+      "model": {
+        "type": "bpmn:InclusiveGateway"
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "errorMessage": "Add a condition"
+          },
+          "trueLabel": {
+            "type": "string"
+          },
+          "falseLabel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expression"
+        ]
+      },
+      "outputDefinition": {
+        "matchedCase": {
+          "type": "string",
+          "description": "The label of the matched branch (true/false label)",
+          "var": "matchedCase"
+        },
+        "matchedCaseId": {
+          "type": "string",
+          "description": "The branch that was taken (true or false)",
+          "var": "matchedCaseId"
+        }
+      },
+      "inputDefaults": {
+        "trueLabel": "True",
+        "falseLabel": "False"
+      },
+      "form": {
+        "id": "decision-properties",
+        "title": "Decision configuration",
+        "sections": [
+          {
+            "id": "condition",
+            "title": "Condition",
+            "fields": [
+              {
+                "name": "inputs.expression",
+                "type": "custom",
+                "component": "code-editor",
+                "componentProps": {
+                  "singleLine": true,
+                  "mode": "expression",
+                  "toggleable": false,
+                  "language": "javascript",
+                  "returnType": "boolean",
+                  "validationMode": "expression",
+                  "showVariableButton": true,
+                  "placeholder": "$vars.httpRequest1.output.statusCode >= 200 && $vars.httpRequest1.output.statusCode < 300"
+                },
+                "label": "Condition",
+                "description": "The condition must be a JavaScript expression that evaluates to true or false."
+              },
+              {
+                "name": "inputs.trueLabel",
+                "type": "text",
+                "label": "True branch label",
+                "description": "This label appears on the true branch."
+              },
+              {
+                "name": "inputs.falseLabel",
+                "type": "text",
+                "label": "False branch label",
+                "description": "This label appears on the false branch."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "nodeType": "core.logic.merge",
+      "version": "1.0",
+      "category": "control-flow",
+      "description": "Join parallel branches into one path",
+      "tags": [
+        "control-flow",
+        "merge"
+      ],
+      "sortOrder": 20,
+      "display": {
+        "label": "Merge",
+        "icon": "merge"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ],
+          "visible": true
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "model": {
+        "type": "bpmn:ParallelGateway"
+      },
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      }
     }
   ],
   "bindings": [
@@ -2348,6 +3402,44 @@
       "default": "",
       "propertyAttribute": "folderPath",
       "resourceSubType": "Agent"
+    },
+    {
+      "id": "bPIGnb4vy",
+      "name": "uipath-uipath-dataservice connection",
+      "type": "string",
+      "resource": "connection",
+      "resourceKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "propertyAttribute": "ConnectionId",
+      "default": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
+    },
+    {
+      "id": "bKz7X85Ay",
+      "name": "FolderKey",
+      "type": "string",
+      "resource": "connection",
+      "resourceKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "propertyAttribute": "FolderKey",
+      "default": "5db31dd1-1073-4f9e-b44b-76f5484e03c4"
+    },
+    {
+      "id": "bJIMbs5yX",
+      "name": "name",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+      "default": "PI360EvidenceSnapshotAutomation",
+      "propertyAttribute": "name",
+      "resourceSubType": "Process"
+    },
+    {
+      "id": "blPybR24v",
+      "name": "folderPath",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+      "default": "solution_folder",
+      "propertyAttribute": "folderPath",
+      "resourceSubType": "Process"
     }
   ],
   "variables": {
@@ -3466,6 +4558,401 @@
           "nodeId": "endEvidenceAndValidation1",
           "outputId": "routeReason"
         }
+      },
+      {
+        "id": "dataFabricCreateProvider1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateProvider1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateProvider1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateProvider1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateAttendant1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateAttendant1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateAttendant1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateAttendant1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateClaim1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateClaim1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateClaim1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateClaim1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvvVisit1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateEvvVisit1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvvVisit1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateEvvVisit1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateRiskSignal1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateRiskSignal1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateRiskSignal1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateRiskSignal1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvidenceDocument1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateEvidenceDocument1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvidenceDocument1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateEvidenceDocument1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "evidenceSnapshotRpa.output",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "out_EvidenceReady": {
+              "type": "boolean"
+            },
+            "out_MissingEvidenceCsv": {
+              "type": "string"
+            },
+            "out_AutomationSummary": {
+              "type": "string"
+            }
+          }
+        },
+        "binding": {
+          "nodeId": "evidenceSnapshotRpa",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "evidenceSnapshotRpa.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "evidenceSnapshotRpa",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "pcsEvidenceBranch1.matchedCase",
+        "type": "string",
+        "description": "The label of the matched branch (true/false label)",
+        "binding": {
+          "nodeId": "pcsEvidenceBranch1",
+          "outputId": "matchedCase"
+        }
+      },
+      {
+        "id": "pcsEvidenceBranch1.matchedCaseId",
+        "type": "string",
+        "description": "The branch that was taken (true or false)",
+        "binding": {
+          "nodeId": "pcsEvidenceBranch1",
+          "outputId": "matchedCaseId"
+        }
       }
     ]
   },
@@ -3504,7 +4991,7 @@
       },
       "quickRulesByCaseType": {
         "position": {
-          "x": 192,
+          "x": 2304,
           "y": 0
         },
         "size": {
@@ -3514,7 +5001,7 @@
       },
       "needsSupervisorReview": {
         "position": {
-          "x": 1152,
+          "x": 3264,
           "y": 336
         },
         "size": {
@@ -3525,7 +5012,7 @@
       },
       "prepareSupervisorEscalation": {
         "position": {
-          "x": 1344,
+          "x": 3456,
           "y": 192
         },
         "size": {
@@ -3536,7 +5023,7 @@
       },
       "needsProviderResponse": {
         "position": {
-          "x": 768,
+          "x": 2880,
           "y": 0
         },
         "size": {
@@ -3547,7 +5034,7 @@
       },
       "routeProviderResponse": {
         "position": {
-          "x": 960,
+          "x": 3072,
           "y": -192
         },
         "size": {
@@ -3558,7 +5045,7 @@
       },
       "isClosureReady": {
         "position": {
-          "x": 1344,
+          "x": 3456,
           "y": 480
         },
         "size": {
@@ -3569,7 +5056,7 @@
       },
       "routeClosure": {
         "position": {
-          "x": 1536,
+          "x": 3648,
           "y": 384
         },
         "size": {
@@ -3580,7 +5067,7 @@
       },
       "routeInvestigation": {
         "position": {
-          "x": 1536,
+          "x": 3648,
           "y": 576
         },
         "size": {
@@ -3591,7 +5078,7 @@
       },
       "endEscalated": {
         "position": {
-          "x": 1536,
+          "x": 3648,
           "y": 192
         },
         "size": {
@@ -3602,7 +5089,7 @@
       },
       "endProvider": {
         "position": {
-          "x": 1152,
+          "x": 3264,
           "y": -192
         },
         "size": {
@@ -3613,7 +5100,7 @@
       },
       "endClosure": {
         "position": {
-          "x": 1728,
+          "x": 3840,
           "y": 384
         },
         "size": {
@@ -3624,7 +5111,7 @@
       },
       "endInvestigation": {
         "position": {
-          "x": 1728,
+          "x": 3840,
           "y": 576
         },
         "size": {
@@ -3635,7 +5122,7 @@
       },
       "agentSelectNextCaseStage1": {
         "position": {
-          "x": 576,
+          "x": 2688,
           "y": 0
         },
         "size": {
@@ -3645,7 +5132,7 @@
       },
       "buildGroundedCaseContext": {
         "position": {
-          "x": 384,
+          "x": 2496,
           "y": 0
         },
         "size": {
@@ -3655,7 +5142,7 @@
       },
       "evidenceStageSelected1": {
         "position": {
-          "x": 960,
+          "x": 3072,
           "y": 176
         },
         "size": {
@@ -3665,7 +5152,7 @@
       },
       "routeToEvidenceAndValidation1": {
         "position": {
-          "x": 1152,
+          "x": 3264,
           "y": 0
         },
         "size": {
@@ -3674,6 +5161,116 @@
         }
       },
       "endEvidenceAndValidation1": {
+        "position": {
+          "x": 3456,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateProvider1": {
+        "position": {
+          "x": 192,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateAttendant1": {
+        "position": {
+          "x": 1152,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateClaim1": {
+        "position": {
+          "x": 576,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateEvvVisit1": {
+        "position": {
+          "x": 1536,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateRiskSignal1": {
+        "position": {
+          "x": 1920,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateEvidenceDocument1": {
+        "position": {
+          "x": 2112,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "evidenceSnapshotRpa": {
+        "position": {
+          "x": 768,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "pcsEvidenceBranch1": {
+        "position": {
+          "x": 960,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "mergeCaseTypeEvidenceWrites1": {
+        "position": {
+          "x": 1728,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "providerCreateOrExisting1": {
+        "position": {
+          "x": 384,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "attendantCreateOrExisting1": {
         "position": {
           "x": 1344,
           "y": 0

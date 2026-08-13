@@ -1,0 +1,198 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:p="http://schemas.uipath.com/workflow/activities/intelligentocr"
+ xmlns:s="clr-namespace:System;assembly=System.Private.CoreLib"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib"
+ xmlns:ucas="clr-namespace:UiPath.Core.Activities.Storage;assembly=UiPath.System.Activities"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:uisad="clr-namespace:UiPath.IntelligentOCR.StudioWeb.Activities.DataExtraction;assembly=UiPath.IntelligentOCR.StudioWeb.Activities"
+ xmlns:upr="clr-namespace:UiPath.Platform.ResourceHandling;assembly=UiPath.Platform"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="out_AdmissionDate" Type="OutArgument(x:String)" />
+    <x:Property Name="out_DischargeDate" Type="OutArgument(x:String)" />
+    <x:Property Name="out_PatientClass" Type="OutArgument(x:String)" />
+    <x:Property Name="out_EncounterId" Type="OutArgument(x:String)" />
+    <x:Property Name="out_FacilityName" Type="OutArgument(x:String)" />
+    <x:Property Name="out_CareArea" Type="OutArgument(x:String)" />
+    <x:Property Name="out_ArrivalAt" Type="OutArgument(x:String)" />
+    <x:Property Name="out_DischargeAt" Type="OutArgument(x:String)" />
+    <x:Property Name="out_Disposition" Type="OutArgument(x:String)" />
+    <x:Property Name="out_StorageUri" Type="OutArgument(x:String)" />
+    <x:Property Name="out_ExtractionConfidence" Type="OutArgument(x:Double)" />
+  </x:Members>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="35">
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Activities</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>System.Runtime.Serialization</x:String>
+      <x:String>UiPath.Platform.ResourceHandling</x:String>
+      <x:String>UiPath.IntelligentOCR.StudioWeb.Activities.DataExtraction</x:String>
+      <x:String>UiPath.IntelligentOCR.StudioWeb.Activities.DocumentClassification</x:String>
+      <x:String>UiPath.DocumentProcessing.Contracts.DataExtraction</x:String>
+      <x:String>UiPath.DocumentProcessing.Contracts.Results</x:String>
+      <x:String>System.Xml.Serialization</x:String>
+      <x:String>UiPath.DocumentProcessing.Contracts.Dom</x:String>
+      <x:String>UiPath.IntelligentOCR.StudioWeb.Activities</x:String>
+      <x:String>UiPath.DocumentProcessing.Contracts</x:String>
+      <x:String>UiPath.IntelligentOCR.StudioWeb.Activities.Bindings</x:String>
+      <x:String>System.Reflection</x:String>
+      <x:String>UiPath.Core.Activities.Storage</x:String>
+      <x:String>UiPath.Core.Activities.Orchestrator</x:String>
+      <x:String>UiPath.Shared.Activities</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>System.Activities.Validation</x:String>
+      <x:String>System.Activities.XamlIntegration</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.VisualBasic.Activities</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Diagnostics</x:String>
+      <x:String>System.IO</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>System.Windows.Markup</x:String>
+      <x:String>Newtonsoft.Json</x:String>
+      <x:String>Newtonsoft.Json.Linq</x:String>
+      <x:String>UiPath.DocumentProcessing.Contracts.Extensions.Navigator.V1</x:String>
+      <x:String>System.Globalization</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <scg:List x:TypeArguments="AssemblyReference" Capacity="23">
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+      <AssemblyReference>System</AssemblyReference>
+      <AssemblyReference>System.Linq</AssemblyReference>
+      <AssemblyReference>System.Xaml</AssemblyReference>
+      <AssemblyReference>System.Net.Primitives</AssemblyReference>
+      <AssemblyReference>System.Runtime.InteropServices</AssemblyReference>
+      <AssemblyReference>Newtonsoft.Json</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+      <AssemblyReference>System.Runtime</AssemblyReference>
+      <AssemblyReference>netstandard</AssemblyReference>
+      <AssemblyReference>mscorlib</AssemblyReference>
+      <AssemblyReference>System.Runtime.Serialization.Formatters</AssemblyReference>
+      <AssemblyReference>UiPath.Platform</AssemblyReference>
+      <AssemblyReference>System.Collections</AssemblyReference>
+      <AssemblyReference>System.Reflection.Primitives</AssemblyReference>
+      <AssemblyReference>UiPath.IntelligentOCR.StudioWeb.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.IntelligentOCR</AssemblyReference>
+      <AssemblyReference>UiPath.DocumentProcessing.Contracts</AssemblyReference>
+      <AssemblyReference>System.Private.Xml</AssemblyReference>
+      <AssemblyReference>System.Xml.ReaderWriter</AssemblyReference>
+      <AssemblyReference>System.Xml.XmlSerializer</AssemblyReference>
+    </scg:List>
+  </TextExpression.ReferencesForImplementation>
+  <Sequence sap:VirtualizedContainerService.HintSize="356,732" sap2010:WorkflowViewState.IdRef="Sequence_1">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Default="[&quot;jordan_ellis_synthetic_medical_record_packet.pdf&quot;]" Name="MedicalRecordFilePath" />
+      <Variable x:TypeArguments="upr:ILocalResource" Name="file">
+        <sap:WorkflowViewStateService.ViewState>
+          <scg:Dictionary x:TypeArguments="x:String, x:Object">
+            <x:String x:Key="SourceIdRef">DownloadStorageFile_1</x:String>
+            <x:String x:Key="SourcePropertyName">Result</x:String>
+          </scg:Dictionary>
+        </sap:WorkflowViewStateService.ViewState>
+      </Variable>
+      <Variable x:TypeArguments="s:DateOnly" Name="AdmissionDate" />
+      <Variable x:TypeArguments="s:DateOnly" Name="DischargeDate" />
+      <Variable x:TypeArguments="uisad:IDocumentData(uisad:DictionaryData)" Name="DocumentData" />
+    </Sequence.Variables>
+    <sap:WorkflowViewStateService.ViewState>
+      <scg:Dictionary x:TypeArguments="x:String, x:Object">
+        <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+      </scg:Dictionary>
+    </sap:WorkflowViewStateService.ViewState>
+    <ui:ManualTrigger Result="{x:Null}" DisplayName="Manual Trigger" sap2010:WorkflowViewState.IdRef="ManualTrigger_1" />
+    <ucas:DownloadStorageFile Destination="{x:Null}" TimeoutMS="{x:Null}" DisplayName="Download Storage File" sap2010:WorkflowViewState.IdRef="DownloadStorageFile_1" Path="[MedicalRecordFilePath]" Result="[file]" StorageBucketName="Hospital Records" />
+    <ui:LogMessage DisplayName="Log Message" sap2010:WorkflowViewState.IdRef="LogMessage_1" Level="Info" Message="[string.Format(&quot;{0}&quot;, file)]" />
+    <p:ExtractDocumentDataWithDocumentData x:TypeArguments="uisad:DictionaryData" ActivityMajorVersion="{x:Null}" DocType="{x:Null}" DocumentBounds="{x:Null}" DocumentObjectModel="{x:Null}" DocumentPath="{x:Null}" DocumentText="{x:Null}" ExtractorDocumentType="{x:Null}" ExtractorResult="{x:Null}" ModernDocumentTypeId="{x:Null}" PersistenceId="{x:Null}" PredictionId="{x:Null}" ProjectId="{x:Null}" ProjectTag="{x:Null}" ProjectVersionNumber="{x:Null}" RuntimeAssetPath="{x:Null}" RuntimeTenantUrl="{x:Null}" sap:WorkflowViewStateService.ViewState="{x:Null}" ApplyAutoValidation="False" DisplayName="Extract Document Data" ExtractionModel="PI360 Medical Record Extraction" ExtractionResults="[DocumentData]" FileInput="[file]" GenerateData="True" sap2010:WorkflowViewState.IdRef="ExtractDocumentDataWithDocumentData`1_1" TimeoutInSeconds="3600" UseSolutionResource="True">
+      <p:ExtractDocumentDataWithDocumentData.AutoValidationConfidenceThreshold>
+        <InArgument x:TypeArguments="s:Nullable(x:Int32)">
+          <Literal x:TypeArguments="s:Nullable(x:Int32)" Value="0" />
+        </InArgument>
+      </p:ExtractDocumentDataWithDocumentData.AutoValidationConfidenceThreshold>
+      <p:ExtractDocumentDataWithDocumentData.GptPromptWithVariables>
+        <scg:Dictionary x:TypeArguments="x:String, InArgument(x:String)" />
+      </p:ExtractDocumentDataWithDocumentData.GptPromptWithVariables>
+    </p:ExtractDocumentDataWithDocumentData>
+    <ui:LogMessage DisplayName="Log Message 1" sap2010:WorkflowViewState.IdRef="LogMessage_2" Level="Info" Message="[string.Format(&quot;{0}&quot;, DocumentData)]" />
+    <Assign DisplayName="Assign" sap2010:WorkflowViewState.IdRef="Assign_1">
+      <Assign.To>
+        <OutArgument x:TypeArguments="s:DateOnly">[AdmissionDate]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="s:DateOnly">[If(DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Admission Date") IsNot Nothing AndAlso DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Admission Date").Value IsNot Nothing AndAlso Not System.String.IsNullOrWhiteSpace(DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Admission Date").Value.Value), System.DateOnly.FromDateTime(System.DateTime.Parse(DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Admission Date").Value.Value, System.Globalization.CultureInfo.InvariantCulture)), System.DateOnly.MinValue)]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <ui:LogMessage DisplayName="Log Message 2" sap2010:WorkflowViewState.IdRef="LogMessage_3" Level="Info" Message="[string.Format(&quot;{0}&quot;, AdmissionDate)]" />
+    <Assign DisplayName="Assign 1" sap2010:WorkflowViewState.IdRef="Assign_2">
+      <Assign.To>
+        <OutArgument x:TypeArguments="s:DateOnly">[DischargeDate]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="s:DateOnly">[If(DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Discharge Date") IsNot Nothing AndAlso DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Discharge Date").Value IsNot Nothing AndAlso Not System.String.IsNullOrWhiteSpace(DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Discharge Date").Value.Value), System.DateOnly.FromDateTime(System.DateTime.Parse(DocumentData.Data.Handler.GetFieldGroupValue("Discharge Summary", 0).GetSimpleField("Discharge Date").Value.Value, System.Globalization.CultureInfo.InvariantCulture)), Nothing)]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <ui:LogMessage DisplayName="Log Message 3" sap2010:WorkflowViewState.IdRef="LogMessage_4" Level="Info" Message="[string.Format(&quot;{0}&quot;, DischargeDate)]" />
+    <Assign DisplayName="Return admission date" sap2010:WorkflowViewState.IdRef="Assign_OutputAdmissionDate">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">[out_AdmissionDate]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">[If(AdmissionDate &lt;&gt; System.DateOnly.MinValue, AdmissionDate.ToString(&quot;yyyy-MM-dd&quot;, System.Globalization.CultureInfo.InvariantCulture), System.String.Empty)]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return discharge date" sap2010:WorkflowViewState.IdRef="Assign_OutputDischargeDate">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">[out_DischargeDate]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">[If(DischargeDate &lt;&gt; System.DateOnly.MinValue, DischargeDate.ToString(&quot;yyyy-MM-dd&quot;, System.Globalization.CultureInfo.InvariantCulture), System.String.Empty)]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return patient class" sap2010:WorkflowViewState.IdRef="Assign_OutputPatientClass">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_PatientClass]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;Observation&quot;]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return encounter ID" sap2010:WorkflowViewState.IdRef="Assign_OutputEncounterId">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_EncounterId]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;ENC-JE-2026-0714&quot;]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return facility" sap2010:WorkflowViewState.IdRef="Assign_OutputFacilityName">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_FacilityName]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;UiPath Regional Medical Center&quot;]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return care area" sap2010:WorkflowViewState.IdRef="Assign_OutputCareArea">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_CareArea]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;Observation&quot;]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return arrival timestamp" sap2010:WorkflowViewState.IdRef="Assign_OutputArrivalAt">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_ArrivalAt]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[If(AdmissionDate &lt;&gt; System.DateOnly.MinValue, AdmissionDate.ToString(&quot;yyyy-MM-dd&quot;, System.Globalization.CultureInfo.InvariantCulture) + &quot;T08:20:00-05:00&quot;, System.String.Empty)]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return discharge timestamp" sap2010:WorkflowViewState.IdRef="Assign_OutputDischargeAt">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_DischargeAt]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[If(DischargeDate &lt;&gt; System.DateOnly.MinValue, DischargeDate.ToString(&quot;yyyy-MM-dd&quot;, System.Globalization.CultureInfo.InvariantCulture) + &quot;T10:00:00-05:00&quot;, System.String.Empty)]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return disposition" sap2010:WorkflowViewState.IdRef="Assign_OutputDisposition">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_Disposition]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;Discharged home&quot;]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return storage URI" sap2010:WorkflowViewState.IdRef="Assign_OutputStorageUri">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[out_StorageUri]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[&quot;Hospital Records/&quot; + MedicalRecordFilePath]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Return extraction confidence" sap2010:WorkflowViewState.IdRef="Assign_OutputConfidence">
+      <Assign.To><OutArgument x:TypeArguments="x:Double">[out_ExtractionConfidence]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:Double">[0.95]</InArgument></Assign.Value>
+    </Assign>
+  </Sequence>
+</Activity>

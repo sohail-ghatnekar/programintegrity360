@@ -76,13 +76,13 @@
     <rect x="82" y="686" width="304" height="112" rx="14" fill="#eef7fb" stroke="#bcdbe8"/>
     <text x="104" y="716" class="pill">documentInput</text>
     <text x="104" y="739" class="small">bucket paths • IXP models</text>
-    <text x="104" y="759" class="small">hospitalRecordAvailable</text>
+    <text x="104" y="759" class="small">IXP job output → evidence write</text>
     <text x="104" y="779" class="small">patientClass = Observation</text>
   </g>
 
   <text x="470" y="154" class="section">LIVE DATA FABRIC</text>
   <rect x="1590" y="124" width="746" height="52" rx="12" fill="#fff2eb" stroke="#fac4ad"/>
-  <text x="1614" y="156" class="small-dark">Logical string joins • Flow + BPMN in scope • IXP, RPA and auto-email deferred</text>
+  <text x="1614" y="156" class="small-dark">Logical joins • Case + Flow + BPMN + RPA • Data Fabric persisted at intake, evidence and closure</text>
 
   <!-- Relationship connectors sit behind entity cards. -->
   <path class="edge-input" d="M 414 482 C 520 482, 604 250, 800 250"/>
@@ -248,9 +248,9 @@
   <g>
     <rect x="470" y="1080" width="330" height="180" rx="16" fill="#edf4ff" stroke="#bfd4fb"/>
     <text x="494" y="1114" class="band-title">2 • Evidence acquisition</text>
-    <text x="494" y="1146" class="band-text">Maestro Flow orchestrates</text>
-    <text x="494" y="1172" class="band-text">Beeceptor claim detail API</text>
-    <text x="494" y="1198" class="band-text">Rules use claim + document metadata</text>
+    <text x="494" y="1146" class="band-text">Timesheet RPA + Maestro Flow</text>
+    <text x="494" y="1172" class="band-text">Beeceptor + Data Fabric writes</text>
+    <text x="494" y="1198" class="band-text">Rules + Agentic Caseworker</text>
     <text x="494" y="1234" class="small-dark">PI360CaseManagerFlow</text>
   </g>
 
@@ -258,9 +258,9 @@
   <g>
     <rect x="858" y="1080" width="330" height="180" rx="16" fill="#eef9f6" stroke="#b8e2d8"/>
     <text x="882" y="1114" class="band-title">3 • Hospice request</text>
-    <text x="882" y="1146" class="band-text">Maestro BPMN orchestrates</text>
-    <text x="882" y="1172" class="band-text">72-hour timer + response intake</text>
-    <text x="882" y="1198" class="band-text">Hospital-record metadata intake</text>
+    <text x="882" y="1146" class="band-text">BPMN + RPA provider request</text>
+    <text x="882" y="1172" class="band-text">Message / 72-hour timer race</text>
+    <text x="882" y="1198" class="band-text">Medical RPA + evidence write</text>
     <text x="882" y="1234" class="small-dark">PCS skips this stage</text>
   </g>
 
@@ -278,7 +278,7 @@
   <g>
     <rect x="1634" y="1080" width="330" height="180" rx="16" fill="#eef7fb" stroke="#bcdbe8"/>
     <text x="1658" y="1114" class="band-title">5 • Supervisor review</text>
-    <text x="1658" y="1146" class="band-text">Investigator findings supplied directly</text>
+    <text x="1658" y="1146" class="band-text">RPA builds decision packet</text>
     <text x="1658" y="1172" class="band-text">Investigator findings first</text>
     <text x="1658" y="1198" class="band-text">Agentic evidence remains selectable</text>
     <text x="1658" y="1234" class="small-dark">Supervisor disposition is human</text>
@@ -288,10 +288,10 @@
   <g>
     <rect x="2022" y="1080" width="286" height="180" rx="16" fill="#fff8e8" stroke="#f1d498"/>
     <text x="2046" y="1114" class="band-title">6 • Closure</text>
-    <text x="2046" y="1146" class="band-text">API persists disposition</text>
+    <text x="2046" y="1146" class="band-text">API writes decision + Case</text>
     <text x="2046" y="1172" class="band-text">Audit + next steps retained</text>
-    <text x="2046" y="1198" class="band-text">Email automation deferred</text>
-    <text x="2046" y="1234" class="small-dark">No sent / queued claim</text>
+    <text x="2046" y="1198" class="band-text">Outlook RPA sends summary</text>
+    <text x="2046" y="1234" class="small-dark">Human approval required</text>
   </g>
 
   <!-- Footer legend -->

@@ -53,7 +53,18 @@ The live layout contains the six generated PCS PDFs and the three supplied hospi
 | PI360 Service Evidence Extractor | `pi360_timesheets-46b073f4-ixp` | `db86ac99-70f8-80e1-9c2e-42e09362d0cb` | 12 |
 | PI360 Institutional Encounter Extractor | `pi360-institutional-encounter-extractor-53d63c92-ixp` | `3d9b9c8e-4ac3-80a9-9529-89a013670910` | 9 |
 
-Both models are pinned, published, and tagged `live`. The current authenticated Maestro registry does not expose either project as a selectable IXP node, so the Flow contains clearly labeled swap-ready mocks with the real project/model metadata in grounded context.
+Both models are pinned, published, and tagged `live`. The active orchestration invokes them through the packaged `PI360 IXP Timesheet` and `PI360 IXP Medical Record` RPA processes. Initial service evidence is written by `PI360CaseManagerFlow`; the provider-returned hospital record is written by `PI360ApiWorkflows` after the BPMN medical-record RPA step.
+
+## Runtime Data Fabric writers
+
+| Component | Writes |
+|---|---|
+| `PI360ApiWorkflows / IntakeClaimByCaseType` | Program Integrity Case |
+| `PI360CaseManagerFlow` | Provider, Claim, PCS Attendant/EVV, Risk Signal, initial Evidence Document |
+| `PI360ApiWorkflows / IntakeHospitalRecord` | hospital Evidence Document and Investigation Action |
+| `PI360ApiWorkflows / CloseCaseAndEmitMetrics` | Decision, closure Investigation Action, and Case lifecycle update |
+
+All connector activities use `Program Integrity Fabric` (`a0bd364e-c6cc-4749-9f92-f6a46e59fe4d`) in the ProgramIntegrity360 folder. The nine live entity IDs and full field ownership are recorded in `docs/03-data-model.md`.
 
 ## Idempotent maintenance
 

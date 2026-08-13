@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 Send Outlook Email",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "163e84d2-8d80-407a-80a5-5e739348a3fa",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360 Send Outlook Email"
+    },
+    "locks": [],
+    "key": "e4153b84-c150-4a1d-a70d-76e1a2c86b38",
+    "files": []
+  }
+}

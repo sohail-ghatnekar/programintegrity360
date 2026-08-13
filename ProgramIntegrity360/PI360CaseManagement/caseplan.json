@@ -1,47 +1,2080 @@
 {
-  "id":"case-PI360CaseX",
-  "version":"27.0.0",
-  "name":"PI360CaseManagement",
-  "description":"State Medicaid program-integrity case lifecycle for MedicaidPCS and StateMedicaidHospice. Deterministic review indicators and agent recommendations route material findings to human review; the case never makes a fraud, intent, coverage, or repayment determination.",
-  "metadata":{"caseIdentifier":"PI-PCS","caseIdentifierType":"constant","caseAppEnabled":true,"allowAdhocOptionalStageTasks":true,"publishVersion":2,"caseUnifiedSchemaEnabled":true,"useNewStageWidth":true,"caseExitRules":[{"id":"Condition_cls9Z1","displayName":"All required stages completed","marksCaseComplete":true,"rules":[[{"id":"Rule_cls9Z1","rule":"required-stages-completed"}]]}],"caseManagerData":{"id":"case-manager","enabled":true,"agentBehavior":[],"data":{"tasks":[[{"id":"tCaseManagerAgent","elementId":"case-manager-tCaseManagerAgent","displayName":"UiPath Case Agent","type":"agent","isRequired":true,"shouldRunOnlyOnce":false,"data":{"name":"=bindings.bCaseMgrName","folderPath":"=bindings.bCaseMgrFold","inputs":[{"name":"caseId","type":"string","id":"vCmaCaseId","var":"vCmaCaseId","elementId":"case-manager-tCaseManagerAgent","value":"=vars.caseId"},{"name":"currentStage","type":"string","id":"vCmaCurrentStage","var":"vCmaCurrentStage","elementId":"case-manager-tCaseManagerAgent","value":"Stage_Corr4a"},{"name":"groundingJson","type":"string","id":"vCmaGrounding","var":"vCmaGrounding","elementId":"case-manager-tCaseManagerAgent","value":"=js:JSON.stringify({caseType: vars.caseType, flowRecommendation: vars.recommendedStageId, routeReason: vars.routeReason, investigatorDecision: vars.investigatorDecision, investigatorFindings: vars.investigatorFindings, supervisorDecision: vars.supervisorDecision, supervisorReviewNotes: vars.supervisorReviewNotes})"},{"name":"quickRulesJson","type":"string","id":"vCmaQuickRules","var":"vCmaQuickRules","elementId":"case-manager-tCaseManagerAgent","value":"=js:JSON.stringify({claimThreshold: vars.claimThreshold, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded, reviewIndicatorOnly: true})"}],"outputs":[{"name":"caseManagerDecisions","type":"json","id":"caseManagerDecisions","var":"caseManagerDecisions","value":"caseManagerDecisions","source":"=caseManagerDecisions","target":"=caseManagerDecisions","elementId":"case-manager-tCaseManagerAgent"}]}}]]}},"intsvcActivityConfig":"v2"},
-  "bindings":[
-    {"id":"bCaseMgrName","name":"name","type":"string","resource":"process","resourceSubType":"Agent","resourceKey":"solution_folder.PI360CaseManagerAgent","default":"PI360CaseManagerAgent","propertyAttribute":"name"},
-    {"id":"bCaseMgrFold","name":"folderPath","type":"string","resource":"process","resourceSubType":"Agent","resourceKey":"solution_folder.PI360CaseManagerAgent","default":"","propertyAttribute":"folderPath"},
-    {"id":"bSupervisorAppName","name":"name","type":"string","resource":"app","resourceKey":"solution_folder.pi360-escalation-action-app","default":"pi360-escalation-action-app","propertyAttribute":"name"},
-    {"id":"bSupervisorAppFold","name":"folderPath","type":"string","resource":"app","resourceKey":"solution_folder.pi360-escalation-action-app","default":"solution_folder","propertyAttribute":"folderPath"},
-    {"id":"bFl3wN7qK","name":"name","type":"string","resource":"process","resourceSubType":"ProcessOrchestration","resourceKey":"solution_folder.PI360CaseManagerFlow","default":"PI360CaseManagerFlow","propertyAttribute":"name"},
-    {"id":"bFp8rT2mX","name":"folderPath","type":"string","resource":"process","resourceSubType":"ProcessOrchestration","resourceKey":"solution_folder.PI360CaseManagerFlow","default":"","propertyAttribute":"folderPath"},
-    {"id":"bBp4nM9sQ","name":"name","type":"string","resource":"process","resourceSubType":"ProcessOrchestration","resourceKey":"solution_folder.PI360AdHocReviewBpmn","default":"PI360AdHocReviewBpmn","propertyAttribute":"name"},
-    {"id":"bBf6dR1vZ","name":"folderPath","type":"string","resource":"process","resourceSubType":"ProcessOrchestration","resourceKey":"solution_folder.PI360AdHocReviewBpmn","default":"","propertyAttribute":"folderPath"},
-    {"id":"bpqtM3QdN","name":"folderPath","type":"string","resource":"process","resourceKey":"PI360 IXP Timesheet","propertyAttribute":"folderPath"},
-    {"id":"b7DAhSveV","name":"name","type":"string","resource":"process","resourceKey":"PI360 IXP Timesheet","default":"PI360 IXP Timesheet","propertyAttribute":"name"}
-  ],
-  "variables":{"inputs":[
-    {"id":"vCaseIn01","name":"caseInput","type":"jsonSchema","default":"","elementId":"trigger_1","required":true,"body":{"type":"object","additionalProperties":true}},
-    {"id":"vClaimIn1","name":"claimInput","type":"jsonSchema","default":"","elementId":"trigger_1","required":true,"body":{"type":"object","additionalProperties":true}},
-    {"id":"vMemberI1","name":"memberInput","type":"jsonSchema","default":"","elementId":"trigger_1","required":true,"body":{"type":"object","additionalProperties":true}},
-    {"id":"vProvidr1","name":"providerInput","type":"jsonSchema","default":"","elementId":"trigger_1","required":true,"body":{"type":"object","additionalProperties":true}},
-    {"id":"vService1","name":"serviceEventInput","type":"jsonSchema","default":"","elementId":"trigger_1","required":true,"body":{"type":"object","additionalProperties":true}},
-    {"id":"vDocumen1","name":"documentInput","type":"jsonSchema","default":"","elementId":"trigger_1","required":true,"body":{"type":"object","additionalProperties":true}}
-  ],"outputs":[],"inputOutputs":[
-    {"id":"caseInput","name":"caseInput","type":"jsonSchema","elementId":"trigger_1","body":{"type":"object","additionalProperties":true}},
-    {"id":"claimInput","name":"claimInput","type":"jsonSchema","elementId":"trigger_1","body":{"type":"object","additionalProperties":true}},
-    {"id":"memberInput","name":"memberInput","type":"jsonSchema","elementId":"trigger_1","body":{"type":"object","additionalProperties":true}},
-    {"id":"providerInput","name":"providerInput","type":"jsonSchema","elementId":"trigger_1","body":{"type":"object","additionalProperties":true}},
-    {"id":"serviceEventInput","name":"serviceEventInput","type":"jsonSchema","elementId":"trigger_1","body":{"type":"object","additionalProperties":true}},
-    {"id":"documentInput","name":"documentInput","type":"jsonSchema","elementId":"trigger_1","body":{"type":"object","additionalProperties":true}},
-    {"id":"caseManagerNextStageId","name":"caseManagerNextStageId","type":"string","elementId":"root","custom":true},
-    {"id":"providerNextStageId","name":"providerNextStageId","type":"string","elementId":"root","custom":true}
-  ]},
-  "nodes":[
-    {"id":"trigger_1","type":"uipath.case.trigger","data":{"typeVersion":"1.0.0","display":{"label":"Medicaid claim intake"},"inputs":{"outputs":[{"name":"caseInput","type":"jsonSchema","source":"=vars.vCaseIn01","var":"caseInput"},{"name":"claimInput","type":"jsonSchema","source":"=vars.vClaimIn1","var":"claimInput"},{"name":"memberInput","type":"jsonSchema","source":"=vars.vMemberI1","var":"memberInput"},{"name":"providerInput","type":"jsonSchema","source":"=vars.vProvidr1","var":"providerInput"},{"name":"serviceEventInput","type":"jsonSchema","source":"=vars.vService1","var":"serviceEventInput"},{"name":"documentInput","type":"jsonSchema","source":"=vars.vDocumen1","var":"documentInput"}],"serviceType":"None"},"isInvalidDropTarget":false,"isPendingParent":false}},
-    {"id":"Stage_Aintk1","type":"case-management:Stage","data":{"label":"Intake and triage","description":"Register six structured intake objects and explain the CaseType profile.","isRequired":true,"parentElement":{"id":"root","type":"case-management:root"},"isInvalidDropTarget":false,"isPendingParent":false,"tasks":[[{"id":"tINT1case","elementId":"Stage_Aintk1-tINT1case","displayName":"API - intake claim and select CaseType profile","type":"api-workflow","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cINT1case","displayName":"When intake stage starts","rules":[[{"id":"rINT1case","rule":"current-stage-entered"}]]}],"data":{"name":"PI360ApiWorkflows","folderPath":"solution_folder","inputs":[{"name":"workflowName","type":"string","id":"vINT1wf","var":"vINT1wf","elementId":"Stage_Aintk1-tINT1case","value":"IntakeClaimByCaseType"},{"name":"caseType","type":"string","id":"vINT1type","var":"vINT1type","elementId":"Stage_Aintk1-tINT1case","value":"=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"},{"name":"caseId","type":"string","id":"vINT1case","var":"vINT1case","elementId":"Stage_Aintk1-tINT1case","value":"=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"},{"name":"caseInput","type":"object","id":"vC1aSe7Qx","var":"vC1aSe7Qx","elementId":"Stage_Aintk1-tINT1case","value":"=vars.caseInput"},{"name":"claimInput","type":"object","id":"vCl4iM8rP","var":"vCl4iM8rP","elementId":"Stage_Aintk1-tINT1case","value":"=vars.claimInput"},{"name":"memberInput","type":"object","id":"vMe2bR6tN","var":"vMe2bR6tN","elementId":"Stage_Aintk1-tINT1case","value":"=vars.memberInput"},{"name":"providerInput","type":"object","id":"vPr7vD3kL","var":"vPr7vD3kL","elementId":"Stage_Aintk1-tINT1case","value":"=vars.providerInput"},{"name":"serviceEventInput","type":"object","id":"vSv5eN9qR","var":"vSv5eN9qR","elementId":"Stage_Aintk1-tINT1case","value":"=vars.serviceEventInput"},{"name":"documentInput","type":"object","id":"vDo8cU2mK","var":"vDo8cU2mK","elementId":"Stage_Aintk1-tINT1case","value":"=vars.documentInput"}]}}],[{"id":"tTRI1agnt","elementId":"Stage_Aintk1-tTRI1agnt","displayName":"Agentic Caseworker - explain triage recommendation","type":"agent","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"Condition_TRI1A1","displayName":"After case intake","rules":[[{"id":"Rule_TRI1A1","rule":"selected-tasks-completed","selectedTasksIds":["tINT1case"]}]]}],"data":{"name":"PI360TriageAgent","folderPath":"solution_folder","inputs":[{"name":"caseId","type":"string","id":"vTRI1case","var":"vTRI1case","elementId":"Stage_Aintk1-tTRI1agnt","value":"=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"},{"name":"groundingJson","type":"string","id":"vTRI1grnd","var":"vTRI1grnd","elementId":"Stage_Aintk1-tTRI1agnt","value":"=js:JSON.stringify({caseType: vars.caseInput?.caseType ?? vars.caseInput?.case_type, caseInput: vars.caseInput, claimInput: vars.claimInput, instruction: 'Explain deterministic triage only; do not determine fraud or repayment.'})"}]}}]],"entryConditions":[{"id":"Condition_ent1aa","displayName":"Case entered","isInterrupting":false,"rules":[[{"rule":"case-entered","id":"Rule_ent1aa"}]]}],"exitConditions":[{"id":"Condition_ext1aa","displayName":"Intake complete","type":"exit-only","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext1aa"}]]}]}},
-    {"id":"Stage_Evcol2","type":"case-management:Stage","data":{"label":"Evidence acquisition and validation","description":"Invoke the Case Manager Flow for claim facts, deterministic checks, and routing while preserving deferred cloud extraction and validation nodes.","isRequired":true,"parentElement":{"id":"root","type":"case-management:root"},"isInvalidDropTarget":false,"isPendingParent":false,"tasks":[[{"id":"tCLM2pull","elementId":"Stage_Evcol2-tCLM2pull","displayName":"Flow - acquire and validate claim evidence","type":"process","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cCLM2pull","displayName":"When evidence stage starts","rules":[[{"id":"rCLM2pull","rule":"current-stage-entered"}]]}],"data":{"name":"=bindings.bFl3wN7qK","folderPath":"=bindings.bFp8rT2mX","inputs":[{"name":"caseInput","type":"object","id":"vK7mQ2pRt","var":"vK7mQ2pRt","elementId":"Stage_Evcol2-tCLM2pull","value":"=vars.caseInput"},{"name":"claimInput","type":"object","id":"vN4xL8sVu","var":"vN4xL8sVu","elementId":"Stage_Evcol2-tCLM2pull","value":"=vars.claimInput"},{"name":"memberInput","type":"object","id":"vD6qP3wZa","var":"vD6qP3wZa","elementId":"Stage_Evcol2-tCLM2pull","value":"=vars.memberInput"},{"name":"providerInput","type":"object","id":"vH2rT9cXm","var":"vH2rT9cXm","elementId":"Stage_Evcol2-tCLM2pull","value":"=vars.providerInput"},{"name":"serviceEventInput","type":"object","id":"vJ5vB7nKs","var":"vJ5vB7nKs","elementId":"Stage_Evcol2-tCLM2pull","value":"=vars.serviceEventInput"},{"name":"documentInput","type":"object","id":"vM8yF1qLd","var":"vM8yF1qLd","elementId":"Stage_Evcol2-tCLM2pull","value":"=vars.documentInput"}],"outputs":[{"name":"caseId","type":"string","id":"caseId","var":"caseId","value":"caseId","source":"=caseId","target":"=caseId","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"caseType","type":"string","id":"caseType","var":"caseType","value":"caseType","source":"=caseType","target":"=caseType","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"claimCount","type":"number","id":"claimCount","var":"claimCount","value":"claimCount","source":"=claimCount","target":"=claimCount","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"lineCount","type":"number","id":"lineCount","var":"lineCount","value":"lineCount","source":"=lineCount","target":"=lineCount","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"totalUnits","type":"number","id":"totalUnits","var":"totalUnits","value":"totalUnits","source":"=totalUnits","target":"=totalUnits","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"totalBilled","type":"number","id":"totalBilled","var":"totalBilled","value":"totalBilled","source":"=totalBilled","target":"=totalBilled","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"claimThreshold","type":"number","id":"claimThreshold","var":"claimThreshold","value":"claimThreshold","source":"=claimThreshold","target":"=claimThreshold","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"thresholdExceeded","type":"boolean","id":"thresholdExceeded","var":"thresholdExceeded","value":"thresholdExceeded","source":"=thresholdExceeded","target":"=thresholdExceeded","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"recommendedStageId","type":"string","id":"recommendedStageId","var":"recommendedStageId","value":"recommendedStageId","source":"=recommendedStageId","target":"=recommendedStageId","elementId":"Stage_Evcol2-tCLM2pull"},{"name":"routeReason","type":"string","id":"routeReason","var":"routeReason","value":"routeReason","source":"=routeReason","target":"=routeReason","elementId":"Stage_Evcol2-tCLM2pull"}]} }],[{"id":"tUeO6EGo3","isRequired":false,"shouldRunOnlyOnce":false,"data":{"name":"=bindings.b7DAhSveV","folderPath":"=bindings.bpqtM3QdN","inputs":[],"outputs":[{"name":"Error","displayName":"Error","value":"error","type":"jsonSchema","source":"=Error","_jsonSchema":{"type":"object","properties":{"code":{"type":"string"},"message":{"type":"string"},"detail":{"type":"string"},"category":{"type":"string"},"status":{"type":"number"},"element":{"type":"string"}}},"id":"error","var":"error","elementId":"Stage_Evcol2-tUeO6EGo3","body":{"type":"object","properties":{"code":{"type":"string"},"message":{"type":"string"},"detail":{"type":"string"},"category":{"type":"string"},"status":{"type":"number"},"element":{"type":"string"}}}}]},"type":"rpa","elementId":"Stage_Evcol2-tUeO6EGo3","displayName":"IXP Extraction TimeSheet @Matt","entryConditions":[{"id":"cdQ2cvPNv","displayName":"Entry rule 1","rules":[[{"id":"rBwCUHKkn","rule":"adhoc","conditionExpression":"=js:false"}]]}]}],[{"id":"tQAC3rec","elementId":"Stage_Evcol2-tQAC3rec","displayName":"Rules - validate threshold and evidence indicators","type":"api-workflow","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cjY9kzqud","displayName":"Entry rule 1","rules":[[{"id":"rjEXRp2VQ","rule":"runs-sequentially"}]]}],"data":{"name":"PI360ApiWorkflows","folderPath":"solution_folder","inputs":[{"name":"workflowName","type":"string","id":"vQAC3wf","var":"vQAC3wf","elementId":"Stage_Evcol2-tQAC3rec","value":"ValidateEvidenceByCaseType"},{"name":"caseType","type":"string","id":"vQAC3type","var":"vQAC3type","elementId":"Stage_Evcol2-tQAC3rec","value":"=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"},{"name":"caseId","type":"string","id":"vQAC3case","var":"vQAC3case","elementId":"Stage_Evcol2-tQAC3rec","value":"=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"},{"name":"claimTotalBilled","type":"double","id":"vQAC3bill","var":"vQAC3bill","elementId":"Stage_Evcol2-tQAC3rec","value":"=js:Number(vars.claimInput?.totalBilled ?? vars.claimInput?.total_billed ?? 0)"},{"name":"hospitalRecordAvailable","type":"boolean","id":"vQAC3hosp","var":"vQAC3hosp","elementId":"Stage_Evcol2-tQAC3rec","value":"=js:Boolean(vars.documentInput?.hospitalRecordAvailable ?? vars.documentInput?.hospital_record_available ?? false)"}]}}]],"entryConditions":[{"id":"Condition_ent2aa","displayName":"Triage stage completed","isInterrupting":false,"rules":[[{"rule":"selected-stage-completed","id":"Rule_ent2aa","selectedStageId":"Stage_Aintk1"}]]},{"id":"Condition_ent2rt","displayName":"Case Manager requested evidence refresh","isInterrupting":true,"rules":[[{"rule":"selected-stage-exited","id":"Rule_ent2rt","conditionExpression":"=js:vars.caseManagerNextStageId === 'Stage_Evcol2'","selectedStageId":"Stage_Corr4a"}]]}],"exitConditions":[{"id":"Condition_ext2pr","displayName":"Flow recommends provider record request","type":"exit-only","exitToStageId":"Stage_Prreq6","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext2pr","conditionExpression":"=js:vars.recommendedStageId === 'Stage_Prreq6'"}]]},{"id":"Condition_ext2aa","displayName":"Flow recommends investigation","type":"exit-only","exitToStageId":"Stage_Corr4a","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext2aa","conditionExpression":"=js:vars.recommendedStageId === 'Stage_Corr4a'"}]]}]}},
-    {"id":"Stage_Corr4a","type":"case-management:Stage","data":{"label":"Investigation","description":"Keep the Agentic Caseworker first pass, investigator human checkpoint, and Case Manager routing boundary.","isRequired":true,"parentElement":{"id":"root","type":"case-management:root"},"isInvalidDropTarget":false,"isPendingParent":false,"tasks":[[{"id":"tCOR4evid","elementId":"Stage_Corr4a-tCOR4evid","displayName":"Agentic Caseworker - first-pass investigation recommendation","type":"agent","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cCOR4evid","displayName":"When investigation stage starts","rules":[[{"id":"rCOR4evid","rule":"current-stage-entered"}]]}],"data":{"name":"PI360EvidenceCorrelationAgent","folderPath":"solution_folder","inputs":[{"name":"caseId","type":"string","id":"vCOR4case","var":"vCOR4case","elementId":"Stage_Corr4a-tCOR4evid","value":"=vars.caseId"},{"name":"groundingJson","type":"string","id":"vCOR4grnd","var":"vCOR4grnd","elementId":"Stage_Corr4a-tCOR4evid","value":"=js:JSON.stringify({caseType: vars.caseType, claimFacts: {claimCount: vars.claimCount, lineCount: vars.lineCount, totalUnits: vars.totalUnits, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded}, routeReason: vars.routeReason, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage, documents: vars.documentInput, instruction: 'Cite facts and state that no document extraction was executed.'})"}]}}],[{"id":"tREV5task","elementId":"Stage_Corr4a-tREV5task","displayName":"Human - confirm true investigation and record findings","type":"action","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"Condition_REV5J9","displayName":"After Agentic Caseworker first pass","rules":[[{"id":"Rule_REV5J9","rule":"selected-tasks-completed","selectedTasksIds":["tCOR4evid"]}]]}],"data":{"taskTitle":"Investigator confirmation - Medicaid claim review","priority":"High","recipient":{"Type":2,"Value":"sohail.ghatnekar@uipath.com"},"labels":"Program Integrity,Investigator Review","name":"=bindings.bSupervisorAppName","folderPath":"=bindings.bSupervisorAppFold","inputs":[{"name":"caseId","type":"string","id":"vInvCase1","var":"vInvCase1","elementId":"Stage_Corr4a-tREV5task","value":"=vars.caseId"},{"name":"routeReason","type":"string","id":"vInvRsn01","var":"vInvRsn01","elementId":"Stage_Corr4a-tREV5task","value":"=vars.routeReason"},{"name":"evidenceSummary","type":"string","id":"vInvEvid1","var":"vInvEvid1","elementId":"Stage_Corr4a-tREV5task","value":"=js:JSON.stringify({claimInput: vars.claimInput, documentInput: vars.documentInput, totalBilled: vars.totalBilled, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage})"}],"outputs":[{"name":"supervisorDecision","type":"string","id":"investigatorDecision","var":"investigatorDecision","value":"investigatorDecision","source":"=supervisorDecision","target":"=investigatorDecision","elementId":"Stage_Corr4a-tREV5task"},{"name":"reviewNotes","type":"string","id":"investigatorFindings","var":"investigatorFindings","value":"investigatorFindings","source":"=reviewNotes","target":"=investigatorFindings","elementId":"Stage_Corr4a-tREV5task"},{"name":"recommendedAction","type":"string","id":"investigatorRecommendedAction","var":"investigatorRecommendedAction","value":"investigatorRecommendedAction","source":"=recommendedAction","target":"=investigatorRecommendedAction","elementId":"Stage_Corr4a-tREV5task"}]}}],[{"id":"tCMR4route","elementId":"Stage_Corr4a-tCMR4route","displayName":"Agentic Caseworker - route reviewed investigation","type":"agent","isRequired":true,"shouldRunOnlyOnce":false,"entryConditions":[{"id":"Condition_CMR4K1","displayName":"After investigator checkpoint","rules":[[{"id":"Rule_CMR4K1","rule":"selected-tasks-completed","selectedTasksIds":["tREV5task"]}]]}],"data":{"name":"=bindings.bCaseMgrName","folderPath":"=bindings.bCaseMgrFold","inputs":[{"name":"caseId","type":"string","id":"vCMR4case","var":"vCMR4case","elementId":"Stage_Corr4a-tCMR4route","value":"=vars.caseId"},{"name":"currentStage","type":"string","id":"vCMR4stage","var":"vCMR4stage","elementId":"Stage_Corr4a-tCMR4route","value":"Stage_Corr4a"},{"name":"groundingJson","type":"string","id":"vCMR4grnd","var":"vCMR4grnd","elementId":"Stage_Corr4a-tCMR4route","value":"=js:JSON.stringify({caseType: vars.caseType, investigatorDecision: vars.investigatorDecision, investigatorFindings: vars.investigatorFindings, flowRouteReason: vars.routeReason, providerStatus: vars.providerRequestStatus})"},{"name":"quickRulesJson","type":"string","id":"vCMR4rules","var":"vCMR4rules","elementId":"Stage_Corr4a-tCMR4route","value":"=js:JSON.stringify({thresholdExceeded: vars.thresholdExceeded, supervisorRequired: true, reviewIndicatorOnly: true})"}],"outputs":[{"name":"nextStageId","type":"string","id":"nextStageId","var":"caseManagerNextStageId","originalVar":"nextStageId","value":"caseManagerNextStageId","source":"=nextStageId","target":"=nextStageId","elementId":"Stage_Corr4a-tCMR4route"}]}}]],"entryConditions":[{"id":"Condition_ent4aa","displayName":"Flow recommends direct investigation","isInterrupting":false,"rules":[[{"rule":"selected-stage-completed","id":"Rule_ent4aa","conditionExpression":"=js:vars.recommendedStageId === 'Stage_Corr4a'","selectedStageId":"Stage_Evcol2"}]]},{"id":"Condition_ent4pr","displayName":"Provider orchestration returns to investigation","isInterrupting":true,"rules":[[{"rule":"selected-stage-completed","id":"Rule_ent4pr","conditionExpression":"=js:vars.providerNextStageId === 'Stage_Corr4a'","selectedStageId":"Stage_Prreq6"}]]},{"id":"Condition_ent4sp","displayName":"Supervisor action returned","isInterrupting":true,"rules":[[{"rule":"selected-stage-completed","id":"Rule_ent4sp","selectedStageId":"Stage_Supv7a"}]]}],"exitConditions":[{"id":"Condition_ext4ev","displayName":"Case Manager requests evidence refresh","type":"exit-only","exitToStageId":"Stage_Evcol2","marksStageComplete":false,"rules":[[{"rule":"selected-tasks-completed","id":"Rule_ext4ev","selectedTasksIds":["tCMR4route"],"conditionExpression":"=js:vars.caseManagerNextStageId === 'Stage_Evcol2'"}]]},{"id":"Condition_ext4sp","displayName":"Case Manager requests supervisor action","type":"exit-only","exitToStageId":"Stage_Supv7a","marksStageComplete":false,"rules":[[{"rule":"selected-tasks-completed","id":"Rule_ext4sp","selectedTasksIds":["tCMR4route"],"conditionExpression":"=js:vars.caseManagerNextStageId === 'Stage_Supv7a'"}]]},{"id":"Condition_ext4cl","displayName":"Case Manager approves closure route","type":"exit-only","exitToStageId":"Stage_Clos9a","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext4cl","conditionExpression":"=js:vars.caseManagerNextStageId === 'Stage_Clos9a'"}]]}]}},
-    {"id":"Stage_Prreq6","type":"case-management:Stage","data":{"label":"Provider record request","description":"Hospice-only provider-record request, P3D wait, response intake, and return to Investigation owned by the BPMN, with preserved cloud wait and deferred extraction nodes.","isRequired":false,"parentElement":{"id":"root","type":"case-management:root"},"isInvalidDropTarget":false,"isPendingParent":false,"tasks":[[{"id":"tREQ6send","elementId":"Stage_Prreq6-tREQ6send","displayName":"BPMN - request and await hospital record","type":"process","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cREQ6send","displayName":"When provider response stage starts","rules":[[{"id":"rREQ6send","rule":"current-stage-entered"}]]}],"data":{"name":"=bindings.bBp4nM9sQ","folderPath":"=bindings.bBf6dR1vZ","inputs":[{"name":"CaseId","type":"string","id":"vREQ6case","var":"vREQ6case","elementId":"Stage_Prreq6-tREQ6send","value":"=vars.caseId"},{"name":"CaseType","type":"string","id":"vREQ6type","var":"vREQ6type","elementId":"Stage_Prreq6-tREQ6send","value":"=vars.caseType"},{"name":"ProviderId","type":"string","id":"vREQ6prov","var":"vREQ6prov","elementId":"Stage_Prreq6-tREQ6send","value":"=js:vars.providerInput?.providerId ?? vars.providerInput?.provider_id"},{"name":"HospitalRecordAvailable","type":"boolean","id":"vREQ6hosp","var":"vREQ6hosp","elementId":"Stage_Prreq6-tREQ6send","value":"=js:Boolean(vars.documentInput?.hospitalRecordAvailable ?? vars.documentInput?.hospital_record_available ?? false)"},{"name":"InvestigatorProceed","type":"boolean","id":"vREQ6gate","var":"vREQ6gate","elementId":"Stage_Prreq6-tREQ6send","value":"true"}],"outputs":[{"name":"ProviderRequestStatus","type":"string","id":"providerRequestStatus","var":"providerRequestStatus","value":"providerRequestStatus","source":"=ProviderRequestStatus","target":"=providerRequestStatus","elementId":"Stage_Prreq6-tREQ6send"},{"name":"HospitalRecordAvailable","type":"boolean","id":"hospitalRecordAvailable","var":"hospitalRecordAvailable","value":"hospitalRecordAvailable","source":"=HospitalRecordAvailable","target":"=hospitalRecordAvailable","elementId":"Stage_Prreq6-tREQ6send"},{"name":"NextStageId","type":"string","id":"nextStageId2","var":"providerNextStageId","originalVar":"nextStageId","value":"providerNextStageId","source":"=NextStageId","target":"=nextStageId2","elementId":"Stage_Prreq6-tREQ6send"},{"name":"AuditMessage","type":"string","id":"auditMessage","var":"auditMessage","value":"auditMessage","source":"=AuditMessage","target":"=auditMessage","elementId":"Stage_Prreq6-tREQ6send"}]} }],[{"id":"tPRV6wait","elementId":"Stage_Prreq6-tPRV6wait","displayName":"Timer - await hospital record (72 hours)","type":"wait-for-timer","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"c79vk7yYr","displayName":"Entry rule 1","rules":[[{"id":"riNyUZUrB","rule":"runs-sequentially"}]]}],"data":{"timerType":"timeDuration","timeDuration":"P3D"}}],[{"id":"tH5yKJJef","isRequired":false,"shouldRunOnlyOnce":false,"data":{},"type":"rpa","elementId":"Stage_Prreq6-tH5yKJJef","displayName":"IXP Extraction Medical Record @Matt","entryConditions":[{"id":"caFDL8DPD","displayName":"Entry rule 1","rules":[[{"id":"rkH2NZpvq","rule":"adhoc","conditionExpression":"=js:false"}]]}]}]],"entryConditions":[{"id":"Condition_ent6hs","displayName":"Hospice Flow recommendation requires hospital record","isInterrupting":false,"rules":[[{"rule":"selected-stage-completed","id":"Rule_ent6hs","conditionExpression":"=js:((vars.caseInput?.caseType ?? vars.caseInput?.case_type) === 'StateMedicaidHospice') && (vars.recommendedStageId === 'Stage_Prreq6')","selectedStageId":"Stage_Evcol2"}]]}],"exitConditions":[{"id":"Condition_ext6aa","displayName":"Provider orchestration returns to investigation","type":"exit-only","exitToStageId":"Stage_Corr4a","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext6aa","conditionExpression":"=js:vars.providerNextStageId === 'Stage_Corr4a'"}]]}]}},
-    {"id":"Stage_Supv7a","type":"case-management:Stage","data":{"label":"Supervisor review","description":"Prepare the cloud packet and present investigator findings and Agentic Evidence directly to the supervisor human checkpoint.","isRequired":false,"parentElement":{"id":"root","type":"case-management:root"},"isInvalidDropTarget":false,"isPendingParent":false,"tasks":[[{"id":"tPKT7prep","elementId":"Stage_Supv7a-tPKT7prep","displayName":"API - prepare investigator findings and agentic evidence","type":"api-workflow","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cQHvJxb5Q","displayName":"Entry rule 1","rules":[[{"id":"rAPETZnAR","rule":"runs-sequentially"}]]}],"data":{"name":"PI360ApiWorkflows","folderPath":"solution_folder","inputs":[{"name":"workflowName","type":"string","id":"vPKT7wf","var":"vPKT7wf","elementId":"Stage_Supv7a-tPKT7prep","value":"PrepareSupervisorPacket"},{"name":"caseType","type":"string","id":"vPKT7type","var":"vPKT7type","elementId":"Stage_Supv7a-tPKT7prep","value":"=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"},{"name":"caseId","type":"string","id":"vPKT7case","var":"vPKT7case","elementId":"Stage_Supv7a-tPKT7prep","value":"=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"}]} }],[{"id":"tSUP7gate","elementId":"Stage_Supv7a-tSUP7gate","displayName":"Human - supervisor review and disposition","type":"action","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"Condition_SUP7P6","displayName":"When supervisor stage starts","rules":[[{"id":"Rule_SUP7P6","rule":"current-stage-entered"}]]}],"data":{"taskTitle":"Supervisor review - Medicaid claim investigation","priority":"High","recipient":{"Type":2,"Value":"sohail.ghatnekar@uipath.com"},"labels":"Program Integrity,Supervisor Approval","name":"=bindings.bSupervisorAppName","folderPath":"=bindings.bSupervisorAppFold","inputs":[{"name":"caseId","type":"string","id":"vSupCase","var":"vSupCase","elementId":"Stage_Supv7a-tSUP7gate","value":"=vars.caseId"},{"name":"routeReason","type":"string","id":"vSupReason","var":"vSupReason","elementId":"Stage_Supv7a-tSUP7gate","value":"=vars.routeReason"},{"name":"evidenceSummary","type":"string","id":"vSupEvidence","var":"vSupEvidence","elementId":"Stage_Supv7a-tSUP7gate","value":"=js:JSON.stringify({investigatorFindings: vars.investigatorFindings, investigatorDecision: vars.investigatorDecision, agenticEvidence: {claimCount: vars.claimCount, lineCount: vars.lineCount, totalUnits: vars.totalUnits, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded, routeReason: vars.routeReason, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage}})"},{"name":"recommendedAction","type":"string","id":"vSupRecommended","var":"vSupRecommended","elementId":"Stage_Supv7a-tSUP7gate","value":"=js:vars.investigatorRecommendedAction ?? 'Continue reviewed investigation'"}],"outputs":[{"name":"supervisorDecision","type":"string","id":"supervisorDecision","var":"supervisorDecision","value":"supervisorDecision","source":"=supervisorDecision","target":"=supervisorDecision","elementId":"Stage_Supv7a-tSUP7gate"},{"name":"reviewNotes","type":"string","id":"supervisorReviewNotes","var":"supervisorReviewNotes","value":"supervisorReviewNotes","source":"=reviewNotes","target":"=supervisorReviewNotes","elementId":"Stage_Supv7a-tSUP7gate"}]}}]],"entryConditions":[{"id":"Condition_ent7aa","displayName":"Case Manager selected supervisor action","isInterrupting":true,"rules":[[{"rule":"selected-stage-exited","id":"Rule_ent7aa","conditionExpression":"=js:vars.caseManagerNextStageId === 'Stage_Supv7a'","selectedStageId":"Stage_Corr4a"}]]}],"exitConditions":[{"id":"Condition_ext7aa","displayName":"Supervisor action completed","type":"exit-only","exitToStageId":"Stage_Corr4a","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext7aa"}]]}]}},
-    {"id":"Stage_Clos9a","type":"case-management:Stage","data":{"label":"Closure and communication","description":"Persist the approved disposition and audit metrics; the preserved automated closure email remains packaged but unreachable.","isRequired":true,"parentElement":{"id":"root","type":"case-management:root"},"isInvalidDropTarget":false,"isPendingParent":false,"tasks":[[{"id":"tCLS9case","elementId":"Stage_Clos9a-tCLS9case","displayName":"API - close case and persist disposition","type":"api-workflow","isRequired":true,"shouldRunOnlyOnce":true,"entryConditions":[{"id":"cCLS9case","displayName":"When closure stage starts","rules":[[{"id":"rCLS9case","rule":"current-stage-entered"}]]}],"data":{"name":"PI360ApiWorkflows","folderPath":"solution_folder","inputs":[{"name":"workflowName","type":"string","id":"vCLS9wf","var":"vCLS9wf","elementId":"Stage_Clos9a-tCLS9case","value":"CloseCaseAndEmitMetrics"},{"name":"caseType","type":"string","id":"vCLS9type","var":"vCLS9type","elementId":"Stage_Clos9a-tCLS9case","value":"=vars.caseType"},{"name":"caseId","type":"string","id":"vCLS9id","var":"vCLS9id","elementId":"Stage_Clos9a-tCLS9case","value":"=vars.caseId"},{"name":"supervisorApproved","type":"boolean","id":"vCLS9sup","var":"vCLS9sup","elementId":"Stage_Clos9a-tCLS9case","value":"=js:String(vars.supervisorDecision ?? '').toLowerCase().includes('approve')"}]} }],[{"id":"thmyc7i2S","isRequired":false,"shouldRunOnlyOnce":false,"data":{},"type":"rpa","elementId":"Stage_Clos9a-thmyc7i2S","displayName":"RPA - send outlook to someone","entryConditions":[{"id":"cC8LinGvN","displayName":"Entry rule 1","rules":[[{"id":"rdOwyhJ50","rule":"adhoc","conditionExpression":"=js:false"}]]}]}]],"entryConditions":[{"id":"Condition_ent9aa","displayName":"Case Manager selected closure","isInterrupting":false,"rules":[[{"rule":"selected-stage-completed","id":"Rule_ent9aa","conditionExpression":"=js:vars.caseManagerNextStageId === 'Stage_Clos9a'","selectedStageId":"Stage_Corr4a"}]]}],"exitConditions":[{"id":"Condition_ext9aa","displayName":"Case closed","type":"exit-only","marksStageComplete":true,"rules":[[{"rule":"required-tasks-completed","id":"Rule_ext9aa"}]]}]}}
-  ],
-  "edges":[],
-  "layout":{}
+    "id": "case-PI360CaseX",
+    "version": "27.0.0",
+    "name": "PI360CaseManagement",
+    "description": "State Medicaid program-integrity case lifecycle for MedicaidPCS and StateMedicaidHospice. Deterministic review indicators and agent recommendations route material findings to human review; the case never makes a fraud, intent, coverage, or repayment determination.",
+    "metadata": {
+        "caseIdentifier": "PI-PCS",
+        "caseIdentifierType": "constant",
+        "caseAppEnabled": true,
+        "allowAdhocOptionalStageTasks": true,
+        "publishVersion": 2,
+        "caseUnifiedSchemaEnabled": true,
+        "useNewStageWidth": true,
+        "caseExitRules": [
+            {
+                "id": "Condition_cls9Z1",
+                "displayName": "All required stages completed",
+                "marksCaseComplete": true,
+                "rules": [
+                    [
+                        {
+                            "id": "Rule_cls9Z1",
+                            "rule": "required-stages-completed"
+                        }
+                    ]
+                ]
+            }
+        ],
+        "caseManagerData": {
+            "id": "case-manager",
+            "enabled": true,
+            "agentBehavior": [],
+            "data": {
+                "tasks": [
+                    [
+                        {
+                            "id": "tCaseManagerAgent",
+                            "elementId": "case-manager-tCaseManagerAgent",
+                            "displayName": "UiPath Case Agent",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": false,
+                            "data": {
+                                "name": "=bindings.bCaseMgrName",
+                                "folderPath": "=bindings.bCaseMgrFold",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCmaCaseId",
+                                        "var": "vCmaCaseId",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "currentStage",
+                                        "type": "string",
+                                        "id": "vCmaCurrentStage",
+                                        "var": "vCmaCurrentStage",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "Stage_Corr4a"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vCmaGrounding",
+                                        "var": "vCmaGrounding",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, flowRecommendation: vars.recommendedStageId, routeReason: vars.routeReason, investigatorDecision: vars.investigatorDecision, investigatorFindings: vars.investigatorFindings, supervisorDecision: vars.supervisorDecision, supervisorReviewNotes: vars.supervisorReviewNotes})"
+                                    },
+                                    {
+                                        "name": "quickRulesJson",
+                                        "type": "string",
+                                        "id": "vCmaQuickRules",
+                                        "var": "vCmaQuickRules",
+                                        "elementId": "case-manager-tCaseManagerAgent",
+                                        "value": "=js:JSON.stringify({claimThreshold: vars.claimThreshold, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded, reviewIndicatorOnly: true})"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "caseManagerDecisions",
+                                        "type": "json",
+                                        "id": "caseManagerDecisions",
+                                        "var": "caseManagerDecisions",
+                                        "value": "caseManagerDecisions",
+                                        "source": "=caseManagerDecisions",
+                                        "target": "=caseManagerDecisions",
+                                        "elementId": "case-manager-tCaseManagerAgent"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ]
+            }
+        },
+        "intsvcActivityConfig": "v2"
+    },
+    "bindings": [
+        {
+            "id": "bCaseMgrName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360CaseManagerAgent",
+            "default": "PI360CaseManagerAgent",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bCaseMgrFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360CaseManagerAgent",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bSupervisorAppName",
+            "name": "name",
+            "type": "string",
+            "resource": "app",
+            "resourceKey": "solution_folder.pi360-escalation-action-app",
+            "default": "pi360-escalation-action-app",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bSupervisorAppFold",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "app",
+            "resourceKey": "solution_folder.pi360-escalation-action-app",
+            "default": "solution_folder",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bFl3wN7qK",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "ProcessOrchestration",
+            "resourceKey": "solution_folder.PI360CaseManagerFlow",
+            "default": "PI360CaseManagerFlow",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bFp8rT2mX",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "ProcessOrchestration",
+            "resourceKey": "solution_folder.PI360CaseManagerFlow",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bBp4nM9sQ",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "ProcessOrchestration",
+            "resourceKey": "solution_folder.PI360AdHocReviewBpmn",
+            "default": "PI360AdHocReviewBpmn",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bBf6dR1vZ",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "ProcessOrchestration",
+            "resourceKey": "solution_folder.PI360AdHocReviewBpmn",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bpqtM3QdN",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "PI360 IXP Timesheet",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "b7DAhSveV",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "PI360 IXP Timesheet",
+            "default": "PI360 IXP Timesheet",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bOGpXs75u",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "PI360 Send Outlook Email",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "b2uZSt75O",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceKey": "PI360 Send Outlook Email",
+            "default": "PI360 Send Outlook Email",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "b9o1PNCG5",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "propertyAttribute": "name",
+            "resourceKey": "solution_folder.PI360DecisionPacketAutomation",
+            "default": "PI360DecisionPacketAutomation"
+        },
+        {
+            "id": "bfASUxk4f",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "propertyAttribute": "folderPath",
+            "resourceKey": "solution_folder.PI360DecisionPacketAutomation",
+            "default": ""
+        },
+        {
+            "id": "bApiWorkflowName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Api",
+            "resourceKey": "solution_folder.PI360ApiWorkflows",
+            "default": "PI360ApiWorkflows",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bApiWorkflowFolder",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Api",
+            "resourceKey": "solution_folder.PI360ApiWorkflows",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bTriageAgentName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360TriageAgent",
+            "default": "PI360TriageAgent",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bTriageAgentFolder",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360TriageAgent",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        },
+        {
+            "id": "bEvidenceAgentName",
+            "name": "name",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360EvidenceCorrelationAgent",
+            "default": "PI360EvidenceCorrelationAgent",
+            "propertyAttribute": "name"
+        },
+        {
+            "id": "bEvidenceAgentFolder",
+            "name": "folderPath",
+            "type": "string",
+            "resource": "process",
+            "resourceSubType": "Agent",
+            "resourceKey": "solution_folder.PI360EvidenceCorrelationAgent",
+            "default": "",
+            "propertyAttribute": "folderPath"
+        }
+    ],
+    "variables": {
+        "inputs": [
+            {
+                "id": "vCaseIn01",
+                "name": "caseInput",
+                "type": "jsonSchema",
+                "default": "",
+                "elementId": "trigger_1",
+                "required": true,
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "vClaimIn1",
+                "name": "claimInput",
+                "type": "jsonSchema",
+                "default": "",
+                "elementId": "trigger_1",
+                "required": true,
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "vMemberI1",
+                "name": "memberInput",
+                "type": "jsonSchema",
+                "default": "",
+                "elementId": "trigger_1",
+                "required": true,
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "vProvidr1",
+                "name": "providerInput",
+                "type": "jsonSchema",
+                "default": "",
+                "elementId": "trigger_1",
+                "required": true,
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "vService1",
+                "name": "serviceEventInput",
+                "type": "jsonSchema",
+                "default": "",
+                "elementId": "trigger_1",
+                "required": true,
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "vDocumen1",
+                "name": "documentInput",
+                "type": "jsonSchema",
+                "default": "",
+                "elementId": "trigger_1",
+                "required": true,
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        ],
+        "outputs": [],
+        "inputOutputs": [
+            {
+                "id": "caseInput",
+                "name": "caseInput",
+                "type": "jsonSchema",
+                "elementId": "trigger_1",
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "claimInput",
+                "name": "claimInput",
+                "type": "jsonSchema",
+                "elementId": "trigger_1",
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "memberInput",
+                "name": "memberInput",
+                "type": "jsonSchema",
+                "elementId": "trigger_1",
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "providerInput",
+                "name": "providerInput",
+                "type": "jsonSchema",
+                "elementId": "trigger_1",
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "serviceEventInput",
+                "name": "serviceEventInput",
+                "type": "jsonSchema",
+                "elementId": "trigger_1",
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "documentInput",
+                "name": "documentInput",
+                "type": "jsonSchema",
+                "elementId": "trigger_1",
+                "body": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            },
+            {
+                "id": "caseManagerNextStageId",
+                "name": "caseManagerNextStageId",
+                "type": "string",
+                "elementId": "root",
+                "custom": true
+            },
+            {
+                "id": "providerNextStageId",
+                "name": "providerNextStageId",
+                "type": "string",
+                "elementId": "root",
+                "custom": true
+            }
+        ]
+    },
+    "nodes": [
+        {
+            "id": "trigger_1",
+            "type": "uipath.case.trigger",
+            "data": {
+                "typeVersion": "1.0.0",
+                "display": {
+                    "label": "Medicaid claim intake"
+                },
+                "inputs": {
+                    "outputs": [
+                        {
+                            "name": "caseInput",
+                            "type": "jsonSchema",
+                            "source": "=vars.vCaseIn01",
+                            "var": "caseInput"
+                        },
+                        {
+                            "name": "claimInput",
+                            "type": "jsonSchema",
+                            "source": "=vars.vClaimIn1",
+                            "var": "claimInput"
+                        },
+                        {
+                            "name": "memberInput",
+                            "type": "jsonSchema",
+                            "source": "=vars.vMemberI1",
+                            "var": "memberInput"
+                        },
+                        {
+                            "name": "providerInput",
+                            "type": "jsonSchema",
+                            "source": "=vars.vProvidr1",
+                            "var": "providerInput"
+                        },
+                        {
+                            "name": "serviceEventInput",
+                            "type": "jsonSchema",
+                            "source": "=vars.vService1",
+                            "var": "serviceEventInput"
+                        },
+                        {
+                            "name": "documentInput",
+                            "type": "jsonSchema",
+                            "source": "=vars.vDocumen1",
+                            "var": "documentInput"
+                        }
+                    ],
+                    "serviceType": "None"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false
+            }
+        },
+        {
+            "id": "Stage_Aintk1",
+            "type": "case-management:Stage",
+            "data": {
+                "label": "Intake and triage",
+                "description": "Register six structured intake objects and explain the CaseType profile.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tINT1case",
+                            "elementId": "Stage_Aintk1-tINT1case",
+                            "displayName": "API - intake claim and select CaseType profile",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "cINT1case",
+                                    "displayName": "When intake stage starts",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rINT1case",
+                                                "rule": "current-stage-entered"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bApiWorkflowName",
+                                "folderPath": "=bindings.bApiWorkflowFolder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vINT1wf",
+                                        "var": "vINT1wf",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "IntakeClaimByCaseType"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vINT1type",
+                                        "var": "vINT1type",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vINT1case",
+                                        "var": "vINT1case",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "caseInput",
+                                        "type": "object",
+                                        "id": "vC1aSe7Qx",
+                                        "var": "vC1aSe7Qx",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.caseInput"
+                                    },
+                                    {
+                                        "name": "claimInput",
+                                        "type": "object",
+                                        "id": "vCl4iM8rP",
+                                        "var": "vCl4iM8rP",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.claimInput"
+                                    },
+                                    {
+                                        "name": "memberInput",
+                                        "type": "object",
+                                        "id": "vMe2bR6tN",
+                                        "var": "vMe2bR6tN",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.memberInput"
+                                    },
+                                    {
+                                        "name": "providerInput",
+                                        "type": "object",
+                                        "id": "vPr7vD3kL",
+                                        "var": "vPr7vD3kL",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.providerInput"
+                                    },
+                                    {
+                                        "name": "serviceEventInput",
+                                        "type": "object",
+                                        "id": "vSv5eN9qR",
+                                        "var": "vSv5eN9qR",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.serviceEventInput"
+                                    },
+                                    {
+                                        "name": "documentInput",
+                                        "type": "object",
+                                        "id": "vDo8cU2mK",
+                                        "var": "vDo8cU2mK",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.documentInput"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tTRI1agnt",
+                            "elementId": "Stage_Aintk1-tTRI1agnt",
+                            "displayName": "Agentic Caseworker - explain triage recommendation",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_TRI1A1",
+                                    "displayName": "After case intake",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_TRI1A1",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tINT1case"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bTriageAgentName",
+                                "folderPath": "=bindings.bTriageAgentFolder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vTRI1case",
+                                        "var": "vTRI1case",
+                                        "elementId": "Stage_Aintk1-tTRI1agnt",
+                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vTRI1grnd",
+                                        "var": "vTRI1grnd",
+                                        "elementId": "Stage_Aintk1-tTRI1agnt",
+                                        "value": "=js:JSON.stringify({caseType: vars.caseInput?.caseType ?? vars.caseInput?.case_type, caseInput: vars.caseInput, claimInput: vars.claimInput, instruction: 'Explain deterministic triage only; do not determine fraud or repayment.'})"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent1aa",
+                        "displayName": "Case entered",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "case-entered",
+                                    "id": "Rule_ent1aa"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext1aa",
+                        "displayName": "Intake complete",
+                        "type": "exit-only",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext1aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Evcol2",
+            "type": "case-management:Stage",
+            "data": {
+                "label": "Evidence acquisition and validation",
+                "description": "Run the service-timesheet RPA, retrieve the CaseType-specific Beeceptor claim, persist evidence entities to Data Fabric, apply deterministic rules, and request an agentic routing recommendation.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tCLM2pull",
+                            "elementId": "Stage_Evcol2-tCLM2pull",
+                            "displayName": "Flow - acquire and validate claim evidence",
+                            "type": "process",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "cCLM2pull",
+                                    "displayName": "After service-timesheet RPA",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rCLM2pull",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tmXrnnlxY"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bFl3wN7qK",
+                                "folderPath": "=bindings.bFp8rT2mX",
+                                "inputs": [
+                                    {
+                                        "name": "caseInput",
+                                        "type": "object",
+                                        "id": "vK7mQ2pRt",
+                                        "var": "vK7mQ2pRt",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=vars.caseInput"
+                                    },
+                                    {
+                                        "name": "claimInput",
+                                        "type": "object",
+                                        "id": "vN4xL8sVu",
+                                        "var": "vN4xL8sVu",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=vars.claimInput"
+                                    },
+                                    {
+                                        "name": "memberInput",
+                                        "type": "object",
+                                        "id": "vD6qP3wZa",
+                                        "var": "vD6qP3wZa",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=vars.memberInput"
+                                    },
+                                    {
+                                        "name": "providerInput",
+                                        "type": "object",
+                                        "id": "vH2rT9cXm",
+                                        "var": "vH2rT9cXm",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=vars.providerInput"
+                                    },
+                                    {
+                                        "name": "serviceEventInput",
+                                        "type": "object",
+                                        "id": "vJ5vB7nKs",
+                                        "var": "vJ5vB7nKs",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=vars.serviceEventInput"
+                                    },
+                                    {
+                                        "name": "documentInput",
+                                        "type": "object",
+                                        "id": "vM8yF1qLd",
+                                        "var": "vM8yF1qLd",
+                                        "elementId": "Stage_Evcol2-tCLM2pull",
+                                        "value": "=vars.documentInput"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "caseId",
+                                        "var": "caseId",
+                                        "value": "caseId",
+                                        "source": "=caseId",
+                                        "target": "=caseId",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "caseType",
+                                        "var": "caseType",
+                                        "value": "caseType",
+                                        "source": "=caseType",
+                                        "target": "=caseType",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "claimCount",
+                                        "type": "number",
+                                        "id": "claimCount",
+                                        "var": "claimCount",
+                                        "value": "claimCount",
+                                        "source": "=claimCount",
+                                        "target": "=claimCount",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "lineCount",
+                                        "type": "number",
+                                        "id": "lineCount",
+                                        "var": "lineCount",
+                                        "value": "lineCount",
+                                        "source": "=lineCount",
+                                        "target": "=lineCount",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "totalUnits",
+                                        "type": "number",
+                                        "id": "totalUnits",
+                                        "var": "totalUnits",
+                                        "value": "totalUnits",
+                                        "source": "=totalUnits",
+                                        "target": "=totalUnits",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "totalBilled",
+                                        "type": "number",
+                                        "id": "totalBilled",
+                                        "var": "totalBilled",
+                                        "value": "totalBilled",
+                                        "source": "=totalBilled",
+                                        "target": "=totalBilled",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "claimThreshold",
+                                        "type": "number",
+                                        "id": "claimThreshold",
+                                        "var": "claimThreshold",
+                                        "value": "claimThreshold",
+                                        "source": "=claimThreshold",
+                                        "target": "=claimThreshold",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "thresholdExceeded",
+                                        "type": "boolean",
+                                        "id": "thresholdExceeded",
+                                        "var": "thresholdExceeded",
+                                        "value": "thresholdExceeded",
+                                        "source": "=thresholdExceeded",
+                                        "target": "=thresholdExceeded",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "recommendedStageId",
+                                        "type": "string",
+                                        "id": "recommendedStageId",
+                                        "var": "recommendedStageId",
+                                        "value": "recommendedStageId",
+                                        "source": "=recommendedStageId",
+                                        "target": "=recommendedStageId",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    },
+                                    {
+                                        "name": "routeReason",
+                                        "type": "string",
+                                        "id": "routeReason",
+                                        "var": "routeReason",
+                                        "value": "routeReason",
+                                        "source": "=routeReason",
+                                        "target": "=routeReason",
+                                        "elementId": "Stage_Evcol2-tCLM2pull"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tmXrnnlxY",
+                            "displayName": "RPA - extract service timesheet",
+                            "shouldRunOnlyOnce": true,
+                            "isRequired": true,
+                            "type": "rpa",
+                            "data": {
+                                "name": "=bindings.b7DAhSveV",
+                                "folderPath": "=bindings.bpqtM3QdN"
+                            },
+                            "elementId": "Stage_Evcol2-tmXrnnlxY",
+                            "entryConditions": [
+                                {
+                                    "id": "cTimesheetRpa",
+                                    "displayName": "When evidence stage starts",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rTimesheetRpa",
+                                                "rule": "current-stage-entered"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent2aa",
+                        "displayName": "Triage stage completed",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent2aa",
+                                    "selectedStageId": "Stage_Aintk1"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ent2rt",
+                        "displayName": "Case Manager requested evidence refresh",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-exited",
+                                    "id": "Rule_ent2rt",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Evcol2'",
+                                    "selectedStageId": "Stage_Corr4a"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext2pr",
+                        "displayName": "Flow recommends provider record request",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Prreq6",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext2pr",
+                                    "conditionExpression": "=js:vars.recommendedStageId === 'Stage_Prreq6'"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ext2aa",
+                        "displayName": "Flow recommends investigation",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Corr4a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext2aa",
+                                    "conditionExpression": "=js:vars.recommendedStageId === 'Stage_Corr4a'"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Corr4a",
+            "type": "case-management:Stage",
+            "data": {
+                "label": "Investigation",
+                "description": "Keep the Agentic Caseworker first pass, investigator human checkpoint, and Case Manager routing boundary.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tCOR4evid",
+                            "elementId": "Stage_Corr4a-tCOR4evid",
+                            "displayName": "Agentic Caseworker - first-pass investigation recommendation",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "cCOR4evid",
+                                    "displayName": "When investigation stage starts",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rCOR4evid",
+                                                "rule": "current-stage-entered"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bEvidenceAgentName",
+                                "folderPath": "=bindings.bEvidenceAgentFolder",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCOR4case",
+                                        "var": "vCOR4case",
+                                        "elementId": "Stage_Corr4a-tCOR4evid",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vCOR4grnd",
+                                        "var": "vCOR4grnd",
+                                        "elementId": "Stage_Corr4a-tCOR4evid",
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, claimFacts: {claimCount: vars.claimCount, lineCount: vars.lineCount, totalUnits: vars.totalUnits, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded}, routeReason: vars.routeReason, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage, documents: vars.documentInput, instruction: 'Cite persisted Data Fabric facts and RPA evidence. Treat location conflict as an overpayment review indicator, not an automated fraud or intent determination.'})"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tREV5task",
+                            "elementId": "Stage_Corr4a-tREV5task",
+                            "displayName": "Human - confirm true investigation and record findings",
+                            "type": "action",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_REV5J9",
+                                    "displayName": "After Agentic Caseworker first pass",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_REV5J9",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tCOR4evid"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "taskTitle": "Investigator confirmation - Medicaid claim review",
+                                "priority": "High",
+                                "recipient": {
+                                    "Type": 2,
+                                    "Value": "sohail.ghatnekar@uipath.com"
+                                },
+                                "labels": "Program Integrity,Investigator Review",
+                                "name": "=bindings.bSupervisorAppName",
+                                "folderPath": "=bindings.bSupervisorAppFold",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vInvCase1",
+                                        "var": "vInvCase1",
+                                        "elementId": "Stage_Corr4a-tREV5task",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "routeReason",
+                                        "type": "string",
+                                        "id": "vInvRsn01",
+                                        "var": "vInvRsn01",
+                                        "elementId": "Stage_Corr4a-tREV5task",
+                                        "value": "=vars.routeReason"
+                                    },
+                                    {
+                                        "name": "evidenceSummary",
+                                        "type": "string",
+                                        "id": "vInvEvid1",
+                                        "var": "vInvEvid1",
+                                        "elementId": "Stage_Corr4a-tREV5task",
+                                        "value": "=js:JSON.stringify({claimInput: vars.claimInput, documentInput: vars.documentInput, totalBilled: vars.totalBilled, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage})"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "supervisorDecision",
+                                        "type": "string",
+                                        "id": "investigatorDecision",
+                                        "var": "investigatorDecision",
+                                        "value": "investigatorDecision",
+                                        "source": "=supervisorDecision",
+                                        "target": "=investigatorDecision",
+                                        "elementId": "Stage_Corr4a-tREV5task"
+                                    },
+                                    {
+                                        "name": "reviewNotes",
+                                        "type": "string",
+                                        "id": "investigatorFindings",
+                                        "var": "investigatorFindings",
+                                        "value": "investigatorFindings",
+                                        "source": "=reviewNotes",
+                                        "target": "=investigatorFindings",
+                                        "elementId": "Stage_Corr4a-tREV5task"
+                                    },
+                                    {
+                                        "name": "recommendedAction",
+                                        "type": "string",
+                                        "id": "investigatorRecommendedAction",
+                                        "var": "investigatorRecommendedAction",
+                                        "value": "investigatorRecommendedAction",
+                                        "source": "=recommendedAction",
+                                        "target": "=investigatorRecommendedAction",
+                                        "elementId": "Stage_Corr4a-tREV5task"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tCMR4route",
+                            "elementId": "Stage_Corr4a-tCMR4route",
+                            "displayName": "Agentic Caseworker - route reviewed investigation",
+                            "type": "agent",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": false,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_CMR4K1",
+                                    "displayName": "After investigator checkpoint",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_CMR4K1",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tREV5task"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bCaseMgrName",
+                                "folderPath": "=bindings.bCaseMgrFold",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCMR4case",
+                                        "var": "vCMR4case",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "currentStage",
+                                        "type": "string",
+                                        "id": "vCMR4stage",
+                                        "var": "vCMR4stage",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "Stage_Corr4a"
+                                    },
+                                    {
+                                        "name": "groundingJson",
+                                        "type": "string",
+                                        "id": "vCMR4grnd",
+                                        "var": "vCMR4grnd",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, investigatorDecision: vars.investigatorDecision, investigatorFindings: vars.investigatorFindings, flowRouteReason: vars.routeReason, providerStatus: vars.providerRequestStatus})"
+                                    },
+                                    {
+                                        "name": "quickRulesJson",
+                                        "type": "string",
+                                        "id": "vCMR4rules",
+                                        "var": "vCMR4rules",
+                                        "elementId": "Stage_Corr4a-tCMR4route",
+                                        "value": "=js:JSON.stringify({thresholdExceeded: vars.thresholdExceeded, supervisorRequired: true, reviewIndicatorOnly: true})"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "nextStageId",
+                                        "type": "string",
+                                        "id": "nextStageId",
+                                        "var": "caseManagerNextStageId",
+                                        "originalVar": "nextStageId",
+                                        "value": "caseManagerNextStageId",
+                                        "source": "=nextStageId",
+                                        "target": "=nextStageId",
+                                        "elementId": "Stage_Corr4a-tCMR4route"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent4aa",
+                        "displayName": "Flow recommends direct investigation",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent4aa",
+                                    "conditionExpression": "=js:vars.recommendedStageId === 'Stage_Corr4a'",
+                                    "selectedStageId": "Stage_Evcol2"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ent4pr",
+                        "displayName": "Provider orchestration returns to investigation",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent4pr",
+                                    "conditionExpression": "=js:vars.providerNextStageId === 'Stage_Corr4a'",
+                                    "selectedStageId": "Stage_Prreq6"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ent4sp",
+                        "displayName": "Supervisor action returned",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent4sp",
+                                    "selectedStageId": "Stage_Supv7a"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext4ev",
+                        "displayName": "Case Manager requests evidence refresh",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Evcol2",
+                        "marksStageComplete": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-tasks-completed",
+                                    "id": "Rule_ext4ev",
+                                    "selectedTasksIds": [
+                                        "tCMR4route"
+                                    ],
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Evcol2'"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ext4sp",
+                        "displayName": "Case Manager requests supervisor action",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Supv7a",
+                        "marksStageComplete": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-tasks-completed",
+                                    "id": "Rule_ext4sp",
+                                    "selectedTasksIds": [
+                                        "tCMR4route"
+                                    ],
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Supv7a'"
+                                }
+                            ]
+                        ]
+                    },
+                    {
+                        "id": "Condition_ext4cl",
+                        "displayName": "Case Manager approves closure route",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Clos9a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext4cl",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Clos9a'"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Prreq6",
+            "type": "case-management:Stage",
+            "data": {
+                "label": "Provider record request",
+                "description": "Hospice-only BPMN sends the provider-request RPA placeholder, waits for the provider message or P3D timeout, runs the medical-record RPA, persists the hospital evidence to Data Fabric, and returns to Investigation.",
+                "isRequired": false,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tREQ6send",
+                            "elementId": "Stage_Prreq6-tREQ6send",
+                            "displayName": "BPMN - request and await hospital record",
+                            "type": "process",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "cREQ6send",
+                                    "displayName": "When provider response stage starts",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rREQ6send",
+                                                "rule": "current-stage-entered"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bBp4nM9sQ",
+                                "folderPath": "=bindings.bBf6dR1vZ",
+                                "inputs": [
+                                    {
+                                        "name": "CaseId",
+                                        "type": "string",
+                                        "id": "vREQ6case",
+                                        "var": "vREQ6case",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "CaseType",
+                                        "type": "string",
+                                        "id": "vREQ6type",
+                                        "var": "vREQ6type",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=vars.caseType"
+                                    },
+                                    {
+                                        "name": "ProviderId",
+                                        "type": "string",
+                                        "id": "vREQ6prov",
+                                        "var": "vREQ6prov",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=js:vars.providerInput?.providerId ?? vars.providerInput?.provider_id"
+                                    },
+                                    {
+                                        "name": "HospitalRecordAvailable",
+                                        "type": "boolean",
+                                        "id": "vREQ6hosp",
+                                        "var": "vREQ6hosp",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "=js:Boolean(vars.documentInput?.hospitalRecordAvailable ?? vars.documentInput?.hospital_record_available ?? false)"
+                                    },
+                                    {
+                                        "name": "InvestigatorProceed",
+                                        "type": "boolean",
+                                        "id": "vREQ6gate",
+                                        "var": "vREQ6gate",
+                                        "elementId": "Stage_Prreq6-tREQ6send",
+                                        "value": "true"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "ProviderRequestStatus",
+                                        "type": "string",
+                                        "id": "providerRequestStatus",
+                                        "var": "providerRequestStatus",
+                                        "value": "providerRequestStatus",
+                                        "source": "=ProviderRequestStatus",
+                                        "target": "=providerRequestStatus",
+                                        "elementId": "Stage_Prreq6-tREQ6send"
+                                    },
+                                    {
+                                        "name": "HospitalRecordAvailable",
+                                        "type": "boolean",
+                                        "id": "hospitalRecordAvailable",
+                                        "var": "hospitalRecordAvailable",
+                                        "value": "hospitalRecordAvailable",
+                                        "source": "=HospitalRecordAvailable",
+                                        "target": "=hospitalRecordAvailable",
+                                        "elementId": "Stage_Prreq6-tREQ6send"
+                                    },
+                                    {
+                                        "name": "NextStageId",
+                                        "type": "string",
+                                        "id": "nextStageId2",
+                                        "var": "providerNextStageId",
+                                        "originalVar": "nextStageId",
+                                        "value": "providerNextStageId",
+                                        "source": "=NextStageId",
+                                        "target": "=nextStageId2",
+                                        "elementId": "Stage_Prreq6-tREQ6send"
+                                    },
+                                    {
+                                        "name": "AuditMessage",
+                                        "type": "string",
+                                        "id": "auditMessage",
+                                        "var": "auditMessage",
+                                        "value": "auditMessage",
+                                        "source": "=AuditMessage",
+                                        "target": "=auditMessage",
+                                        "elementId": "Stage_Prreq6-tREQ6send"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent6hs",
+                        "displayName": "Hospice Flow recommendation requires hospital record",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent6hs",
+                                    "conditionExpression": "=js:((vars.caseInput?.caseType ?? vars.caseInput?.case_type) === 'StateMedicaidHospice') && (vars.recommendedStageId === 'Stage_Prreq6')",
+                                    "selectedStageId": "Stage_Evcol2"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext6aa",
+                        "displayName": "Provider orchestration returns to investigation",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Corr4a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext6aa",
+                                    "conditionExpression": "=js:vars.providerNextStageId === 'Stage_Corr4a'"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Supv7a",
+            "type": "case-management:Stage",
+            "data": {
+                "label": "Supervisor review",
+                "description": "Assemble a deterministic RPA decision packet, then present investigator findings and agentic evidence to the supervisor human checkpoint.",
+                "isRequired": false,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tOsyyZpTf",
+                            "displayName": "RPA - assemble supervisor decision packet",
+                            "shouldRunOnlyOnce": true,
+                            "isRequired": true,
+                            "type": "rpa",
+                            "data": {
+                                "name": "=bindings.b9o1PNCG5",
+                                "folderPath": "=bindings.bfASUxk4f",
+                                "inputs": [
+                                    {
+                                        "name": "in_CaseId",
+                                        "displayName": "in_CaseId",
+                                        "value": "=vars.caseId",
+                                        "type": "string",
+                                        "required": false,
+                                        "var": "vU1rhakkc",
+                                        "id": "vU1rhakkc",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "in_ProviderName",
+                                        "displayName": "in_ProviderName",
+                                        "value": "=js:vars.providerInput?.providerName ?? vars.providerInput?.provider_name ?? 'Harbor Home Support Services'",
+                                        "type": "string",
+                                        "required": false,
+                                        "var": "vJpeN4HRI",
+                                        "id": "vJpeN4HRI",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "in_UnsupportedUnits",
+                                        "displayName": "in_UnsupportedUnits",
+                                        "value": "=js:Number(vars.serviceEventInput?.unsupportedUnits ?? vars.serviceEventInput?.unsupported_units ?? 0)",
+                                        "type": "integer",
+                                        "minimum": -2147483648,
+                                        "maximum": 2147483647,
+                                        "required": false,
+                                        "var": "vQncmjuYc",
+                                        "id": "vQncmjuYc",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "in_UnitRate",
+                                        "displayName": "in_UnitRate",
+                                        "value": "=js:Number(vars.claimInput?.unitRate ?? vars.claimInput?.unit_rate ?? 0)",
+                                        "type": "number",
+                                        "minimum": -1.7976931348623157e+308,
+                                        "maximum": 1.7976931348623157e+308,
+                                        "required": false,
+                                        "var": "vQygg1dFo",
+                                        "id": "vQygg1dFo",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "in_RiskScore",
+                                        "displayName": "in_RiskScore",
+                                        "value": "=js:Number(vars.caseInput?.riskScore ?? vars.caseInput?.risk_score ?? 82)",
+                                        "type": "integer",
+                                        "minimum": -2147483648,
+                                        "maximum": 2147483647,
+                                        "required": false,
+                                        "var": "vMmJ6U1lh",
+                                        "id": "vMmJ6U1lh",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "in_RouteReason",
+                                        "displayName": "in_RouteReason",
+                                        "value": "=vars.routeReason",
+                                        "type": "string",
+                                        "required": false,
+                                        "var": "v8vRDuMx0",
+                                        "id": "v8vRDuMx0",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "out_PacketId",
+                                        "displayName": "out_PacketId",
+                                        "value": "outPacketId",
+                                        "type": "string",
+                                        "source": "=out_PacketId",
+                                        "var": "outPacketId",
+                                        "id": "outPacketId",
+                                        "target": "=outPacketId",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "out_SampleExposure",
+                                        "displayName": "out_SampleExposure",
+                                        "value": "outSampleExposure",
+                                        "type": "number",
+                                        "minimum": -1.7976931348623157e+308,
+                                        "maximum": 1.7976931348623157e+308,
+                                        "source": "=out_SampleExposure",
+                                        "var": "outSampleExposure",
+                                        "id": "outSampleExposure",
+                                        "target": "=outSampleExposure",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "out_RequiresSupervisorApproval",
+                                        "displayName": "out_RequiresSupervisorApproval",
+                                        "value": "outRequiresSupervisorApproval",
+                                        "type": "boolean",
+                                        "source": "=out_RequiresSupervisorApproval",
+                                        "var": "outRequiresSupervisorApproval",
+                                        "id": "outRequiresSupervisorApproval",
+                                        "target": "=outRequiresSupervisorApproval",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "out_DecisionBrief",
+                                        "displayName": "out_DecisionBrief",
+                                        "value": "outDecisionBrief",
+                                        "type": "string",
+                                        "source": "=out_DecisionBrief",
+                                        "var": "outDecisionBrief",
+                                        "id": "outDecisionBrief",
+                                        "target": "=outDecisionBrief",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "out_PolicyCitation",
+                                        "displayName": "out_PolicyCitation",
+                                        "value": "outPolicyCitation",
+                                        "type": "string",
+                                        "source": "=out_PolicyCitation",
+                                        "var": "outPolicyCitation",
+                                        "id": "outPolicyCitation",
+                                        "target": "=outPolicyCitation",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf"
+                                    },
+                                    {
+                                        "name": "Error",
+                                        "displayName": "Error",
+                                        "value": "error",
+                                        "type": "jsonSchema",
+                                        "_jsonSchema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "detail": {
+                                                    "type": "string"
+                                                },
+                                                "category": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "number"
+                                                },
+                                                "element": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        },
+                                        "source": "=Error",
+                                        "var": "error",
+                                        "id": "error",
+                                        "target": "=error",
+                                        "elementId": "Stage_Supv7a-tOsyyZpTf",
+                                        "body": {
+                                            "type": "object",
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                },
+                                                "detail": {
+                                                    "type": "string"
+                                                },
+                                                "category": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "number"
+                                                },
+                                                "element": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "elementId": "Stage_Supv7a-tOsyyZpTf"
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tSUP7gate",
+                            "elementId": "Stage_Supv7a-tSUP7gate",
+                            "displayName": "Human - supervisor review and disposition",
+                            "type": "action",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "Condition_SUP7P6",
+                                    "displayName": "After supervisor packet assembly",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "Rule_SUP7P6",
+                                                "rule": "selected-tasks-completed",
+                                                "selectedTasksIds": [
+                                                    "tOsyyZpTf"
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "taskTitle": "Supervisor review - Medicaid claim investigation",
+                                "priority": "High",
+                                "recipient": {
+                                    "Type": 2,
+                                    "Value": "sohail.ghatnekar@uipath.com"
+                                },
+                                "labels": "Program Integrity,Supervisor Approval",
+                                "name": "=bindings.bSupervisorAppName",
+                                "folderPath": "=bindings.bSupervisorAppFold",
+                                "inputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vSupCase",
+                                        "var": "vSupCase",
+                                        "elementId": "Stage_Supv7a-tSUP7gate",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "routeReason",
+                                        "type": "string",
+                                        "id": "vSupReason",
+                                        "var": "vSupReason",
+                                        "elementId": "Stage_Supv7a-tSUP7gate",
+                                        "value": "=vars.routeReason"
+                                    },
+                                    {
+                                        "name": "evidenceSummary",
+                                        "type": "string",
+                                        "id": "vSupEvidence",
+                                        "var": "vSupEvidence",
+                                        "elementId": "Stage_Supv7a-tSUP7gate",
+                                        "value": "=js:JSON.stringify({investigatorFindings: vars.investigatorFindings, investigatorDecision: vars.investigatorDecision, decisionPacket: {packetId: vars.outPacketId, decisionBrief: vars.outDecisionBrief, policyCitation: vars.outPolicyCitation, sampleExposure: vars.outSampleExposure}, agenticEvidence: {claimCount: vars.claimCount, lineCount: vars.lineCount, totalUnits: vars.totalUnits, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded, routeReason: vars.routeReason, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage}})"
+                                    },
+                                    {
+                                        "name": "recommendedAction",
+                                        "type": "string",
+                                        "id": "vSupRecommended",
+                                        "var": "vSupRecommended",
+                                        "elementId": "Stage_Supv7a-tSUP7gate",
+                                        "value": "=js:vars.investigatorRecommendedAction ?? 'Continue reviewed investigation'"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "supervisorDecision",
+                                        "type": "string",
+                                        "id": "supervisorDecision",
+                                        "var": "supervisorDecision",
+                                        "value": "supervisorDecision",
+                                        "source": "=supervisorDecision",
+                                        "target": "=supervisorDecision",
+                                        "elementId": "Stage_Supv7a-tSUP7gate"
+                                    },
+                                    {
+                                        "name": "reviewNotes",
+                                        "type": "string",
+                                        "id": "supervisorReviewNotes",
+                                        "var": "supervisorReviewNotes",
+                                        "value": "supervisorReviewNotes",
+                                        "source": "=reviewNotes",
+                                        "target": "=supervisorReviewNotes",
+                                        "elementId": "Stage_Supv7a-tSUP7gate"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent7aa",
+                        "displayName": "Case Manager selected supervisor action",
+                        "isInterrupting": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-exited",
+                                    "id": "Rule_ent7aa",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Supv7a'",
+                                    "selectedStageId": "Stage_Corr4a"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext7aa",
+                        "displayName": "Supervisor action completed",
+                        "type": "exit-only",
+                        "exitToStageId": "Stage_Corr4a",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext7aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "Stage_Clos9a",
+            "type": "case-management:Stage",
+            "data": {
+                "label": "Closure and communication",
+                "description": "Persist the supervisor decision, closure audit action, and final Case state to Data Fabric, then send the reviewed closure summary through Outlook RPA.",
+                "isRequired": true,
+                "parentElement": {
+                    "id": "root",
+                    "type": "case-management:root"
+                },
+                "isInvalidDropTarget": false,
+                "isPendingParent": false,
+                "tasks": [
+                    [
+                        {
+                            "id": "tCLS9case",
+                            "elementId": "Stage_Clos9a-tCLS9case",
+                            "displayName": "API - close case and persist disposition",
+                            "type": "api-workflow",
+                            "isRequired": true,
+                            "shouldRunOnlyOnce": true,
+                            "entryConditions": [
+                                {
+                                    "id": "cCLS9case",
+                                    "displayName": "When closure stage starts",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rCLS9case",
+                                                "rule": "current-stage-entered"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "data": {
+                                "name": "=bindings.bApiWorkflowName",
+                                "folderPath": "=bindings.bApiWorkflowFolder",
+                                "inputs": [
+                                    {
+                                        "name": "workflowName",
+                                        "type": "string",
+                                        "id": "vCLS9wf",
+                                        "var": "vCLS9wf",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "CloseCaseAndEmitMetrics"
+                                    },
+                                    {
+                                        "name": "caseType",
+                                        "type": "string",
+                                        "id": "vCLS9type",
+                                        "var": "vCLS9type",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.caseType"
+                                    },
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "vCLS9id",
+                                        "var": "vCLS9id",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "supervisorApproved",
+                                        "type": "boolean",
+                                        "id": "vCLS9sup",
+                                        "var": "vCLS9sup",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=js:String(vars.supervisorDecision ?? '').toLowerCase().includes('approve')"
+                                    },
+                                    {
+                                        "name": "supervisorDecision",
+                                        "type": "string",
+                                        "id": "vCLS9decision",
+                                        "var": "vCLS9decision",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.supervisorDecision"
+                                    },
+                                    {
+                                        "name": "supervisorReviewNotes",
+                                        "type": "string",
+                                        "id": "vCLS9notes",
+                                        "var": "vCLS9notes",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.supervisorReviewNotes"
+                                    },
+                                    {
+                                        "name": "investigatorFindings",
+                                        "type": "string",
+                                        "id": "vCLS9findings",
+                                        "var": "vCLS9findings",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.investigatorFindings"
+                                    },
+                                    {
+                                        "name": "recommendedAction",
+                                        "type": "string",
+                                        "id": "vCLS9action",
+                                        "var": "vCLS9action",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.investigatorRecommendedAction"
+                                    },
+                                    {
+                                        "name": "requesterEmail",
+                                        "type": "string",
+                                        "id": "vCLS9email",
+                                        "var": "vCLS9email",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=js:vars.caseInput?.requesterEmail ?? vars.caseInput?.requester_email"
+                                    },
+                                    {
+                                        "name": "claimTotalBilled",
+                                        "type": "number",
+                                        "id": "vCLS9billed",
+                                        "var": "vCLS9billed",
+                                        "elementId": "Stage_Clos9a-tCLS9case",
+                                        "value": "=vars.totalBilled"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            "id": "tsxxZlma3",
+                            "displayName": "RPA - send closure summary email",
+                            "shouldRunOnlyOnce": true,
+                            "isRequired": true,
+                            "type": "rpa",
+                            "data": {
+                                "name": "=bindings.b2uZSt75O",
+                                "folderPath": "=bindings.bOGpXs75u",
+                                "inputs": [
+                                    {
+                                        "name": "in_CaseId",
+                                        "type": "string",
+                                        "id": "vEmailCaseId",
+                                        "var": "vEmailCaseId",
+                                        "elementId": "Stage_Clos9a-tsxxZlma3",
+                                        "value": "=vars.caseId"
+                                    },
+                                    {
+                                        "name": "in_RecipientEmail",
+                                        "type": "string",
+                                        "id": "vEmailRecipient",
+                                        "var": "vEmailRecipient",
+                                        "elementId": "Stage_Clos9a-tsxxZlma3",
+                                        "value": "=js:vars.caseInput?.requesterEmail ?? vars.caseInput?.requester_email"
+                                    },
+                                    {
+                                        "name": "in_CaseType",
+                                        "type": "string",
+                                        "id": "vEmailCaseType",
+                                        "var": "vEmailCaseType",
+                                        "elementId": "Stage_Clos9a-tsxxZlma3",
+                                        "value": "=vars.caseType"
+                                    },
+                                    {
+                                        "name": "in_Disposition",
+                                        "type": "string",
+                                        "id": "vEmailDisposition",
+                                        "var": "vEmailDisposition",
+                                        "elementId": "Stage_Clos9a-tsxxZlma3",
+                                        "value": "=vars.supervisorDecision"
+                                    },
+                                    {
+                                        "name": "in_NextSteps",
+                                        "type": "string",
+                                        "id": "vEmailNextSteps",
+                                        "var": "vEmailNextSteps",
+                                        "elementId": "Stage_Clos9a-tsxxZlma3",
+                                        "value": "=js:vars.investigatorRecommendedAction ?? 'Follow the supervisor disposition and preserve the audit record.'"
+                                    },
+                                    {
+                                        "name": "in_EvidenceSummary",
+                                        "type": "string",
+                                        "id": "vEmailEvidence",
+                                        "var": "vEmailEvidence",
+                                        "elementId": "Stage_Clos9a-tsxxZlma3",
+                                        "value": "=js:JSON.stringify({investigatorFindings: vars.investigatorFindings, supervisorReviewNotes: vars.supervisorReviewNotes, totalBilled: vars.totalBilled, routeReason: vars.routeReason})"
+                                    }
+                                ]
+                            },
+                            "elementId": "Stage_Clos9a-tsxxZlma3",
+                            "entryConditions": [
+                                {
+                                    "id": "cEmailAfterClosure",
+                                    "displayName": "After Data Fabric closure writes",
+                                    "rules": [
+                                        [
+                                            {
+                                                "id": "rEmailAfterClosure",
+                                                "rule": "runs-sequentially"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                ],
+                "entryConditions": [
+                    {
+                        "id": "Condition_ent9aa",
+                        "displayName": "Case Manager selected closure",
+                        "isInterrupting": false,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "selected-stage-completed",
+                                    "id": "Rule_ent9aa",
+                                    "conditionExpression": "=js:vars.caseManagerNextStageId === 'Stage_Clos9a'",
+                                    "selectedStageId": "Stage_Corr4a"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "exitConditions": [
+                    {
+                        "id": "Condition_ext9aa",
+                        "displayName": "Case closed",
+                        "type": "exit-only",
+                        "marksStageComplete": true,
+                        "rules": [
+                            [
+                                {
+                                    "rule": "required-tasks-completed",
+                                    "id": "Rule_ext9aa"
+                                }
+                            ]
+                        ]
+                    }
+                ]
+            }
+        }
+    ],
+    "edges": [],
+    "layout": {}
 }

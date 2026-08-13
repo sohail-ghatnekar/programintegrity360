@@ -1,0 +1,140 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib"
+ xmlns:this="clr-namespace:"
+ xmlns:ucas="clr-namespace:UiPath.Core.Activities.Storage;assembly=UiPath.System.Activities"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:umam="clr-namespace:UiPath.MicrosoftOffice365.Activities.Mail;assembly=UiPath.MicrosoftOffice365.Activities"
+ xmlns:umame="clr-namespace:UiPath.MicrosoftOffice365.Activities.Mail.Enums;assembly=UiPath.MicrosoftOffice365.Activities"
+ xmlns:umamm="clr-namespace:UiPath.MicrosoftOffice365.Activities.Mail.Models;assembly=UiPath.MicrosoftOffice365.Activities"
+ xmlns:upr="clr-namespace:UiPath.Platform.ResourceHandling;assembly=UiPath.Platform"
+ xmlns:usau="clr-namespace:UiPath.Shared.Activities.Utils;assembly=UiPath.MicrosoftOffice365.Activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_CaseId" Type="InArgument(x:String)" />
+    <x:Property Name="in_RecipientEmail" Type="InArgument(x:String)" />
+    <x:Property Name="in_CaseType" Type="InArgument(x:String)" />
+    <x:Property Name="in_Disposition" Type="InArgument(x:String)" />
+    <x:Property Name="in_NextSteps" Type="InArgument(x:String)" />
+    <x:Property Name="in_EvidenceSummary" Type="InArgument(x:String)" />
+  </x:Members>
+  <this:Main.in_CaseId>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.in_CaseId>
+  <this:Main.in_RecipientEmail>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.in_RecipientEmail>
+  <this:Main.in_CaseType>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.in_CaseType>
+  <this:Main.in_Disposition>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.in_Disposition>
+  <this:Main.in_NextSteps>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.in_NextSteps>
+  <this:Main.in_EvidenceSummary>
+    <InArgument x:TypeArguments="x:String" />
+  </this:Main.in_EvidenceSummary>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="29">
+      <x:String>UiPath.Platform.ResourceHandling</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Reflection</x:String>
+      <x:String>System.Activities</x:String>
+      <x:String>UiPath.Core.Activities.Storage</x:String>
+      <x:String>UiPath.Core.Activities.Orchestrator</x:String>
+      <x:String>UiPath.MicrosoftOffice365.Activities.Mail.Models</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>UiPath.MicrosoftOffice365.Activities.Mail.Enums</x:String>
+      <x:String>UiPath.Shared.Activities.Utils</x:String>
+      <x:String>UiPath.MicrosoftOffice365.Activities.Mail</x:String>
+      <x:String>UiPath.Shared.Activities.ConnectionService.Contracts</x:String>
+      <x:String>UiPath.MicrosoftOffice365.Activities</x:String>
+      <x:String>UiPath.Shared.Activities</x:String>
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>System.Activities.Validation</x:String>
+      <x:String>System.Activities.XamlIntegration</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.VisualBasic.Activities</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Diagnostics</x:String>
+      <x:String>System.IO</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>System.Windows.Markup</x:String>
+      <x:String>Newtonsoft.Json</x:String>
+      <x:String>Newtonsoft.Json.Linq</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <scg:List x:TypeArguments="AssemblyReference" Capacity="18">
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+      <AssemblyReference>System</AssemblyReference>
+      <AssemblyReference>System.Linq</AssemblyReference>
+      <AssemblyReference>System.Xaml</AssemblyReference>
+      <AssemblyReference>System.Net.Primitives</AssemblyReference>
+      <AssemblyReference>System.Runtime.InteropServices</AssemblyReference>
+      <AssemblyReference>Newtonsoft.Json</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+      <AssemblyReference>System.Runtime</AssemblyReference>
+      <AssemblyReference>netstandard</AssemblyReference>
+      <AssemblyReference>mscorlib</AssemblyReference>
+      <AssemblyReference>System.Runtime.Serialization.Formatters</AssemblyReference>
+      <AssemblyReference>UiPath.MicrosoftOffice365.Activities</AssemblyReference>
+      <AssemblyReference>System.Collections</AssemblyReference>
+      <AssemblyReference>UiPath.Platform</AssemblyReference>
+      <AssemblyReference>System.Reflection.Primitives</AssemblyReference>
+    </scg:List>
+  </TextExpression.ReferencesForImplementation>
+  <Sequence sap:VirtualizedContainerService.HintSize="356,732" sap2010:WorkflowViewState.IdRef="Sequence_1">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Default="[&quot;02_personal_care_timesheet.pdf&quot;]" Name="TimesheetFilePath" />
+      <Variable x:TypeArguments="upr:ILocalResource" Name="TimesheetFile" />
+    </Sequence.Variables>
+    <sap:WorkflowViewStateService.ViewState>
+      <scg:Dictionary x:TypeArguments="x:String, x:Object">
+        <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+      </scg:Dictionary>
+    </sap:WorkflowViewStateService.ViewState>
+    <ui:ManualTrigger Result="{x:Null}" DisplayName="Start closure email" sap2010:WorkflowViewState.IdRef="ManualTrigger_1" />
+    <ucas:DownloadStorageFile Destination="{x:Null}" TimeoutMS="{x:Null}" DisplayName="Download supporting timesheet" sap2010:WorkflowViewState.IdRef="DownloadStorageFile_1" Path="[TimesheetFilePath]" Result="[TimesheetFile]" StorageBucketName="Timesheets" />
+    <umam:SendMailConnections ArgumentAttachmentPaths="{x:Null}" AttachmentList="{x:Null}" AttachmentPaths="{x:Null}" Bcc="{x:Null}" Cc="{x:Null}" ConnectionAccountName="{x:Null}" ContinueOnError="{x:Null}" MailboxBackup="{x:Reference __ReferenceID1}" ReplyTo="{x:Null}" SensitivityLabelId="{x:Null}" TextBody="{x:Null}" AttachmentInputMode="Existing" Attachments="[New List(Of IResource) From {TimesheetFile}]" AuthScopesInvalid="False" Body="[String.Format(&quot;&lt;p&gt;Hello,&lt;/p&gt;&lt;p&gt;Program Integrity case &lt;strong&gt;{0}&lt;/strong&gt; ({1}) completed human and supervisor review.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Disposition:&lt;/strong&gt; {2}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Evidence and findings:&lt;/strong&gt; {3}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Next steps:&lt;/strong&gt; {4}&lt;/p&gt;&lt;p&gt;For a State Medicaid Hospice case, the location conflict means the billed in-home service overlapped Jordan Ellis's hospital stay. This is a reviewed overpayment indicator, not an automated fraud or intent determination.&lt;/p&gt;&lt;p&gt;The supporting timesheet is attached for audit reference.&lt;/p&gt;&lt;p&gt;Thank you,&lt;br&gt;HHS Program Integrity Automation&lt;/p&gt;&quot;, in_CaseId, in_CaseType, in_Disposition, in_EvidenceSummary, in_NextSteps)]" ConnectionId="647137a9-edde-4aee-b393-fb802229b7a4" DisplayName="Send closure summary email" sap2010:WorkflowViewState.IdRef="SendMailConnections_1" Importance="Normal" InputType="HTML" IsDeliveryReceiptRequested="False" IsReadReceiptRequested="False" SaveAsDraft="False" Subject="[String.Format(&quot;Program Integrity case {0} - closure summary&quot;, in_CaseId)]" To="[New List(Of String) From {If(String.IsNullOrWhiteSpace(in_RecipientEmail), &quot;sohail.ghatnekar@uipath.com&quot;, in_RecipientEmail)}.ToArray()]" UseConnectionService="True" UseSharedMailbox="False">
+      <umam:SendMailConnections.AttachmentsBackup>
+        <usau:BackupSlot x:TypeArguments="umame:AttachmentInputMode" StoredValue="Existing">
+          <usau:BackupSlot.BackupValues>
+            <scg:Dictionary x:TypeArguments="umame:AttachmentInputMode, scg:List(x:Object)" />
+          </usau:BackupSlot.BackupValues>
+        </usau:BackupSlot>
+      </umam:SendMailConnections.AttachmentsBackup>
+      <umam:SendMailConnections.InputTypeBackup>
+        <usau:BackupSlot x:TypeArguments="umame:BodyInputType" StoredValue="HTML">
+          <usau:BackupSlot.BackupValues>
+            <scg:Dictionary x:TypeArguments="umame:BodyInputType, scg:List(x:Object)" />
+          </usau:BackupSlot.BackupValues>
+        </usau:BackupSlot>
+      </umam:SendMailConnections.InputTypeBackup>
+      <umam:SendMailConnections.Mailbox>
+        <InArgument x:TypeArguments="x:String" x:Name="__ReferenceID0" />
+      </umam:SendMailConnections.Mailbox>
+      <umam:SendMailConnections.MailboxArg>
+        <umamm:MailboxArgument SharedMailbox="{x:Reference __ReferenceID0}" UseSharedMailbox="False">
+          <umamm:MailboxArgument.Backup>
+            <usau:BackupSlot x:TypeArguments="umame:MailboxSelectionMode" x:Name="__ReferenceID1" StoredValue="NoMailbox">
+              <usau:BackupSlot.BackupValues>
+                <scg:Dictionary x:TypeArguments="umame:MailboxSelectionMode, scg:List(x:Object)" />
+              </usau:BackupSlot.BackupValues>
+            </usau:BackupSlot>
+          </umamm:MailboxArgument.Backup>
+        </umamm:MailboxArgument>
+      </umam:SendMailConnections.MailboxArg>
+    </umam:SendMailConnections>
+  </Sequence>
+</Activity>

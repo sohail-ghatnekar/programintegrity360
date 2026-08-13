@@ -64,11 +64,131 @@
       "id": "processda8d33bc-864b-4ac0-ad48-220a77834bbd",
       "value": {},
       "metadata": {
-        "ActivityName": "IXP Extraction TimeSheet @Matt",
+        "ActivityName": "RPA - extract service timesheet",
         "BindingsVersion": "2.2",
         "DisplayLabel": "name",
         "SolutionsSupport": "true",
         "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "4b3445e2-e309-4462-98b1-ee5a8e19c24b",
+      "id": "process4b3445e2-e309-4462-98b1-ee5a8e19c24b",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360DecisionPacketAutomation",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "RPA - build supervisor decision packet",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "81823fe7-f177-4719-9dcf-468d15aeb72d",
+      "id": "process81823fe7-f177-4719-9dcf-468d15aeb72d",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360 Send Outlook Email",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "RPA - send closure summary email",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "9c77c6aa-3a07-4053-a559-28c98f2520a3",
+      "id": "process9c77c6aa-3a07-4053-a559-28c98f2520a3",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360ApiWorkflows",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Data Fabric lifecycle API workflows",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Api"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "07bc936d-d767-4ca8-845d-f6be376a0e2b",
+      "id": "process07bc936d-d767-4ca8-845d-f6be376a0e2b",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360TriageAgent",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Agentic Caseworker - explain triage recommendation",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "d7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f",
+      "id": "processd7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360EvidenceCorrelationAgent",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Agentic Caseworker - first-pass investigation recommendation",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
       }
     }
   ]

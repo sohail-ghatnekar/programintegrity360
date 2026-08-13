@@ -1,0 +1,117 @@
+{
+  "version": "2.0",
+  "resources": [
+    {
+      "resource": "process",
+      "key": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "id": "process64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "value": {
+        "folderPath": {
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360CaseManagerAgent",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "API - retrieve CaseType claim details",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+      "id": "process6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+      "value": {
+        "folderPath": {
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360ClaimDetailsApi",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "API - retrieve CaseType claim details",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Api"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "fabc409c-d468-4964-92e0-2171e0ced3ba",
+      "id": "processfabc409c-d468-4964-92e0-2171e0ced3ba",
+      "value": {
+        "folderPath": {
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360QuickRulesCodedAgent",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "API - retrieve CaseType claim details",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
+      }
+    },
+    {
+      "resource": "connection",
+      "key": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "id": "connectiona0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "value": {
+        "ConnectionId": {
+          "defaultValue": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "isExpression": false,
+          "displayName": "uipath-uipath-dataservice connection"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Data Fabric - create provider",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "uipath-uipath-dataservice connection",
+        "UseConnectionService": "true",
+        "Connector": "uipath-uipath-dataservice"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "id": "process58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360EvidenceSnapshotAutomation",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "RPA placeholder - extract service evidence",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    }
+  ]
+}

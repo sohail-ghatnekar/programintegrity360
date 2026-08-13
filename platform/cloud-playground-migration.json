@@ -117,7 +117,7 @@
       "tag": "live",
       "pinned": true
     },
-    "maestroRuntimeBinding": "Swap-ready mock nodes remain until these projects appear in the authenticated Maestro IXP node registry."
+    "runtimeBinding": "The Case and BPMN invoke the packaged PI360 IXP Timesheet and PI360 IXP Medical Record RPA processes."
   },
   "storageBuckets": {
     "Timesheets": {

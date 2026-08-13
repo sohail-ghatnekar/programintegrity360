@@ -10,7 +10,7 @@ Say:
 
 The primary walkthrough is `PI-HSP-2026-0042`, State Medicaid Hospice. The current coded-app visual design is unchanged. Use the live hospice record only when the app badge says `Live UiPath` and the record is visible. If the badge says `Demo data`, use the separate PCS fallback below and do not represent it as the hospice case.
 
-The Case plan owns lifecycle and human checkpoints; Data Fabric is the persistent system of record. In this build, Evidence invokes `PI360CaseManagerFlow`, and the hospice provider-record stage invokes `PI360AdHocReviewBpmn`. IXP extraction, RPA automation, and automated email are deferred and are not executed.
+The Case plan owns lifecycle and human checkpoints; Data Fabric is the persistent system of record. Evidence runs the timesheet RPA and `PI360CaseManagerFlow`; the hospice provider-record stage runs `PI360AdHocReviewBpmn`; supervisor review creates an RPA decision packet; and closure persists the approved result before the Outlook RPA sends its summary.
 
 ## Manual-trigger inputs
 
@@ -79,12 +79,12 @@ documentInput = {
 | Time | Surface | Story point |
 |---|---|---|
 | 0:00–1:15 | Manual trigger and Intake | CaseType routing and threshold |
-| 1:15–2:45 | Evidence acquisition | Case invokes Flow: Beeceptor GET, QuickRules, and Caseworker routing |
-| 2:45–4:15 | Provider record request | Hospice BPMN investigator gate and visible `P3D` wait |
+| 1:15–2:45 | Evidence acquisition | Timesheet RPA, Beeceptor GET, Data Fabric writes, QuickRules, and Caseworker routing |
+| 2:45–4:15 | Provider record request | Hospice BPMN gate, RPA request, response/`P3D` race, medical-record RPA, and persistence |
 | 4:15–5:45 | Rules and Caseworker | 360-minute conflict and grounded first pass |
 | 5:45–7:45 | Coded app and investigator task | Human confirmation to open a true investigation |
 | 7:45–9:30 | Supervisor review | Investigator Findings and Agentic Evidence |
-| 9:30–11:00 | Closure | Audit trail, reviewed disposition, and next steps |
+| 9:30–11:00 | Closure | Data Fabric decision/update, audit trail, and RPA closure email |
 
 ### 1. Intake and triage
 
@@ -96,27 +96,27 @@ Say:
 
 ### 2. Evidence acquisition and validation
 
-Show the Case task `Flow - acquire and validate claim evidence`, then show `PI360CaseManagerFlow` calling `PI360ClaimDetailsApi` with HTTP `GET`:
+Show `RPA - extract service timesheet`, then the Case task `Flow - acquire and validate claim evidence`. Show `PI360CaseManagerFlow` calling `PI360ClaimDetailsApi` with HTTP `GET`:
 
 `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice`
 
-Point to the three claim lines, 52 units, and $3,250 total. Then show the Timesheets bucket path as supplied evidence and the Flow's `PI360QuickRulesCodedAgent` and `PI360CaseManagerAgent` steps.
+Point to the three claim lines, 52 units, and $3,250 total. Then trace the Flow's Data Fabric writes: Provider, Claim, intake Evidence Document, and Risk Signal. The hospice branch skips Attendant and EVV; the PCS branch writes both. Finish with `PI360QuickRulesCodedAgent` and `PI360CaseManagerAgent`.
 
 Say:
 
-> "The API supplies claim facts only. The timesheet is separate supplied evidence. The Flow uses QuickRules for deterministic routing and the Agentic Caseworker for a cited recommendation; neither decides fraud or opens an investigation. IXP extraction is deferred in this build, so no IXP result is presented as a runtime action."
+> "The claim API supplies claim facts only. The timesheet RPA handles the supplied service document. The Flow persists the normalized facts and intake evidence through Program Integrity Fabric, then uses QuickRules for deterministic routing and the Agentic Caseworker for a cited recommendation. Neither decides fraud or opens an investigation."
 
 Do not say the Beeceptor response contains hospital or timesheet facts.
 
 ### 3. Provider record request
 
-Show the hospice-only Case task `BPMN - request and await hospital record` and the `PI360AdHocReviewBpmn` diagram. Point first to `Investigator proceed?`, then to `API: Request hospital record`, `Await response (P3D)`, and `API: Intake hospital record`. Show the supplied hospital packet in the Hospital Records bucket only as the provider response becomes available.
+Show the hospice-only Case task `BPMN - request and await hospital record` and `PI360AdHocReviewBpmn`. Point first to `Investigator proceed?`, then to `RPA placeholder: send provider record request` and the event-based response race. Follow the message path through `RPA: extract hospital medical record` and `API: persist hospital evidence to Data Fabric`. Also point to the alternate `P3D` timeout end. Show the supplied hospital packet in the Hospital Records bucket only as the provider response becomes available.
 
 Say:
 
-> "Hospice adds a BPMN-owned provider-record stage. The investigator-proceed gateway blocks the request until approval. Once approved, the BPMN visibly waits `P3D`, or 72 hours, for the provider response. A returned record is intaken and control returns to Investigation; a missing record remains awaiting provider and no analysis is claimed. The printed patient class is Observation, not inpatient."
+> "Hospice adds a BPMN-owned provider-record stage. The investigator-proceed gateway blocks the request until approval. The provider-request integration is an explicit RPA placeholder. After it runs, BPMN waits for either a Case-correlated response or `P3D`. A response runs the medical-record extraction RPA and persists the hospital evidence and audit action before control returns to Investigation. A timeout remains awaiting provider. The printed patient class is Observation, not inpatient."
 
-Do not present an institutional IXP extraction as executed; that integration is deferred.
+Do not claim the hospital record is available before the correlated provider-response message. Do not describe the RPA placeholder as a working provider-portal integration.
 
 ### 4. Deterministic conflict and Agentic Caseworker
 
@@ -157,7 +157,7 @@ Do not complete a real operational task during the demo.
 
 ### 6. Supervisor review
 
-Switch to `Supervisor`, open `Decisions`, and show the existing supervisor workbench.
+Switch to `Supervisor`, show `RPA - build supervisor decision packet`, then open `Decisions` and the existing supervisor workbench.
 
 Say:
 
@@ -165,11 +165,11 @@ Say:
 
 ### 7. Closure and communication
 
-Show `Closure and communication` in the six-stage strip and the API workflow that closes the Case and persists the approved disposition.
+Show `Closure and communication` in the six-stage strip. Trace `CloseCaseAndEmitMetrics`: it creates the final Decision and closure audit action, resolves the Case by `case_id`, and updates it to Closure/Closed. Then show the sequential `RPA - send closure summary email` task.
 
 Say:
 
-> "Closure occurs only after the required human review. The Case persists the supervisor-approved disposition and audit trail in Data Fabric. It preserves Observation exactly and never labels the review indicator as a fraud determination. Automated closure email is deferred and is not sent or queued in this build."
+> "Closure occurs only after the required human review. The API workflow persists the supervisor-approved Decision and audit action and updates the Case to Closed. Only then does the Outlook RPA send the approved disposition, evidence summary, and next steps. It preserves Observation exactly and never labels the review indicator as a fraud determination."
 
 ## PCS fallback
 
@@ -187,6 +187,6 @@ Show the existing 90-minute overlapping visit, 24 unsupported units, timesheet e
 - Preserve the printed patient class `Observation`; do not recast it as a different hospital status.
 - Call the 360-minute result a review indicator or location/time conflict, not fraud.
 - Do not imply the policy automatically denies the claim.
-- Do not describe IXP, RPA automation, or automated email as active runtime work; all are deferred.
+- Distinguish the active timesheet, medical-record, decision-packet, and email RPA projects from the two explicitly labeled integration placeholders.
 - Do not claim task completion without the explicit Tasks API `Completed` confirmation.
 - Keep Jordan's roles separated by case ID.

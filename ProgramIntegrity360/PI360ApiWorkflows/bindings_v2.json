@@ -4,20 +4,20 @@
     {
       "resource": "Connection",
       "key": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
-      "id": "Connectiona0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "activityId": "UpdateEntityRecordV2_1",
+      "activityDisplayName": "Update case lifecycle state",
       "value": {
         "ConnectionId": {
           "defaultValue": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
-          "isExpression": false,
-          "displayName": "Program Integrity Fabric"
+          "isExpression": false
         }
       },
       "metadata": {
-        "ActivityName": "PI360 Program Integrity Case Upsert",
-        "BindingsVersion": "2.2",
-        "DisplayLabel": "Program Integrity Fabric",
         "UseConnectionService": "true",
-        "Connector": "uipath-uipath-dataservice"
+        "Connector": "uipath-uipath-dataservice",
+        "ActivityName": "Update case lifecycle state",
+        "BindingsVersion": "2.2",
+        "SolutionsSupport": "true"
       }
     }
   ]

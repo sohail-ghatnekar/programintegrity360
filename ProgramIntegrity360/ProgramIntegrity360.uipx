@@ -84,6 +84,16 @@
       "Id": "616518cc-4755-4790-a5ad-3f2c7b4191a5"
     },
     {
+      "Type": "Process",
+      "ProjectRelativePath": "PI360 IXP Medical Record/project.uiproj",
+      "Id": "e0fafcd3-755c-4551-b399-eef50efbadf7"
+    },
+    {
+      "Type": "Process",
+      "ProjectRelativePath": "PI360 Send Outlook Email/project.uiproj",
+      "Id": "163e84d2-8d80-407a-80a5-5e739348a3fa"
+    },
+    {
       "Type": "AppV2",
       "ProjectRelativePath": "PI360RecoveryAuthorizationActionApp/project.uiproj",
       "Id": "ec7a30ac-2270-421a-b5f7-0d9676d3bbe4"

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "entryPoints": [
+    {
+      "filePath": "Main.xaml",
+      "uniqueId": "6fba330b-37d3-4030-ba2c-0e0309d16875",
+      "type": "process",
+      "output": {
+        "type": "object",
+        "properties": {
+          "out_AdmissionDate": {
+            "type": "string"
+          },
+          "out_DischargeDate": {
+            "type": "string"
+          },
+          "out_PatientClass": {
+            "type": "string"
+          },
+          "out_EncounterId": {
+            "type": "string"
+          },
+          "out_FacilityName": {
+            "type": "string"
+          },
+          "out_CareArea": {
+            "type": "string"
+          },
+          "out_ArrivalAt": {
+            "type": "string"
+          },
+          "out_DischargeAt": {
+            "type": "string"
+          },
+          "out_Disposition": {
+            "type": "string"
+          },
+          "out_StorageUri": {
+            "type": "string"
+          },
+          "out_ExtractionConfidence": {
+            "type": "number",
+            "minimum": -1.7976931348623157E+308,
+            "maximum": 1.7976931348623157E+308
+          }
+        }
+      }
+    }
+  ]
+}
