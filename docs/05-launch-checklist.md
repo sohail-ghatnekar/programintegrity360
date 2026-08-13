@@ -1,66 +1,89 @@
-# Launch Checklist — Program Integrity 360
+# Launch checklist — Program Integrity 360
 
-A short, repeatable runbook to get the demo into a known-good state and recover fast if something drifts.
-Target environment: **staging.uipath.com / uipathlabs / Playground**. All data is **synthetic**.
+Target: `cloud.uipath.com / uipathlabs / Playground / AMER Presales/Public Sector/ProgramIntegrity360`. All data is synthetic.
 
----
+## Deployment readiness
 
-## T-1 day — provisioning (run once)
-- [ ] `uip login` to staging.uipath.com, org **uipathlabs**, tenant **Playground** (interactive browser).
-- [ ] Deploy the solution per `solution/deploy.md` (`pack → publish → deploy → activate`, name **Program Integrity 360**).
-- [ ] Confirm Data Fabric entities exist (9): ProgramIntegrityCase, Provider, Attendant, Claim, EVVVisit,
-      RiskSignal, EvidenceDocument, InvestigationAction, Decision — see `platform/data-fabric-and-plumbing.md`.
-- [ ] Confirm queues (`pi-evidence-collection`, `pi-human-review`, …), bucket `pi-evidence`, and the two
-      triggers (`tr-intake-alert`, `tr-records-response`) are present.
-- [ ] Confirm the Coded App **Program Integrity 360** is published and reachable; OAuth-PKCE login works.
-- [ ] Confirm the 4 agents (Triage, Evidence Correlation, Investigation Planning, Summary) are deployed and
-      bound to the case type.
-- [ ] Confirm two demo users exist with correct roles: `inv.taylor` (Investigator), `sup.morgan` (Supervisor).
+- [x] Confirm the CLI profile targets `uipathlabs/Playground`.
+- [x] Confirm solution 0.5.1 remains available for rollback.
+- [x] Validate, publish, and activate solution 0.6.1 per `solution/deploy.md`.
+- [x] Confirm the active folder key is `5db31dd1-1073-4f9e-b44b-76f5484e03c4`.
+- [x] Confirm the hosted coded app responds at `https://uipathlabs.uipath.host/pi360-coded-app`.
+- [x] Do not publish a coded-app release in this pass; preserve its visual design and PCS demo-data fallback.
+- [ ] Regenerate `caseplan.json.bpmn` from the current Case plan before packaging.
+- [ ] Confirm the Case Evidence task is bound to `solution_folder.PI360CaseManagerFlow` and the hospice Provider task is bound to `solution_folder.PI360AdHocReviewBpmn`.
+- [ ] Confirm no Case, Flow, or BPMN binding resolves to a `_1` resource.
 
-## T-1 hour — seed / reset the reference case
-> Goal: the tenant holds exactly ONE case, `PI-PCS-2026-0041`, in a clean, internally consistent state.
-- [ ] Seed entities from `data/*.json` (providers → attendants → case → claims → evv_visits → risk_signals →
-      evidence_documents → decisions → investigation_actions). Load order matters (FK references).
-- [ ] Verify the deterministic calculator has run and stored RS-01..RS-05 with `computed_by = deterministic-calc-v1`.
-- [ ] Verify exposure fields on the case: low **$172.80**, period **≈$1,600**, high **$42,000** + disclaimer.
-- [ ] Upload the 6 evidence documents to bucket `pi-evidence/PI-PCS-2026-0041/`.
-- [ ] Decide the demo mode (pick ONE):
-  - **A. Completed reference case** (default): case = `Closed`, full timeline visible (ACT-0001..ACT-0015).
-    Best for narrating the whole arc quickly.
-  - **B. Live walk-through**: reset case to `stage = Investigator human review`, `status = In Review`, remove
-    ACT-0009..ACT-0015 and DEC-0002 so you can click through the investigator decision, provider-response
-    resume, and supervisor approval live. (Keep RS-01..RS-05, docs, agent v1 narrative.)
+## External fixtures
 
-## T-15 min — smoke test (do not skip)
-Run the compact smoke checklist in `test/test-plan.md`. Minimum green-light set:
-- [ ] Command Center loads and shows case `PI-PCS-2026-0041` with 5 risk signals.
-- [ ] Reconciliation screen shows the 9 claims and the improper-unit math (8+8+4+4 = **24**).
-- [ ] Risk Signals screen shows the **90-minute** overlap on **2026-04-14** (EVV-88231 × EVV-88237).
-- [ ] Evidence Studio shows DOC-TS-0416 flagged for human validation (confidence 0.71).
-- [ ] Agent rationale renders with **FACT / INFERENCE** labels and citations; no uncited claim.
-- [ ] Decision Center: adverse/financial action is **disabled** for `inv.taylor`, **enabled** for `sup.morgan`.
-- [ ] Case Timeline renders the InvestigationAction rows in order.
-- [ ] The non-determination disclaimer is visible on the case header.
+- [ ] `PI360ClaimDetailsApi` uses HTTP `GET` to `https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS` and returns `caseType = MedicaidPCS` and nine claims.
+- [ ] `PI360ClaimDetailsApi` uses HTTP `GET` to `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice` and returns `caseType = StateMedicaidHospice`, 52 units, and $3,250.
+- [ ] Neither Beeceptor response supplies timesheet or hospital-derived conclusions.
 
-## Demo-day runbook (order of screens)
-Follow `docs/04-demo-script.md`. Screen order: Command Center → Case 360 → Claims vs EVV Reconciliation →
-Evidence Studio → Risk Signals & Agent Rationale → Decision Center (investigator) → Provider Response
-Tracking → Decision Center (supervisor approval) → Case Timeline → Insights.
+## IXP and RPA integrations
 
-## Fallbacks (if the live tenant misbehaves)
-- [ ] Have `docs/04-demo-script.md` open with the wireframes (`coded-app/wireframes.md`) as a static backup.
-- [ ] Have screenshots of the 9 screens captured T-1 day as a slide backup.
-- [ ] If an agent call is slow/unavailable, narrate from the pre-stored agent outputs in
-      `agents/*.md` and `investigation_actions.json` (ACT-0003/0006/0007/0012).
-- [ ] If entity writes fail, switch to demo mode **A** (read-only completed case) and narrate.
+- [ ] Confirm the Evidence stage runs `PI360 IXP Timesheet` before `PI360CaseManagerFlow`.
+- [ ] Confirm the BPMN response path runs `PI360 IXP Medical Record` before `IntakeHospitalRecord` writes the hospital evidence.
+- [ ] Confirm supervisor review runs `PI360DecisionPacketAutomation` before the human task.
+- [ ] Confirm closure runs `PI360 Send Outlook Email` only after the approved Decision, audit action, and Case update are persisted.
+- [ ] Confirm the provider-request and generic service-evidence integration gaps are visibly labeled RPA placeholders, with no mock API branch.
 
-## Reset between runs
-- [ ] Re-seed from `data/*.json` (mode A) or re-apply the mode-B trim.
-- [ ] Clear any human tasks generated during a live run from Action Center.
-- [ ] Confirm no second/duplicate case was created by an accidental trigger fire.
+## Storage buckets
 
-## Talk-track guardrails (say these, every time)
-- "Program Integrity 360 surfaces **risk signals** and organizes evidence — it does **not** make a fraud determination."
-- "**Deterministic code** computed every number; the **agent explained** it and cited the source."
-- "**No adverse or financial action** happens without a **human approval**."
-- "All data here is **synthetic**."
+- [ ] Timesheets contains the six PCS service/provider PDFs under `pcs/PI-PCS-2026-0041/` and the supplied hospice timesheet under `hospice/PI-HSP-2026-0042/incoming/`.
+- [ ] Hospital Records contains the Jordan Ellis packet under `hospice/PI-HSP-2026-0042/provider-response/`.
+- [ ] Policy Docs contains the PCS plan of care and `reference/policy/03_personal_care_services_policy.pdf`.
+- [ ] Fresh listings show PDF content types and nonzero sizes.
+
+## Data Fabric
+
+Playground is at its 500-object cap. Do not create replacement entities or choice sets.
+
+- [ ] Confirm exactly nine `PI360*` entities with the recorded IDs.
+- [ ] Confirm record counts: cases 2, providers 1, attendants 2, claims 10, EVV 12, signals 6, evidence 9, actions 15, decisions 2.
+- [ ] Confirm total records: 59.
+- [ ] Confirm one `PI-PCS-2026-0041` row and one `PI-HSP-2026-0042` row.
+- [ ] Confirm the hospice case stores Jordan Ellis as member and Taylor Brooks as caregiver.
+- [ ] Confirm the hospice claim stores 52 units, $3,250, `LINE-0714-01`, place of service 12, and the three lines in `claim_lines_json`.
+- [ ] Confirm the hospital evidence row stores `Observation`, the exact arrival/discharge interval, and medical-record extraction provenance.
+- [ ] Confirm logical joins use `case_id` for Case-linked claims, signals, evidence documents, actions, and decisions; `provider_id` for Provider context; and `attendant_id`/`member_id` for service context. Do not create relationship entities at the tenant cap.
+
+## Local verification
+
+- [ ] Run the complete Python contract and PDF suite.
+- [ ] From `ProgramIntegrity360/PI360CodedApp`, run `npm test`, `npm run lint`, and `npm run build`.
+- [ ] Validate the Case plan, Maestro Flow, both API workflows, and agents with the installed UiPath CLI.
+- [ ] Run `git diff --check`.
+
+## Hospice-first smoke path
+
+- [ ] Supply all six manual-trigger objects separately.
+- [ ] Confirm `CaseType = StateMedicaidHospice` selects the hospice profile.
+- [ ] Confirm $3,250 exceeds the $2,500 threshold.
+- [ ] Confirm the Evidence Case stage runs the timesheet RPA and invokes `PI360CaseManagerFlow`, which uses `PI360ClaimDetailsApi` with HTTP `GET` to `/StateMedicaidHospice`, writes intake evidence to Data Fabric, then runs QuickRules and CaseManager agents.
+- [ ] Confirm the hospice Flow recommendation opens `Provider record request` and invokes `PI360AdHocReviewBpmn`.
+- [ ] Confirm the BPMN's investigator-proceed gateway occurs before the RPA provider-request placeholder and its event-based gateway races a correlated response against `P3D`.
+- [ ] Confirm a missing hospital record remains awaiting provider; a returned record runs medical-record extraction and Data Fabric persistence before Investigation.
+- [ ] Confirm the returned record preserves patient class `Observation`.
+- [ ] Confirm deterministic rules return 360 overlap minutes and `reviewIndicatorOnly = true`.
+- [ ] Confirm Agentic Caseworker recommends but does not open the true investigation.
+- [ ] Confirm an investigator task is required before supervisor review.
+- [ ] Confirm supervisor review builds the decision packet and exposes Investigator Findings and Agentic Evidence.
+- [ ] Confirm closure persists the human-approved Decision, action, and Case update before the closure-email RPA begins.
+
+## PCS fallback smoke path
+
+- [ ] Confirm `CaseType = MedicaidPCS` selects `PI360ClaimDetailsApi` HTTP `GET` route `/MedicaidPCS`.
+- [ ] Confirm PCS retains its five deterministic signals and existing evidence.
+- [ ] Confirm the PCS overlapping-visit signal remains 90 minutes; the 360-minute location/time conflict is hospice `RS-HSP-01`.
+- [ ] Confirm PCS skips the automatic hospital-record request.
+- [ ] Confirm the coded app's `Demo data` state is described as PCS fallback, never as live hospice data.
+
+## Demo guardrails
+
+- [ ] Keep the payer label state Medicaid hospice.
+- [ ] Preserve the printed patient class Observation without recasting it as a different hospital status.
+- [ ] Call automated outputs review indicators or risk signals, not fraud findings.
+- [ ] Do not complete a real adverse or financial task.
+- [ ] Do not claim either labeled RPA placeholder integrates with a real provider portal or service-evidence system.
+- [ ] Keep Jordan's member role and attendant role separated by case ID.

@@ -1,0 +1,27 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "Timesheets",
+    "kind": "bucket",
+    "type": "orchestratorBucket",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Orchestrator",
+      "name": "Timesheets",
+      "description": null,
+      "options": null,
+      "tags": []
+    },
+    "locks": [],
+    "key": "ee5b39e1-60de-4ddd-92c3-3bc05d0d74c4"
+  }
+}

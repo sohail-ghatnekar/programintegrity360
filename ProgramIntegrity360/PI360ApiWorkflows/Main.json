@@ -3,8 +3,8 @@
     "dsl": "1.0.0",
     "namespace": "pi360.api",
     "name": "PI360ApiWorkflows",
-    "version": "0.3.0",
-    "title": "Program Integrity 360 API Workflows",
+    "version": "0.7.0",
+    "title": "Program Integrity 360 Case Lifecycle API Contracts",
     "metadata": {
       "variables": []
     }
@@ -17,7 +17,11 @@
         "properties": {
           "workflowName": {
             "type": "string",
-            "default": "PullClaims"
+            "default": "IntakeClaimByCaseType"
+          },
+          "caseType": {
+            "type": "string",
+            "default": "MedicaidPCS"
           },
           "caseId": {
             "type": "string",
@@ -27,9 +31,13 @@
             "type": "string",
             "default": "PRV-100482"
           },
-          "attendantId": {
-            "type": "string",
-            "default": "ATT-2087"
+          "claimTotalBilled": {
+            "type": "number",
+            "default": 0
+          },
+          "hospitalRecordAvailable": {
+            "type": "boolean",
+            "default": false
           },
           "investigatorProceed": {
             "type": "boolean",
@@ -39,33 +47,48 @@
             "type": "boolean",
             "default": false
           },
-          "currentStage": {
-            "type": "string",
-            "default": "Investigation"
+          "supervisorDecision": {
+            "type": "string"
           },
-          "riskScore": {
-            "type": "number",
-            "default": 86
+          "supervisorReviewNotes": {
+            "type": "string"
           },
-          "unsupportedUnits": {
-            "type": "number",
-            "default": 24
+          "investigatorFindings": {
+            "type": "string"
           },
-          "missingEvidenceCount": {
-            "type": "number",
-            "default": 0
+          "recommendedAction": {
+            "type": "string"
           },
-          "providerResponseNeeded": {
-            "type": "boolean",
-            "default": false
+          "requesterEmail": {
+            "type": "string"
           },
-          "providerResponseReceived": {
-            "type": "boolean",
-            "default": true
+          "caseInput": {
+            "type": "object",
+            "additionalProperties": true
           },
-          "proposedAction": {
-            "type": "string",
-            "default": "refer for audit"
+          "claimInput": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "memberInput": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "providerInput": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "serviceEventInput": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "documentInput": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "providerMessageInput": {
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "title": "Inputs"
@@ -81,6 +104,9 @@
           "workflowName": {
             "type": "string"
           },
+          "caseType": {
+            "type": "string"
+          },
           "caseId": {
             "type": "string"
           },
@@ -92,6 +118,12 @@
           },
           "recordsAffected": {
             "type": "number"
+          },
+          "persistedCaseId": {
+            "type": "string"
+          },
+          "registrationMode": {
+            "type": "string"
           },
           "message": {
             "type": "string"
@@ -137,23 +169,674 @@
             }
           },
           {
-            "SimulateApiWorkflow": {
+            "PrepareLifecycleRequest": {
               "run": {
                 "script": {
                   "language": "javascript",
                   "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
-                  "code": "const input = $workflow.input || {};\nconst workflowName = String(input.workflowName || 'PullClaims').trim();\nconst caseId = String(input.caseId || 'PI-PCS-2026-0041');\nconst providerId = String(input.providerId || 'PRV-100482');\nconst attendantId = String(input.attendantId || 'ATT-2087');\nconst riskScore = Number(input.riskScore ?? 86);\nconst unsupportedUnits = Number(input.unsupportedUnits ?? 24);\nconst missingEvidenceCount = Number(input.missingEvidenceCount ?? 0);\nconst providerResponseNeeded = input.providerResponseNeeded === true || input.providerResponseNeeded === 'true';\nconst providerResponseReceived = input.providerResponseReceived !== false && input.providerResponseReceived !== 'false';\nconst proposedAction = String(input.proposedAction || 'refer for audit');\nconst supervisorApproved = input.supervisorApproved === true || input.supervisorApproved === 'true';\nconst supportedWorkflows = ['IntakeAlertCreateCase', 'CreateCaseAuditTrail', 'PullClaims', 'PullEvvVisits', 'PullPlanOfCare', 'LookupProviderEnrollment', 'PullPersonnelPacket', 'LandEvidenceDocuments', 'ExtractDocumentFields', 'ValidateExtractionFields', 'ReconcileExtractionConfidence', 'ComputeRiskSignals', 'QuickRulesCheck', 'ReconcileClaimEvidence', 'CreateInvestigatorReviewTask', 'SendProviderRecordsRequest', 'IntakeProviderResponse', 'RefreshCorrelationAfterResponse', 'PrepareSupervisorPacket', 'CreateSupervisorApprovalTask', 'GenerateReferralPacket', 'OpenOverpaymentRecovery', 'QueueProviderNotice', 'CloseCaseAndEmitMetrics', 'AddProviderMonitoringFlag', 'WriteFinalAuditRecord'];\nconst base = { workflowName, caseId, gated: false, recordsAffected: 0, mockMode: true, note: 'No external connector or Data Fabric mutation is performed by this local simulator.' };\nfunction result(status, recordsAffected, message, payload, gated = false) {\n  return { ...base, status, recordsAffected, message, payload, gated };\n}\nconst catalog = {\n  IntakeAlertCreateCase: () => result('Open', 2, 'Case creation contract accepted for claims analytics alert ALERT-CA-2026-7781.', { alertId: 'ALERT-CA-2026-7781', providerId, attendantId, stage: 'Alert intake and triage', writes: ['PI360ProgramIntegrityCase', 'PI360InvestigationAction'] }),\n  CreateCaseAuditTrail: () => result('Completed', 1, 'Initial audit trail entry contract accepted.', { actionId: 'ACT-0001', actor: 'Case intake', event: 'Case created from alert' }),\n  PullClaims: () => result('Completed', 9, 'Claims pull contract returns the canonical 9-claim reviewed sample.', { claimCount: 9, flaggedClaims: ['CLM-0491', 'CLM-0503', 'CLM-0540', 'CLM-0549'], deDuplicatedImproperUnits: 24, sampleExposure: 172.8, computedBy: 'deterministic-calc-v1' }),\n  PullEvvVisits: () => result('Completed', 44, 'EVV pull contract returns the visit sample used by RS-01 and RS-02.', { visitCount: 44, manualNoGpsCount: 12, overlapAnchors: ['EVV-88231', 'EVV-88237'] }),\n  PullPlanOfCare: () => result('Completed', 2, 'Plan-of-care pull contract returns authorized daily and weekly unit limits.', { primaryMember: 'MBR-33915', dailyUnits: 20, weeklyUnits: 80, documentId: 'DOC-POC-33915' }),\n  LookupProviderEnrollment: () => result('Active', 1, 'Provider enrollment lookup contract resolved Harbor Home Support Services.', { providerId, medicaidProviderId: 'MPI-4471902', npi: '1730456789', activeAttendantCount: 22, priorIntegrityHistory: '1 education letter (2024), no sanctions' }),\n  PullPersonnelPacket: () => result('Completed', 1, 'Personnel-packet contract returns credential and missing-document signals.', { attendantId, certification: 'PCA-556210', certificationExpiry: '2026-03-31', missingDocuments: 2, documentId: 'DOC-PP-2087' }),\n  LandEvidenceDocuments: () => result('Completed', 6, 'Evidence landing contract accepts the canonical six-document bundle.', { bucketPrefix: `pi-evidence/${caseId}`, documents: ['DOC-TS-0416', 'DOC-TS-0519', 'DOC-POC-33915', 'DOC-SN-0414', 'DOC-PP-2087', 'DOC-CORR-01'] }),\n  ExtractDocumentFields: () => result('Completed', 6, 'Document extraction contract returns typed fields for timesheets, plan of care, notes, personnel packet, and correspondence.', { extractedDocumentCount: 6, lowConfidenceFields: ['DOC-SN-0414.documented_end', 'DOC-TS-0416.time_out'] }),\n  ValidateExtractionFields: () => result('HumanValidated', 2, 'Human validation write-back contract accepts corrected low-confidence extraction fields.', { validatedFields: ['DOC-SN-0414.documented_end', 'DOC-TS-0416.time_out'], validationStatus: 'Human-validated' }),\n  ReconcileExtractionConfidence: () => result('Completed', 6, 'Extraction reconciliation contract normalizes document validation statuses.', { autoConfirmed: 3, humanValidated: 3, needsReview: 0 }),\n  ComputeRiskSignals: () => result('Completed', 5, 'Deterministic risk-signal contract computes RS-01 through RS-05.', { signals: ['RS-01', 'RS-02', 'RS-03', 'RS-04', 'RS-05'], unsupportedUnits: 24, overlapMinutes: 90, computedBy: 'deterministic-calc-v1' }),\n  QuickRulesCheck: () => {\n    const blockers = [];\n    const warnings = [];\n    if (riskScore < 0 || riskScore > 100) blockers.push('risk_score_out_of_range');\n    if (unsupportedUnits < 0) blockers.push('unsupported_units_negative');\n    if (missingEvidenceCount > 0) blockers.push('missing_material_evidence');\n    if (providerResponseNeeded && !providerResponseReceived) blockers.push('await_provider_response');\n    const gatedTerms = ['recovery', 'overpayment', 'refer', 'audit', 'sanction', 'notice', 'adverse'];\n    const supervisorGateRequired = gatedTerms.some(term => proposedAction.toLowerCase().includes(term));\n    if (supervisorGateRequired && !supervisorApproved) blockers.push('supervisor_approval_required');\n    if (riskScore >= 85 && !supervisorGateRequired) warnings.push('high_risk_review_recommended');\n    if (unsupportedUnits === 0 && !proposedAction.toLowerCase().includes('close')) warnings.push('no_unsupported_units_in_input');\n    const recommendedStage = providerResponseNeeded && !providerResponseReceived\n      ? 'ProviderResponse'\n      : missingEvidenceCount > 0\n        ? 'Evidence'\n        : supervisorGateRequired && !supervisorApproved\n          ? 'SupervisorEscalation'\n          : blockers.length === 0\n            ? 'Investigation'\n            : 'SupervisorEscalation';\n    const payload = { caseId, currentStage: String(input.currentStage || 'Investigation'), riskScore, unsupportedUnits, missingEvidenceCount, providerResponseNeeded, providerResponseReceived, supervisorApproved, proposedAction, supervisorGateRequired, blockers, warnings, recommendedStage, checkedBy: 'quick-rules-v1' };\n    return result(blockers.length ? 'Blocked' : 'Clear', 0, blockers.length ? 'Quick rules found blockers before routing.' : 'Quick rules found no blocking issue before routing.', payload, blockers.length > 0);\n  },\n  ReconcileClaimEvidence: () => result('Completed', 4, 'Claim/evidence reconciliation contract links flagged claims to supporting source IDs.', { reconciledClaims: ['CLM-0491', 'CLM-0503', 'CLM-0540', 'CLM-0549'], evidenceIds: ['DOC-SN-0414', 'DOC-TS-0416', 'DOC-TS-0519', 'EVV-88288'] }),\n  CreateInvestigatorReviewTask: () => result('PendingHumanReview', 1, 'Investigator review task contract created a gated review checkpoint.', { assignee: 'inv.taylor', role: 'Investigator', adverseOrFinancialAllowed: false }),\n  SendProviderRecordsRequest: () => input.investigatorProceed === true || input.investigatorProceed === 'true' ? result('Awaiting Provider', 2, 'Provider records request contract accepted after investigator gate.', { requestId: 'REQ-PI360-0041', requestedDocs: ['Personnel packet', 'Timesheets 04-16 / 05-19', 'Service note 04-14'], respondBy: '2026-08-12', writes: ['PI360ProgramIntegrityCase.Status', 'PI360InvestigationAction'] }) : result('Blocked', 0, 'Investigator proceed gate is required before a provider records request is sent.', { requiredGate: 'investigatorProceed', outboundSent: false }, true),\n  IntakeProviderResponse: () => result('Completed', 1, 'Provider response intake contract accepts DOC-CORR-01 and reopens review.', { documentId: 'DOC-CORR-01', received: '2026-07-28T14:02:00Z', responseDoesResolveMismatch: false }),\n  RefreshCorrelationAfterResponse: () => result('Completed', 2, 'Post-response correlation refresh contract keeps unsupported units unchanged.', { unsupportedUnitsRemain: 24, refreshedOutputs: ['correlation', 'summary-v2'] }),\n  PrepareSupervisorPacket: () => result('Completed', 1, 'Supervisor packet contract bundles evidence, decisions, and non-determination disclaimers.', { packetId: 'PKT-PI360-0041', includes: ['risk signals', 'claim sample', 'provider response', 'decision log'] }),\n  CreateSupervisorApprovalTask: () => result('PendingSupervisor', 1, 'Supervisor approval task contract created the adverse/financial action gate.', { assignee: 'sup.morgan', role: 'Supervisor', requiredFor: ['Refer for audit', 'Open recovery'] }),\n  GenerateReferralPacket: () => result('Completed', 1, 'Referral packet generation contract accepts supervisor-approved disposition.', { referralPacketId: 'REF-PI360-0041', disposition: 'Refer for audit' }),\n  OpenOverpaymentRecovery: () => input.supervisorApproved === true || input.supervisorApproved === 'true' ? result('Recovery Opened', 1, 'Overpayment recovery handoff contract accepted after supervisor approval.', { recoveryId: 'REC-PI360-0041', basis: '24 unsupported units across CLM-0491, CLM-0503, CLM-0540, CLM-0549', sampleAmount: 172.8, reviewedPeriodEstimate: 1600, indicativeRange: { low: 18000, high: 42000 }, disclaimer: 'Indicative range, subject to human validation. Not a determination.' }) : result('Blocked', 0, 'Supervisor approval is required before any adverse or financial action is opened.', { requiredGate: 'supervisorApproved', recoveryOpened: false }, true),\n  QueueProviderNotice: () => result('Queued', 1, 'Provider notice queue contract accepts the approved notification payload.', { noticeId: 'NOT-PI360-0041', channel: 'provider-portal', sendAfterSupervisorApproval: true }),\n  CloseCaseAndEmitMetrics: () => result('Closed', 3, 'Closure contract writes final case state and emits Insights metrics.', { finalStatus: 'Closed', insightsMetrics: ['cycle_time', 'unsupported_units', 'human_gate_count'] }),\n  AddProviderMonitoringFlag: () => result('Completed', 1, 'Provider monitoring contract adds a review flag for future sampling.', { providerId, monitoringFlag: true, reason: 'Confirmed unsupported units in reviewed sample' }),\n  WriteFinalAuditRecord: () => result('Completed', 1, 'Final audit trail contract appends immutable closure action.', { actionId: 'ACT-0015', actor: 'Closure automation', event: 'Case closed and monitoring flag written' })\n};\nconst handler = catalog[workflowName];\nif (!handler) {\n  return result('InvalidRequest', 0, `Unknown workflowName '${workflowName}'.`, { supportedWorkflows });\n}\nreturn handler();"
+                  "code": "const input = $workflow.input || {};\nconst workflowName = String(input.workflowName || 'IntakeClaimByCaseType').trim();\nconst caseInput = input.caseInput || {};\nconst claimInput = input.claimInput || {};\nconst memberInput = input.memberInput || {};\nconst providerInput = input.providerInput || {};\nconst serviceEventInput = input.serviceEventInput || {};\nconst documentInput = input.documentInput && typeof input.documentInput === 'object' ? input.documentInput : {};\nconst providerMessageInput = input.providerMessageInput && typeof input.providerMessageInput === 'object' ? input.providerMessageInput : {};\nconst caseType = String(caseInput.caseType || caseInput.case_type || input.caseType || '').trim();\nconst caseId = String(caseInput.caseId || caseInput.case_id || input.caseId || '').trim();\nconst requesterEmail = String(caseInput.requesterEmail || caseInput.requester_email || input.requesterEmail || '').trim();\nconst maestroInstanceId = String(caseInput.maestroInstanceId || caseInput.maestro_instance_id || '').trim();\nconst allowedCaseTypes = ['MedicaidPCS', 'StateMedicaidHospice'];\nconst supportedWorkflows = ['IntakeClaimByCaseType', 'IntakeHospitalRecord', 'CloseCaseAndEmitMetrics'];\nif (!supportedWorkflows.includes(workflowName)) throw new Error(`Unknown workflowName '${workflowName}'. Supported workflows: ${supportedWorkflows.join(', ')}.`);\nif (!allowedCaseTypes.includes(caseType)) throw new Error(`Unsupported CaseType '${caseType}'. Expected MedicaidPCS or StateMedicaidHospice.`);\nconst isHospice = caseType === 'StateMedicaidHospice';\nconst claimThreshold = 2500;\nconst claimTotalBilled = Number(claimInput.totalBilled ?? claimInput.total_billed ?? claimInput.claimTotalBilled ?? input.claimTotalBilled ?? (isHospice ? 3250 : 1267.2));\nconst providerId = String(providerInput.providerId || providerInput.provider_id || claimInput.providerId || claimInput.provider_id || input.providerId || 'PRV-100482').trim();\nconst supervisorApproved = input.supervisorApproved === true || input.supervisorApproved === 'true';\nconst text = (...values) => {\n  const value = values.find(candidate => candidate !== undefined && candidate !== null && String(candidate).trim() !== '');\n  return value === undefined ? undefined : String(value).trim();\n};\nconst number = (...values) => {\n  const value = values.find(candidate => candidate !== undefined && candidate !== null && candidate !== '');\n  if (value === undefined) return undefined;\n  const parsed = Number(value);\n  return Number.isFinite(parsed) ? parsed : undefined;\n};\nconst now = new Date().toISOString();\nif (workflowName === 'IntakeClaimByCaseType') {\n  const expectedScenarioCode = isHospice ? 'HSP' : 'PCS';\n  const caseIdPattern = new RegExp(`^PI-${expectedScenarioCode}-[0-9]{4}-[A-Z0-9]{6}$`);\n  if (!caseIdPattern.test(caseId)) throw new Error(`IntakeClaimByCaseType requires a case ID matching PI-${expectedScenarioCode}-<four-digit year>-<six uppercase alphanumeric characters>.`);\n  const atSigns = requesterEmail.match(/@/g) || [];\n  if (atSigns.length !== 1 || !/^[^\\s@,;]+@[^\\s@,;]+\\.[^\\s@,;]+$/.test(requesterEmail)) throw new Error('IntakeClaimByCaseType requires one valid caseInput.requesterEmail address.');\n  const record = {\n    case_id: caseId,\n    case_type: caseType,\n    title: text(caseInput.title, isHospice ? 'Harbor Home Support Services — hospice location conflict review' : 'Harbor Home Support Services — PCS billing integrity review'),\n    program: text(caseInput.program, isHospice ? 'State Medicaid Hospice' : 'Medicaid PCS'),\n    trigger_type: text(caseInput.triggerType, caseInput.trigger_type, 'Maestro case intake'),\n    trigger_ref: text(caseInput.triggerRef, caseInput.trigger_ref, claimInput.claimId, claimInput.claim_id, caseId),\n    requester_email: requesterEmail,\n    maestro_instance_id: maestroInstanceId || undefined,\n    provider_id: providerId || undefined,\n    member_id: text(memberInput.memberId, memberInput.member_id, claimInput.memberId, claimInput.member_id),\n    member_name: text(memberInput.memberName, memberInput.member_name, memberInput.name),\n    member_date_of_birth: text(memberInput.dateOfBirth, memberInput.date_of_birth),\n    member_medicaid_id: text(memberInput.medicaidId, memberInput.medicaid_id),\n    attendant_id: text(serviceEventInput.attendantId, serviceEventInput.attendant_id, providerInput.attendantId, providerInput.attendant_id),\n    caregiver_name: text(serviceEventInput.caregiverName, serviceEventInput.caregiver_name, providerInput.caregiverName, providerInput.caregiver_name),\n    service_period_start: text(serviceEventInput.servicePeriodStart, serviceEventInput.service_period_start),\n    service_period_end: text(serviceEventInput.servicePeriodEnd, serviceEventInput.service_period_end),\n    claim_total_billed: number(claimInput.totalBilled, claimInput.total_billed, input.claimTotalBilled, isHospice ? 3250 : 1267.2),\n    claim_threshold: number(claimInput.claimThreshold, claimInput.claim_threshold, isHospice ? claimThreshold : 0),\n    priority: 0,\n    stage: 0,\n    status: 0,\n    risk_signal_count: number(caseInput.riskSignalCount, caseInput.risk_signal_count, 0),\n    alert_date: text(caseInput.alertDate, caseInput.alert_date, now.slice(0, 10)),\n    opened_at: now,\n    created_at: now,\n    updated_at: now\n  };\n  return { workflowName, isIntake: true, isHospitalRecord: false, isClose: false, caseType, caseId, requesterEmail, maestroInstanceId, record };\n}\nif (!caseId) throw new Error(`${workflowName} requires caseId.`);\nif (workflowName === 'IntakeHospitalRecord') {\n  if (!isHospice) throw new Error('IntakeHospitalRecord is only valid for StateMedicaidHospice.');\n  const providerPayload = providerMessageInput.response || providerMessageInput.payload || providerMessageInput;\n  const normalizeKey = value => String(value || '').replace(/[^a-z0-9]/gi, '').toLowerCase();\n  const findNestedValue = (root, keys) => {\n    const wanted = new Set(keys.map(normalizeKey));\n    const seen = new Set();\n    const pending = [{ value: root, depth: 0 }];\n    while (pending.length) {\n      const current = pending.shift();\n      if (!current || !current.value || typeof current.value !== 'object' || seen.has(current.value) || current.depth > 7) continue;\n      seen.add(current.value);\n      for (const [key, value] of Object.entries(current.value)) {\n        if (wanted.has(normalizeKey(key)) && value !== undefined && value !== null && typeof value !== 'object') return value;\n        if (value && typeof value === 'object') pending.push({ value, depth: current.depth + 1 });\n      }\n    }\n    return undefined;\n  };\n  const messagePayload = {\n    ...providerPayload,\n    patientClass: text(findNestedValue(documentInput, ['out_PatientClass', 'patientClass']), providerPayload.patientClass, providerPayload.patient_class),\n    encounterId: text(findNestedValue(documentInput, ['out_EncounterId', 'encounterId']), providerPayload.encounterId, providerPayload.encounter_id),\n    facilityName: text(findNestedValue(documentInput, ['out_FacilityName', 'facilityName']), providerPayload.facilityName, providerPayload.facility_name),\n    careArea: text(findNestedValue(documentInput, ['out_CareArea', 'careArea']), providerPayload.careArea, providerPayload.care_area),\n    arrivalAt: text(findNestedValue(documentInput, ['out_ArrivalAt', 'arrivalAt', 'out_AdmissionDate', 'admissionDate']), providerPayload.arrivalAt, providerPayload.arrival_at),\n    dischargeAt: text(findNestedValue(documentInput, ['out_DischargeAt', 'dischargeAt', 'out_DischargeDate', 'dischargeDate']), providerPayload.dischargeAt, providerPayload.discharge_at),\n    disposition: text(findNestedValue(documentInput, ['out_Disposition', 'disposition']), providerPayload.disposition, providerPayload.encounter_disposition),\n    storageUri: text(findNestedValue(documentInput, ['out_StorageUri', 'storageUri']), providerPayload.storageUri, providerPayload.storage_uri, providerPayload.fileName),\n    extractionConfidence: number(findNestedValue(documentInput, ['out_ExtractionConfidence', 'extractionConfidence']), providerPayload.extractionConfidence, providerPayload.extraction_confidence)\n  };\n  const evidenceRecord = {\n    doc_id: text(messagePayload.documentId, messagePayload.document_id, `${caseId}-HOSPITAL-RECORD`),\n    case_id: caseId,\n    doc_type: 0,\n    source_system: 'Orchestrator Storage Bucket',\n    storage_uri: text(messagePayload.storageUri, messagePayload.storage_uri, messagePayload.fileName, 'Hospital Records/jordan_ellis_synthetic_medical_record_packet.pdf'),\n    extracted_fields: JSON.stringify({\n      patientClass: text(messagePayload.patientClass, messagePayload.patient_class, 'Observation'),\n      encounterId: text(messagePayload.encounterId, messagePayload.encounter_id, 'ENC-JE-2026-0714'),\n      facilityName: text(messagePayload.facilityName, messagePayload.facility_name, 'UiPath Regional Medical Center'),\n      arrivalAt: text(messagePayload.arrivalAt, messagePayload.arrival_at, '2026-07-14T08:20:00-05:00'),\n      dischargeAt: text(messagePayload.dischargeAt, messagePayload.discharge_at, '2026-07-16T10:00:00-05:00')\n    }),\n    extraction_confidence: number(messagePayload.extractionConfidence, messagePayload.extraction_confidence, 0.95),\n    validation_status: 0,\n    validated_by: 'PI360 IXP Medical Record automation',\n    note: 'Hospital record supports an institutional location-conflict review indicator; human review remains required.',\n    ixp_model: 'PI360 Medical Record Extraction',\n    ixp_model_version: 'live',\n    reference_only: false,\n    patient_class: text(messagePayload.patientClass, messagePayload.patient_class, 'Observation'),\n    encounter_id: text(messagePayload.encounterId, messagePayload.encounter_id, 'ENC-JE-2026-0714'),\n    facility_name: text(messagePayload.facilityName, messagePayload.facility_name, 'UiPath Regional Medical Center'),\n    care_area: text(messagePayload.careArea, messagePayload.care_area, 'Observation'),\n    encounter_arrival_at: text(messagePayload.arrivalAt, messagePayload.arrival_at, '2026-07-14T08:20:00-05:00'),\n    encounter_discharge_at: text(messagePayload.dischargeAt, messagePayload.discharge_at, '2026-07-16T10:00:00-05:00'),\n    encounter_disposition: text(messagePayload.disposition, messagePayload.encounter_disposition, 'Discharged home')\n  };\n  const actionRecord = {\n    action_id: `${caseId}-HOSPITAL-RECORD-RECEIVED`,\n    case_id: caseId,\n    action_type: 0,\n    actor_id: 'PI360AdHocReviewBpmn',\n    actor_kind: 0,\n    action_at: now,\n    detail: 'Provider record received, extracted by RPA, and persisted for investigator review.',\n    before_value: 'Awaiting provider',\n    after_value: 'Hospital record available'\n  };\n  return { workflowName, isIntake: false, isHospitalRecord: true, isClose: false, caseType, caseId, evidenceRecord, actionRecord };\n}\nif (!supervisorApproved) throw new Error('CloseCaseAndEmitMetrics requires supervisorApproved=true.');\nconst supervisorDecision = String(input.supervisorDecision || 'Approved closure');\nconst supervisorReviewNotes = String(input.supervisorReviewNotes || '');\nconst investigatorFindings = String(input.investigatorFindings || '');\nconst recommendedAction = String(input.recommendedAction || supervisorDecision);\nconst rationale = [supervisorReviewNotes, investigatorFindings].filter(Boolean).join(' | ');\nconst decisionRecord = {\n  decision_id: `${caseId}-SUPERVISOR-DISPOSITION`,\n  case_id: caseId,\n  decision_type: 0,\n  recommended_action: recommendedAction,\n  decided_action: supervisorDecision,\n  decision_role: 0,\n  rationale,\n  financial_impact_estimate: claimTotalBilled,\n  approved_by: requesterEmail || 'PI360 supervisor',\n  decided_at: now\n};\nconst actionRecord = {\n  action_id: `${caseId}-CASE-CLOSED`,\n  case_id: caseId,\n  action_type: 0,\n  actor_id: requesterEmail || 'PI360 supervisor',\n  actor_kind: 0,\n  action_at: now,\n  detail: `Supervisor disposition persisted: ${supervisorDecision}`,\n  before_value: 'Pending approval',\n  after_value: 'Closed'\n};\nreturn { workflowName, isIntake: false, isHospitalRecord: false, isClose: true, caseType, caseId, decisionRecord, actionRecord, closePatch: { stage: 8, status: 4, disposition: supervisorDecision, disposition_rationale: rationale, closed_at: now, updated_at: now } };"
                 }
               },
               "export": {
-                "as": "{ ...$context, outputs: { ...$context?.outputs, \"SimulateApiWorkflow\": $output }, apiWorkflowResult: $output }"
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"PrepareLifecycleRequest\": $output } }"
               },
               "metadata": {
                 "activityType": "JsInvoke",
-                "displayName": "Simulate API Workflow Contract",
+                "displayName": "Prepare Lifecycle Request",
                 "fullName": "JsInvoke",
-                "outputName": "SimulateApiWorkflow",
+                "outputName": "PrepareLifecycleRequest",
                 "showHeader": true
+              }
+            }
+          },
+          {
+            "If_Intake#Wrapper": {
+              "do": [
+                {
+                  "If_Intake": {
+                    "switch": [
+                      {
+                        "case": {
+                          "when": "${$context.outputs.PrepareLifecycleRequest.isIntake === true}",
+                          "then": "If_Intake#Then"
+                        }
+                      },
+                      {
+                        "default": {
+                          "then": "If_Intake#Else"
+                        }
+                      }
+                    ],
+                    "metadata": {
+                      "displayName": "Is intake registration"
+                    }
+                  }
+                },
+                {
+                  "If_Intake#Then": {
+                    "do": [
+                      {
+                        "Try_CreateRegistration": {
+                          "try": [
+                            {
+                              "CreateEntityRecordCurated_1": {
+                                "call": "UiPath.IntSvc",
+                                "with": {
+                                  "connector": "uipath-uipath-dataservice",
+                                  "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                  "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                  "method": "POST",
+                                  "endpoint": "/v2/{entityName}/CreateEntityRecord",
+                                  "queryParameters": {},
+                                  "pathParameters": {
+                                    "entityName": "PI360ProgramIntegrityCase"
+                                  },
+                                  "bodyParameters": {
+                                    "case_id": "${$context.outputs.PrepareLifecycleRequest.record.case_id}",
+                                    "case_type": "${$context.outputs.PrepareLifecycleRequest.record.case_type}",
+                                    "title": "${$context.outputs.PrepareLifecycleRequest.record.title}",
+                                    "program": "${$context.outputs.PrepareLifecycleRequest.record.program}",
+                                    "trigger_type": "${$context.outputs.PrepareLifecycleRequest.record.trigger_type}",
+                                    "trigger_ref": "${$context.outputs.PrepareLifecycleRequest.record.trigger_ref}",
+                                    "requester_email": "${$context.outputs.PrepareLifecycleRequest.record.requester_email}",
+                                    "maestro_instance_id": "${$context.outputs.PrepareLifecycleRequest.record.maestro_instance_id}",
+                                    "provider_id": "${$context.outputs.PrepareLifecycleRequest.record.provider_id}",
+                                    "member_id": "${$context.outputs.PrepareLifecycleRequest.record.member_id}",
+                                    "member_name": "${$context.outputs.PrepareLifecycleRequest.record.member_name}",
+                                    "member_date_of_birth": "${$context.outputs.PrepareLifecycleRequest.record.member_date_of_birth}",
+                                    "member_medicaid_id": "${$context.outputs.PrepareLifecycleRequest.record.member_medicaid_id}",
+                                    "attendant_id": "${$context.outputs.PrepareLifecycleRequest.record.attendant_id}",
+                                    "caregiver_name": "${$context.outputs.PrepareLifecycleRequest.record.caregiver_name}",
+                                    "service_period_start": "${$context.outputs.PrepareLifecycleRequest.record.service_period_start}",
+                                    "service_period_end": "${$context.outputs.PrepareLifecycleRequest.record.service_period_end}",
+                                    "claim_total_billed": "${$context.outputs.PrepareLifecycleRequest.record.claim_total_billed}",
+                                    "claim_threshold": "${$context.outputs.PrepareLifecycleRequest.record.claim_threshold}",
+                                    "priority": 0,
+                                    "stage": 0,
+                                    "status": 0,
+                                    "risk_signal_count": "${$context.outputs.PrepareLifecycleRequest.record.risk_signal_count}",
+                                    "alert_date": "${$context.outputs.PrepareLifecycleRequest.record.alert_date}",
+                                    "opened_at": "${$context.outputs.PrepareLifecycleRequest.record.opened_at}",
+                                    "created_at": "${$context.outputs.PrepareLifecycleRequest.record.created_at}",
+                                    "updated_at": "${$context.outputs.PrepareLifecycleRequest.record.updated_at}"
+                                  }
+                                },
+                                "export": {
+                                  "as": "{ ...$context, outputs: { ...$context?.outputs, \"CreateEntityRecordCurated_1\": $output } }"
+                                },
+                                "metadata": {
+                                  "fullName": "Connector",
+                                  "activityType": "Connector",
+                                  "displayName": "Create Entity Record",
+                                  "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                                  "assemblyQualifiedName": "Connector",
+                                  "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_CreateEntityRecordCurated\"}}"
+                                }
+                              }
+                            },
+                            {
+                              "ReturnCreatedRegistration": {
+                                "run": {
+                                  "script": {
+                                    "language": "javascript",
+                                    "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                    "code": "const prepared = $context.outputs.PrepareLifecycleRequest;\nreturn { workflowName: prepared.workflowName, caseType: prepared.caseType, caseId: prepared.caseId, status: 'Open', gated: false, recordsAffected: 1, persistedCaseId: prepared.caseId, registrationMode: 'Created', message: 'Program Integrity case registration created.', payload: { caseType: prepared.caseType, nextStageId: 'Stage_Evcol2', requesterEmail: prepared.requesterEmail, maestroInstanceId: prepared.maestroInstanceId || null } };"
+                                  }
+                                },
+                                "export": {
+                                  "as": "{ ...$context, outputs: { ...$context?.outputs, \"ReturnCreatedRegistration\": $output }, apiWorkflowResult: $output }"
+                                },
+                                "metadata": {
+                                  "activityType": "JsInvoke",
+                                  "displayName": "Return Created Registration",
+                                  "fullName": "JsInvoke",
+                                  "outputName": "ReturnCreatedRegistration",
+                                  "showHeader": true
+                                }
+                              }
+                            }
+                          ],
+                          "catch": {
+                            "as": "createError",
+                            "do": [
+                              {
+                                "QueryEntityRecordsCurated_1": {
+                                  "call": "UiPath.IntSvc",
+                                  "with": {
+                                    "connector": "uipath-uipath-dataservice",
+                                    "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                    "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                    "method": "POST",
+                                    "endpoint": "/v2/{entityName}/qer",
+                                    "queryParameters": {
+                                      "queryExpression": "${\"'case_id' = '\" + $context.outputs.PrepareLifecycleRequest.caseId.split(\"'\").join(\"''\") + \"'\"}",
+                                      "limit": 2
+                                    },
+                                    "pathParameters": {
+                                      "entityName": "PI360ProgramIntegrityCase"
+                                    },
+                                    "bodyParameters": {}
+                                  },
+                                  "export": {
+                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"QueryEntityRecordsCurated_1\": $output } }"
+                                  },
+                                  "metadata": {
+                                    "fullName": "Connector",
+                                    "activityType": "Connector",
+                                    "displayName": "Query Entity Records",
+                                    "uiPathActivityTypeId": "703065b9-a310-33b8-9d4d-12df0a6f520b",
+                                    "assemblyQualifiedName": "Connector",
+                                    "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"QueryEntityRecordsCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"QueryEntityRecordsCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/qer\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_QueryEntityRecordsCurated\"}}"
+                                  }
+                                }
+                              },
+                              {
+                                "InspectExistingCase": {
+                                  "run": {
+                                    "script": {
+                                      "language": "javascript",
+                                      "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                      "code": "const connectorOutput = $context.outputs.QueryEntityRecordsCurated_1;\nif (!connectorOutput || !Object.prototype.hasOwnProperty.call(connectorOutput, 'content')) {\n  throw new Error('Unrecognized Data Fabric query response: missing content envelope.');\n}\nconst raw = connectorOutput.content;\nlet payload;\nif (typeof raw === 'string') {\n  try {\n    payload = JSON.parse(raw);\n  } catch {\n    throw new Error('Unrecognized Data Fabric query response: content is not valid JSON.');\n  }\n} else {\n  payload = raw;\n}\nlet rows;\nif (Array.isArray(payload)) {\n  rows = payload;\n} else if (payload && typeof payload === 'object') {\n  const supportedKeys = ['value', 'items', 'Items', 'results', 'data'];\n  const presentKeys = supportedKeys.filter(key => Object.prototype.hasOwnProperty.call(payload, key));\n  if (presentKeys.length !== 1 || !Array.isArray(payload[presentKeys[0]])) {\n    throw new Error('Unrecognized Data Fabric query response: expected exactly one supported list envelope.');\n  }\n  rows = payload[presentKeys[0]];\n} else {\n  throw new Error('Unrecognized Data Fabric query response: expected an array or supported list envelope.');\n}\nif (rows.length > 1) {\n  throw new Error(`Data integrity error: query returned ${rows.length} PI360ProgramIntegrityCase rows for case_id '${$context.outputs.PrepareLifecycleRequest.caseId}'.`);\n}\nif (rows.length === 0) {\n  return { exists: false, recordId: null, createdAt: $context.outputs.PrepareLifecycleRequest.record.created_at, openedAt: $context.outputs.PrepareLifecycleRequest.record.opened_at };\n}\nconst existing = rows[0] || {};\nconst recordId = existing.Id ?? existing.id ?? existing.RecordId ?? existing.recordId ?? existing._id;\nif (!recordId) {\n  throw new Error(`Data integrity error: existing PI360ProgramIntegrityCase '${$context.outputs.PrepareLifecycleRequest.caseId}' has no record ID.`);\n}\nreturn {\n  exists: true,\n  recordId: String(recordId),\n  priority: existing.priority ?? existing.Priority ?? null,\n  stage: existing.stage ?? existing.Stage ?? null,\n  status: existing.status ?? existing.Status ?? null,\n  riskSignalCount: existing.risk_signal_count ?? existing.RiskSignalCount ?? existing.riskSignalCount ?? null,\n  createdAt: existing.created_at ?? existing.CreatedAt ?? existing.createdAt ?? $context.outputs.PrepareLifecycleRequest.record.created_at,\n  openedAt: existing.opened_at ?? existing.OpenedAt ?? existing.openedAt ?? $context.outputs.PrepareLifecycleRequest.record.opened_at\n};"
+                                    }
+                                  },
+                                  "export": {
+                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"InspectExistingCase\": $output } }"
+                                  },
+                                  "metadata": {
+                                    "activityType": "JsInvoke",
+                                    "displayName": "Inspect Existing Case",
+                                    "fullName": "JsInvoke",
+                                    "outputName": "InspectExistingCase",
+                                    "showHeader": true
+                                  }
+                                }
+                              },
+                              {
+                                "ConfirmConflictRecovery": {
+                                  "run": {
+                                    "script": {
+                                      "language": "javascript",
+                                      "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                      "code": "const existing = $context.outputs.InspectExistingCase;\nif (!existing || existing.exists !== true || !existing.recordId) {\n  throw new Error('Case create failed and no exact existing case_id row was available for idempotent recovery.');\n}\nreturn { recovered: true, recordId: existing.recordId, priority: existing.priority, stage: existing.stage, status: existing.status };"
+                                    }
+                                  },
+                                  "export": {
+                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"ConfirmConflictRecovery\": $output } }"
+                                  },
+                                  "metadata": {
+                                    "activityType": "JsInvoke",
+                                    "displayName": "Confirm Conflict Recovery",
+                                    "fullName": "JsInvoke",
+                                    "outputName": "ConfirmConflictRecovery",
+                                    "showHeader": true
+                                  }
+                                }
+                              },
+                              {
+                                "ReturnExistingRegistration": {
+                                  "run": {
+                                    "script": {
+                                      "language": "javascript",
+                                      "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                      "code": "const prepared = $context.outputs.PrepareLifecycleRequest;\nconst existing = $context.outputs.InspectExistingCase;\nreturn { workflowName: prepared.workflowName, caseType: prepared.caseType, caseId: prepared.caseId, status: String(existing.status ?? 'Open'), gated: false, recordsAffected: 0, persistedCaseId: prepared.caseId, registrationMode: 'Existing', message: 'Existing Program Integrity case registration preserved without rewriting lifecycle state.', payload: { caseType: prepared.caseType, nextStageId: null, requesterEmail: prepared.requesterEmail, maestroInstanceId: prepared.maestroInstanceId || null, preservedLifecycle: { priority: existing.priority, stage: existing.stage, status: existing.status } } };"
+                                    }
+                                  },
+                                  "export": {
+                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"ReturnExistingRegistration\": $output }, apiWorkflowResult: $output }"
+                                  },
+                                  "metadata": {
+                                    "activityType": "JsInvoke",
+                                    "displayName": "Return Existing Registration",
+                                    "fullName": "JsInvoke",
+                                    "outputName": "ReturnExistingRegistration",
+                                    "showHeader": true
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "export": {
+                            "as": "{ ...$context, outputs: { ...$context?.outputs, \"Try_CreateRegistration\": $output } }"
+                          },
+                          "metadata": {
+                            "activityType": "TryCatch",
+                            "displayName": "Create or Recover Existing Registration",
+                            "fullName": "TryCatch"
+                          }
+                        }
+                      }
+                    ],
+                    "then": "exit"
+                  }
+                },
+                {
+                  "If_Intake#Else": {
+                    "do": [
+                      {
+                        "If_HospitalRecord#Wrapper": {
+                          "do": [
+                            {
+                              "If_HospitalRecord": {
+                                "switch": [
+                                  {
+                                    "case": {
+                                      "when": "${$context.outputs.PrepareLifecycleRequest.isHospitalRecord === true}",
+                                      "then": "If_HospitalRecord#Then"
+                                    }
+                                  },
+                                  {
+                                    "default": {
+                                      "then": "If_HospitalRecord#Else"
+                                    }
+                                  }
+                                ],
+                                "metadata": {
+                                  "displayName": "Is hospital evidence write"
+                                }
+                              }
+                            },
+                            {
+                              "If_HospitalRecord#Then": {
+                                "do": [
+                                  {
+                                    "CreateEntityRecordCurated_2": {
+                                      "call": "UiPath.IntSvc",
+                                      "with": {
+                                        "connector": "uipath-uipath-dataservice",
+                                        "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                        "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                        "method": "POST",
+                                        "endpoint": "/v2/{entityName}/CreateEntityRecord",
+                                        "queryParameters": {},
+                                        "pathParameters": {
+                                          "entityName": "PI360EvidenceDocument"
+                                        },
+                                        "bodyParameters": {
+                                          "doc_id": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.doc_id}",
+                                          "case_id": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.case_id}",
+                                          "doc_type": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.doc_type}",
+                                          "source_system": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.source_system}",
+                                          "storage_uri": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.storage_uri}",
+                                          "extracted_fields": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.extracted_fields}",
+                                          "extraction_confidence": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.extraction_confidence}",
+                                          "validation_status": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.validation_status}",
+                                          "validated_by": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.validated_by}",
+                                          "note": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.note}",
+                                          "ixp_model": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.ixp_model}",
+                                          "ixp_model_version": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.ixp_model_version}",
+                                          "reference_only": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.reference_only}",
+                                          "patient_class": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.patient_class}",
+                                          "encounter_id": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.encounter_id}",
+                                          "facility_name": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.facility_name}",
+                                          "care_area": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.care_area}",
+                                          "encounter_arrival_at": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.encounter_arrival_at}",
+                                          "encounter_discharge_at": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.encounter_discharge_at}",
+                                          "encounter_disposition": "${$context.outputs.PrepareLifecycleRequest.evidenceRecord.encounter_disposition}"
+                                        }
+                                      },
+                                      "export": {
+                                        "as": "{ ...$context, outputs: { ...$context?.outputs, \"CreateEntityRecordCurated_2\": $output } }"
+                                      },
+                                      "metadata": {
+                                        "fullName": "Connector",
+                                        "activityType": "Connector",
+                                        "displayName": "Persist hospital evidence",
+                                        "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                                        "assemblyQualifiedName": "Connector",
+                                        "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_CreateEntityRecordCurated\"}}"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "CreateEntityRecordCurated_3": {
+                                      "call": "UiPath.IntSvc",
+                                      "with": {
+                                        "connector": "uipath-uipath-dataservice",
+                                        "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                        "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                        "method": "POST",
+                                        "endpoint": "/v2/{entityName}/CreateEntityRecord",
+                                        "queryParameters": {},
+                                        "pathParameters": {
+                                          "entityName": "PI360InvestigationAction"
+                                        },
+                                        "bodyParameters": {
+                                          "action_id": "${$context.outputs.PrepareLifecycleRequest.actionRecord.action_id}",
+                                          "case_id": "${$context.outputs.PrepareLifecycleRequest.actionRecord.case_id}",
+                                          "action_type": "${$context.outputs.PrepareLifecycleRequest.actionRecord.action_type}",
+                                          "actor_id": "${$context.outputs.PrepareLifecycleRequest.actionRecord.actor_id}",
+                                          "actor_kind": "${$context.outputs.PrepareLifecycleRequest.actionRecord.actor_kind}",
+                                          "action_at": "${$context.outputs.PrepareLifecycleRequest.actionRecord.action_at}",
+                                          "detail": "${$context.outputs.PrepareLifecycleRequest.actionRecord.detail}",
+                                          "before_value": "${$context.outputs.PrepareLifecycleRequest.actionRecord.before_value}",
+                                          "after_value": "${$context.outputs.PrepareLifecycleRequest.actionRecord.after_value}"
+                                        }
+                                      },
+                                      "export": {
+                                        "as": "{ ...$context, outputs: { ...$context?.outputs, \"CreateEntityRecordCurated_3\": $output } }"
+                                      },
+                                      "metadata": {
+                                        "fullName": "Connector",
+                                        "activityType": "Connector",
+                                        "displayName": "Record hospital evidence action",
+                                        "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                                        "assemblyQualifiedName": "Connector",
+                                        "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_CreateEntityRecordCurated\"}}"
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "ReturnHospitalRecordResult": {
+                                      "run": {
+                                        "script": {
+                                          "language": "javascript",
+                                          "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                          "code": "const prepared = $context.outputs.PrepareLifecycleRequest;\nreturn { workflowName: prepared.workflowName, caseType: prepared.caseType, caseId: prepared.caseId, status: 'Completed', gated: false, recordsAffected: 2, persistedCaseId: prepared.caseId, registrationMode: 'EvidencePersisted', message: 'Hospital evidence and audit action persisted to Data Fabric.', payload: { nextStageId: 'Stage_Corr4a', documentId: prepared.evidenceRecord.doc_id } };"
+                                        }
+                                      },
+                                      "export": {
+                                        "as": "{ ...$context, outputs: { ...$context?.outputs, \"ReturnHospitalRecordResult\": $output }, apiWorkflowResult: $output }"
+                                      },
+                                      "metadata": {
+                                        "activityType": "JsInvoke",
+                                        "displayName": "Return persisted hospital evidence",
+                                        "fullName": "JsInvoke",
+                                        "outputName": "ReturnHospitalRecordResult",
+                                        "showHeader": true
+                                      }
+                                    }
+                                  }
+                                ],
+                                "then": "exit"
+                              }
+                            },
+                            {
+                              "If_HospitalRecord#Else": {
+                                "do": [
+                                  {
+                                    "If_Close#Wrapper": {
+                                      "do": [
+                                        {
+                                          "If_Close": {
+                                            "switch": [
+                                              {
+                                                "case": {
+                                                  "when": "${$context.outputs.PrepareLifecycleRequest.isClose === true}",
+                                                  "then": "If_Close#Then"
+                                                }
+                                              },
+                                              {
+                                                "default": {
+                                                  "then": "If_Close#Else"
+                                                }
+                                              }
+                                            ],
+                                            "metadata": {
+                                              "displayName": "Is closure write"
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "If_Close#Then": {
+                                            "do": [
+                                              {
+                                                "CreateEntityRecordCurated_4": {
+                                                  "call": "UiPath.IntSvc",
+                                                  "with": {
+                                                    "connector": "uipath-uipath-dataservice",
+                                                    "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "method": "POST",
+                                                    "endpoint": "/v2/{entityName}/CreateEntityRecord",
+                                                    "queryParameters": {},
+                                                    "pathParameters": {
+                                                      "entityName": "PI360Decision"
+                                                    },
+                                                    "bodyParameters": {
+                                                      "decision_id": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.decision_id}",
+                                                      "case_id": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.case_id}",
+                                                      "decision_type": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.decision_type}",
+                                                      "recommended_action": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.recommended_action}",
+                                                      "decided_action": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.decided_action}",
+                                                      "decision_role": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.decision_role}",
+                                                      "rationale": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.rationale}",
+                                                      "financial_impact_estimate": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.financial_impact_estimate}",
+                                                      "approved_by": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.approved_by}",
+                                                      "decided_at": "${$context.outputs.PrepareLifecycleRequest.decisionRecord.decided_at}"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"CreateEntityRecordCurated_4\": $output } }"
+                                                  },
+                                                  "metadata": {
+                                                    "fullName": "Connector",
+                                                    "activityType": "Connector",
+                                                    "displayName": "Persist supervisor decision",
+                                                    "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                                                    "assemblyQualifiedName": "Connector",
+                                                    "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_CreateEntityRecordCurated\"}}"
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "CreateEntityRecordCurated_5": {
+                                                  "call": "UiPath.IntSvc",
+                                                  "with": {
+                                                    "connector": "uipath-uipath-dataservice",
+                                                    "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "method": "POST",
+                                                    "endpoint": "/v2/{entityName}/CreateEntityRecord",
+                                                    "queryParameters": {},
+                                                    "pathParameters": {
+                                                      "entityName": "PI360InvestigationAction"
+                                                    },
+                                                    "bodyParameters": {
+                                                      "action_id": "${$context.outputs.PrepareLifecycleRequest.actionRecord.action_id}",
+                                                      "case_id": "${$context.outputs.PrepareLifecycleRequest.actionRecord.case_id}",
+                                                      "action_type": "${$context.outputs.PrepareLifecycleRequest.actionRecord.action_type}",
+                                                      "actor_id": "${$context.outputs.PrepareLifecycleRequest.actionRecord.actor_id}",
+                                                      "actor_kind": "${$context.outputs.PrepareLifecycleRequest.actionRecord.actor_kind}",
+                                                      "action_at": "${$context.outputs.PrepareLifecycleRequest.actionRecord.action_at}",
+                                                      "detail": "${$context.outputs.PrepareLifecycleRequest.actionRecord.detail}",
+                                                      "before_value": "${$context.outputs.PrepareLifecycleRequest.actionRecord.before_value}",
+                                                      "after_value": "${$context.outputs.PrepareLifecycleRequest.actionRecord.after_value}"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"CreateEntityRecordCurated_5\": $output } }"
+                                                  },
+                                                  "metadata": {
+                                                    "fullName": "Connector",
+                                                    "activityType": "Connector",
+                                                    "displayName": "Record closure action",
+                                                    "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                                                    "assemblyQualifiedName": "Connector",
+                                                    "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_CreateEntityRecordCurated\"}}"
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "QueryEntityRecordsCurated_2": {
+                                                  "call": "UiPath.IntSvc",
+                                                  "with": {
+                                                    "connector": "uipath-uipath-dataservice",
+                                                    "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "method": "POST",
+                                                    "endpoint": "/v2/{entityName}/qer",
+                                                    "queryParameters": {
+                                                      "queryExpression": "${\"'case_id' = '\" + $context.outputs.PrepareLifecycleRequest.caseId.split(\"'\").join(\"''\") + \"'\"}",
+                                                      "limit": 2
+                                                    },
+                                                    "pathParameters": {
+                                                      "entityName": "PI360ProgramIntegrityCase"
+                                                    },
+                                                    "bodyParameters": {}
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"QueryEntityRecordsCurated_2\": $output } }"
+                                                  },
+                                                  "metadata": {
+                                                    "fullName": "Connector",
+                                                    "activityType": "Connector",
+                                                    "displayName": "Query case for closure",
+                                                    "uiPathActivityTypeId": "703065b9-a310-33b8-9d4d-12df0a6f520b",
+                                                    "assemblyQualifiedName": "Connector",
+                                                    "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"QueryEntityRecordsCurated\",\"httpMethod\":\"POST\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"QueryEntityRecordsCurated\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/qer\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_QueryEntityRecordsCurated\"}}"
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "InspectCaseForClosure": {
+                                                  "run": {
+                                                    "script": {
+                                                      "language": "javascript",
+                                                      "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                                      "code": "const envelope = $context.outputs.QueryEntityRecordsCurated_2 || {};\nconst raw = Object.prototype.hasOwnProperty.call(envelope, 'content') ? envelope.content : envelope;\nconst payload = typeof raw === 'string' ? JSON.parse(raw) : raw;\nconst rows = Array.isArray(payload) ? payload : (payload?.value || payload?.items || payload?.Items || payload?.results || payload?.data || []);\nif (!Array.isArray(rows) || rows.length !== 1) throw new Error(`Expected exactly one case row for closure; received ${Array.isArray(rows) ? rows.length : 'unrecognized payload'}.`);\nconst row = rows[0] || {};\nconst recordId = row.Id ?? row.id ?? row.RecordId ?? row.recordId ?? row._id;\nif (!recordId) throw new Error('Case row has no record ID.');\nreturn { recordId: String(recordId) };"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"InspectCaseForClosure\": $output } }"
+                                                  },
+                                                  "metadata": {
+                                                    "activityType": "JsInvoke",
+                                                    "displayName": "Resolve case record ID",
+                                                    "fullName": "JsInvoke",
+                                                    "outputName": "InspectCaseForClosure",
+                                                    "showHeader": true
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "UpdateEntityRecordV2_1": {
+                                                  "call": "UiPath.IntSvc",
+                                                  "with": {
+                                                    "connector": "uipath-uipath-dataservice",
+                                                    "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+                                                    "method": "PUT",
+                                                    "endpoint": "/v2/{entityName}/UpdateEntityRecord",
+                                                    "queryParameters": {
+                                                      "recordId": "${$context.outputs.InspectCaseForClosure.recordId}",
+                                                      "expansionLevel": 1
+                                                    },
+                                                    "pathParameters": {
+                                                      "entityName": "PI360ProgramIntegrityCase"
+                                                    },
+                                                    "bodyParameters": {
+                                                      "stage": "${$context.outputs.PrepareLifecycleRequest.closePatch.stage}",
+                                                      "status": "${$context.outputs.PrepareLifecycleRequest.closePatch.status}",
+                                                      "disposition": "${$context.outputs.PrepareLifecycleRequest.closePatch.disposition}",
+                                                      "disposition_rationale": "${$context.outputs.PrepareLifecycleRequest.closePatch.disposition_rationale}",
+                                                      "closed_at": "${$context.outputs.PrepareLifecycleRequest.closePatch.closed_at}",
+                                                      "updated_at": "${$context.outputs.PrepareLifecycleRequest.closePatch.updated_at}"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"UpdateEntityRecordV2_1\": $output } }"
+                                                  },
+                                                  "metadata": {
+                                                    "fullName": "Connector",
+                                                    "activityType": "Connector",
+                                                    "displayName": "Update case lifecycle state",
+                                                    "uiPathActivityTypeId": "718fdc36-73a8-3607-8604-ddef95bb9967",
+                                                    "assemblyQualifiedName": "Connector",
+                                                    "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-dataservice\",\"activityType\":\"Curated\",\"objectName\":\"UpdateEntityRecordV2\",\"httpMethod\":\"PUT\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"UpdateEntityRecordV2\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"PUT\",\"path\":\"/v2/{entityName}/UpdateEntityRecord\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_UpdateEntityRecordV2\"}}"
+                                                  }
+                                                }
+                                              },
+                                              {
+                                                "ReturnClosureResult": {
+                                                  "run": {
+                                                    "script": {
+                                                      "language": "javascript",
+                                                      "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                                      "code": "const prepared = $context.outputs.PrepareLifecycleRequest;\nreturn { workflowName: prepared.workflowName, caseType: prepared.caseType, caseId: prepared.caseId, status: 'Closed', gated: false, recordsAffected: 3, persistedCaseId: prepared.caseId, registrationMode: 'Closed', message: 'Decision, closure audit action, and final case state persisted to Data Fabric.', payload: { finalStage: 8, finalStatus: 4, disposition: prepared.closePatch.disposition } };"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"ReturnClosureResult\": $output }, apiWorkflowResult: $output }"
+                                                  },
+                                                  "metadata": {
+                                                    "activityType": "JsInvoke",
+                                                    "displayName": "Return persisted closure",
+                                                    "fullName": "JsInvoke",
+                                                    "outputName": "ReturnClosureResult",
+                                                    "showHeader": true
+                                                  }
+                                                }
+                                              }
+                                            ],
+                                            "then": "exit"
+                                          }
+                                        },
+                                        {
+                                          "If_Close#Else": {
+                                            "do": [
+                                              {
+                                                "RejectUnsupportedLifecycle": {
+                                                  "run": {
+                                                    "script": {
+                                                      "language": "javascript",
+                                                      "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                                                      "code": "throw new Error('No persistence route matched the requested lifecycle operation.');"
+                                                    }
+                                                  },
+                                                  "export": {
+                                                    "as": "{ ...$context, outputs: { ...$context?.outputs, \"RejectUnsupportedLifecycle\": $output } }"
+                                                  },
+                                                  "metadata": {
+                                                    "activityType": "JsInvoke",
+                                                    "displayName": "Reject unsupported lifecycle operation",
+                                                    "fullName": "JsInvoke",
+                                                    "outputName": "RejectUnsupportedLifecycle",
+                                                    "showHeader": true
+                                                  }
+                                                }
+                                              }
+                                            ],
+                                            "then": "exit"
+                                          }
+                                        }
+                                      ],
+                                      "export": {
+                                        "as": "{ ...$context, outputs: { ...$context?.outputs, \"If_Close\": $output } }"
+                                      },
+                                      "metadata": {
+                                        "activityType": "If",
+                                        "displayName": "Persist closure decision",
+                                        "fullName": "If"
+                                      }
+                                    }
+                                  }
+                                ],
+                                "then": "exit"
+                              }
+                            }
+                          ],
+                          "export": {
+                            "as": "{ ...$context, outputs: { ...$context?.outputs, \"If_HospitalRecord\": $output } }"
+                          },
+                          "metadata": {
+                            "activityType": "If",
+                            "displayName": "Persist lifecycle write",
+                            "fullName": "If"
+                          }
+                        }
+                      }
+                    ],
+                    "then": "exit"
+                  }
+                }
+              ],
+              "export": {
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"If_Intake\": $output } }"
+              },
+              "metadata": {
+                "activityType": "If",
+                "displayName": "Intake Registration",
+                "fullName": "If"
               }
             }
           },

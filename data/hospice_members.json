@@ -1,0 +1,14 @@
+[
+  {
+    "member_id": "MBR-071426",
+    "medicaid_id": "NMCD-SYN-071426",
+    "name": "Jordan Ellis",
+    "date_of_birth": "1991-02-08",
+    "program": "State Medicaid Hospice",
+    "authorization_id": "AUTH-HSP-2026-4401",
+    "authorization_service_type": "In-home hospice personal care",
+    "authorization_effective_from": "2026-07-01",
+    "authorization_effective_through": "2026-07-31",
+    "authorization_status": "Active"
+  }
+]

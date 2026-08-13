@@ -4,17 +4,30 @@
   "entryPoints": [
     {
       "filePath": "/content/caseplan.json.bpmn#trigger_1",
-      "uniqueId": "e5a2ca47-c812-46d4-8ee6-201eb4b8ebb4",
+      "uniqueId": "0750ed69-925a-49b3-8a92-40a7ad9c105f",
       "type": "CaseManagement",
       "input": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "caseType": {
+            "type": "string",
+            "title": "caseType"
+          },
+          "caseworkerEmail": {
+            "type": "string",
+            "title": "caseworkerEmail"
+          }
+        },
+        "required": [
+          "caseType",
+          "caseworkerEmail"
+        ]
       },
       "output": {
         "type": "object",
         "properties": {}
       },
-      "displayName": "Trigger 1"
+      "displayName": "Medicaid claim intake"
     }
   ]
 }

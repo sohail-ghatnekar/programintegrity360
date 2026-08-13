@@ -11,6 +11,12 @@ import type {
   LiveCaseRepositoryConfig,
   RepositoryOperationResult,
 } from '../../services/uipath/liveCaseRepository';
+import { DataFabricCaseRepository } from '../../services/uipath/dataFabricCaseRepository';
+import { createCaseStarter } from '../../services/uipath/caseStarter';
+import type { CaseStarter } from '../../services/uipath/caseStarter';
+import type { Pi360EntityIds } from '../../config/uipath';
+import { buildCaseStartPayload } from './caseIntakeCatalog';
+import type { CaseType } from './caseIntakeCatalog';
 import { DemoCaseRepository } from './demoRepository';
 import type { CaseRepository, CaseSummary, CaseWorkspaceSnapshot, DeepReadonly } from './types';
 
@@ -19,6 +25,17 @@ export type CaseWorkspaceStatus = 'idle' | 'loading' | 'live' | 'demo' | 'error'
 export type CaseWorkspaceRefreshResult =
   | { ok: true }
   | { ok: false; error: Error };
+
+export type CaseStartStatus = 'idle' | 'starting' | 'polling' | 'registered' | 'pending' | 'error';
+
+export type CaseStartOutcome =
+  | { status: 'registered'; caseId: string; jobKey: string }
+  | { status: 'pending'; caseId: string; jobKey: string };
+
+export type CaseStartPollPolicy = {
+  attempts: number;
+  intervalMs: number;
+};
 
 type WarningRepository = CaseRepository & {
   listCasesWithWarnings?: () => Promise<RepositoryOperationResult<readonly DeepReadonly<CaseSummary>[]>>;
@@ -29,19 +46,53 @@ type WarningRepository = CaseRepository & {
 
 type LiveRepositoryFactory = (
   sdk: UiPath,
-  config: LiveCaseRepositoryConfig,
+  config: ConfiguredCaseRepository,
 ) => WarningRepository;
+
+type ConfiguredCaseRepository = LiveCaseRepositoryConfig & {
+  entityIds: Partial<Pi360EntityIds>;
+};
 
 export type UseCaseWorkspaceOptions = {
   runtimeConfig?: UiPathRuntimeConfig;
   demoRepository?: CaseRepository;
   liveRepositoryFactory?: LiveRepositoryFactory;
+  caseStarter?: CaseStarter;
+  delay?: (milliseconds: number) => Promise<void>;
+  pollPolicy?: CaseStartPollPolicy;
 };
 
 const defaultDemoRepository = new DemoCaseRepository();
-const defaultLiveRepositoryFactory: LiveRepositoryFactory = (sdk, config) => (
-  new LiveCaseRepository(sdk, config)
-);
+export const DEFAULT_CASE_START_POLL_POLICY: Readonly<CaseStartPollPolicy> = Object.freeze({
+  attempts: 10,
+  intervalMs: 1500,
+});
+const defaultDelay = (milliseconds: number) => new Promise<void>((resolve) => {
+  window.setTimeout(resolve, milliseconds);
+});
+const entityKeys: Array<keyof Pi360EntityIds> = [
+  'cases',
+  'providers',
+  'attendants',
+  'claims',
+  'evvVisits',
+  'riskSignals',
+  'evidenceDocuments',
+  'investigationActions',
+  'decisions',
+];
+
+function hasCompleteEntityMapping(entityIds?: Partial<Pi360EntityIds>): entityIds is Pi360EntityIds {
+  if (!entityIds) return false;
+  return entityKeys.every((key) => Boolean(entityIds[key]?.trim()));
+}
+
+const defaultLiveRepositoryFactory: LiveRepositoryFactory = (sdk, config) => {
+  const runtimeRepository = new LiveCaseRepository(sdk, config);
+  return hasCompleteEntityMapping(config.entityIds)
+    ? new DataFabricCaseRepository(sdk, { entityIds: config.entityIds }, runtimeRepository)
+    : runtimeRepository;
+};
 
 function errorMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : 'Unknown UiPath service error';
@@ -60,6 +111,14 @@ function refreshFailure(reason: unknown): CaseWorkspaceRefreshResult {
 
 const refreshSucceeded: CaseWorkspaceRefreshResult = { ok: true };
 const refreshSuperseded = () => refreshFailure(new Error('Case workspace refresh was superseded by a newer request.'));
+const caseStartSuperseded = () => new Error('Case start was superseded by a newer request.');
+
+function matchesBusinessCaseId(candidate: DeepReadonly<CaseSummary>, caseId: string): boolean {
+  const expected = caseId.trim().toUpperCase();
+  return [candidate.id, candidate.businessCaseId].some(
+    (value) => typeof value === 'string' && value.trim().toUpperCase() === expected,
+  );
+}
 
 function portalOriginFromPlatformBase(platformBaseUrl: string): string {
   try {
@@ -75,7 +134,7 @@ function portalOriginFromPlatformBase(platformBaseUrl: string): string {
   }
 }
 
-function repositoryConfig(runtime: UiPathRuntimeConfig): LiveCaseRepositoryConfig {
+function repositoryConfig(runtime: UiPathRuntimeConfig): ConfiguredCaseRepository {
   return {
     caseProcessName: runtime.caseProcessName,
     folderKey: runtime.folderKey,
@@ -83,6 +142,7 @@ function repositoryConfig(runtime: UiPathRuntimeConfig): LiveCaseRepositoryConfi
     portalOrigin: portalOriginFromPlatformBase(runtime.platformBaseUrl),
     organizationName: runtime.config.orgName ?? '',
     tenantName: runtime.config.tenantName ?? '',
+    entityIds: runtime.entityIds ?? {},
   };
 }
 
@@ -114,16 +174,31 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
   const liveConfig = useMemo(() => repositoryConfig(runtime), [runtime]);
   const demoRepository = options.demoRepository ?? defaultDemoRepository;
   const repositoryFactory = options.liveRepositoryFactory ?? defaultLiveRepositoryFactory;
+  const delay = options.delay ?? defaultDelay;
+  const pollPolicy = options.pollPolicy ?? DEFAULT_CASE_START_POLL_POLICY;
   const liveRepository = useMemo(
     () => auth?.sdk ? repositoryFactory(auth.sdk, liveConfig) : null,
     [auth?.sdk, liveConfig, repositoryFactory],
   );
+  const caseStarter = useMemo(() => {
+    if (options.caseStarter) return options.caseStarter;
+    if (!auth?.sdk) return null;
+    return async (request: Parameters<CaseStarter>[0]) => createCaseStarter(auth.sdk, {
+      folderId: runtime.folderId ?? undefined,
+      processName: runtime.caseProcessName || undefined,
+    })(request);
+  }, [auth?.sdk, options.caseStarter, runtime.caseProcessName, runtime.folderId]);
   const [cases, setCases] = useState<readonly DeepReadonly<CaseSummary>[]>([]);
   const [workspace, setWorkspace] = useState<CaseWorkspaceSnapshot | null>(null);
   const [status, setStatus] = useState<CaseWorkspaceStatus>('idle');
   const [warnings, setWarnings] = useState<readonly string[]>([]);
+  const [caseStartStatus, setCaseStartStatus] = useState<CaseStartStatus>('idle');
+  const [caseStartMessage, setCaseStartMessage] = useState<string | null>(null);
   const selectedCaseId = useRef<string | null>(null);
   const requestId = useRef(0);
+  const caseStartRequestId = useRef(0);
+  const pendingCaseStart = useRef<Extract<CaseStartOutcome, { status: 'pending' }> | null>(null);
+  const mounted = useRef(true);
 
   const loadDemo = useCallback(async (): Promise<CaseWorkspaceRefreshResult> => {
     const currentRequest = ++requestId.current;
@@ -173,8 +248,22 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
       caseWarnings = casesResult.warnings;
       if (currentRequest !== requestId.current) return refreshSuperseded();
       const liveCases = casesResult.data;
-      const selected = liveCases.find((candidate) => candidate.id === preferredCaseId) ?? liveCases[0];
+      const requestedCaseId = preferredCaseId?.trim() || null;
+      if (!requestedCaseId && liveCases.length === 0) {
+        selectedCaseId.current = null;
+        setCases([]);
+        setWorkspace(null);
+        setWarnings(casesResult.warnings);
+        setStatus('live');
+        return refreshSucceeded;
+      }
+      const selected = requestedCaseId
+        ? liveCases.find((candidate) => matchesBusinessCaseId(candidate, requestedCaseId))
+        : liveCases[0];
       if (!selected) {
+        if (requestedCaseId) {
+          throw new Error(`Requested live case was not found: ${requestedCaseId}`);
+        }
         throw new Error(`No instances found for ${liveConfig.caseProcessName || 'the configured case process'}`);
       }
       const workspaceResult = await loadWorkspaceWithWarnings(liveRepository, selected.id);
@@ -224,6 +313,126 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
     }
   }, [auth?.isAuthenticated, loadDemo, loadLive]);
 
+  const startCase = useCallback(async (input: {
+    caseType: CaseType;
+    requesterEmail: string;
+  }): Promise<CaseStartOutcome> => {
+    if (pendingCaseStart.current) {
+      return pendingCaseStart.current;
+    }
+
+    let startedOutcome: Extract<CaseStartOutcome, { status: 'pending' }> | null = null;
+    const currentRequest = ++caseStartRequestId.current;
+    requestId.current += 1;
+    const isCurrent = () => mounted.current && currentRequest === caseStartRequestId.current;
+    const requireCurrent = () => {
+      if (!isCurrent()) throw caseStartSuperseded();
+    };
+
+    const rejectStart = (reason: unknown): never => {
+      requireCurrent();
+      const error = reason instanceof Error ? reason : new Error(errorMessage(reason));
+      setCaseStartStatus('error');
+      setCaseStartMessage(error.message);
+      throw error;
+    };
+
+    if (!auth?.isAuthenticated || !caseStarter || !liveRepository) {
+      return rejectStart(new Error('Connect UiPath to start a case.'));
+    }
+
+    setStatus((current) => {
+      if (current !== 'loading') return current;
+      if (workspace?.dataSource === 'live') return 'live';
+      if (workspace?.dataSource === 'demo') return 'demo';
+      return 'idle';
+    });
+    setWarnings([]);
+    setCaseStartStatus('starting');
+    setCaseStartMessage(null);
+
+    try {
+      const payload = buildCaseStartPayload(input);
+      const started = await caseStarter(payload);
+      requireCurrent();
+
+      if (started.caseId !== payload.caseId) {
+        throw new Error(`UiPath process start returned a mismatched case ID for ${payload.caseId}.`);
+      }
+
+      startedOutcome = Object.freeze({
+        status: 'pending' as const,
+        caseId: payload.caseId,
+        jobKey: started.jobKey,
+      });
+      setCaseStartStatus('polling');
+      let terminalPollWarnings: readonly string[] = [];
+      for (let attempt = 0; attempt < pollPolicy.attempts; attempt += 1) {
+        await delay(pollPolicy.intervalMs);
+        requireCurrent();
+
+        let discovered: RepositoryOperationResult<readonly DeepReadonly<CaseSummary>[]>;
+        try {
+          discovered = await listCasesWithWarnings(liveRepository);
+        } catch (reason) {
+          requireCurrent();
+          terminalPollWarnings = [
+            `Unable to confirm workspace registration for ${payload.caseId}: ${errorMessage(reason)}.`,
+          ];
+          continue;
+        }
+        requireCurrent();
+        terminalPollWarnings = discovered.warnings;
+
+        if (!discovered.data.some((candidate) => matchesBusinessCaseId(candidate, payload.caseId))) {
+          continue;
+        }
+
+        const loaded = await loadLive(payload.caseId);
+        requireCurrent();
+        if (!loaded.ok) {
+          throw loaded.error;
+        }
+
+        setWarnings((current) => [...new Set([...terminalPollWarnings, ...current])]);
+        setCaseStartStatus('registered');
+        setCaseStartMessage(`Case ${payload.caseId} is ready.`);
+        return {
+          status: 'registered',
+          caseId: payload.caseId,
+          jobKey: started.jobKey,
+        };
+      }
+
+      requireCurrent();
+      setWarnings(terminalPollWarnings);
+      pendingCaseStart.current = startedOutcome;
+      setCaseStartStatus('pending');
+      setCaseStartMessage(`Process started; workspace registration is pending for ${payload.caseId}.`);
+      return startedOutcome;
+    } catch (reason) {
+      if (!isCurrent()) throw caseStartSuperseded();
+      if (startedOutcome) {
+        pendingCaseStart.current = startedOutcome;
+        setCaseStartStatus('pending');
+        setCaseStartMessage(
+          `Process started; workspace registration is pending for ${startedOutcome.caseId}.`,
+        );
+        return startedOutcome;
+      }
+      return rejectStart(reason);
+    }
+  }, [auth?.isAuthenticated, caseStarter, delay, liveRepository, loadLive, pollPolicy, workspace]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      caseStartRequestId.current += 1;
+      requestId.current += 1;
+    };
+  }, []);
+
   useEffect(() => {
     if (auth?.isLoading) {
       setStatus('idle');
@@ -249,5 +458,8 @@ export function useCaseWorkspace(options: UseCaseWorkspaceOptions = {}) {
     refresh,
     useDemoData,
     selectCase,
+    startCase,
+    caseStartStatus,
+    caseStartMessage,
   };
 }

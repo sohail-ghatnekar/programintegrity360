@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -17,7 +18,6 @@
       "name": "PI360EvidenceCorrelationAgent"
     },
     "locks": [],
-    "key": "0f60dc9b-ee5c-4380-b92d-a06689f8b19f",
-    "files": []
+    "key": "0f60dc9b-ee5c-4380-b92d-a06689f8b19f"
   }
 }

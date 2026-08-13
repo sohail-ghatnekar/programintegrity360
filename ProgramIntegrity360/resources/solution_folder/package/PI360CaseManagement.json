@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -17,7 +18,6 @@
       "name": "PI360CaseManagement"
     },
     "locks": [],
-    "key": "6b0b4cb2-318e-48a2-9126-ce021507131d",
-    "files": []
+    "key": "6b0b4cb2-318e-48a2-9126-ce021507131d"
   }
 }

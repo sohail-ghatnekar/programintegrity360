@@ -7,7 +7,147 @@
     "7ba602b8-50b0-46c9-9dd7-5474e6a1fd14",
     "4c035cd1-dd1b-484f-975d-a3edbab24c0d"
   ],
-  "evaluations": [],
+  "evaluations": [
+    {
+      "id": "dfaaf1cc-7358-4d57-adf9-8bb4e83a11fe",
+      "name": "pcs-investigation-route",
+      "inputs": {
+        "caseId": "PI-PCS-2026-0041",
+        "currentStage": "Stage_Evcol2",
+        "groundingJson": "{\"caseType\":\"MedicaidPCS\",\"claimDetailsAvailable\":true,\"serviceEvidenceExtracted\":true,\"missingEvidenceCount\":0}",
+        "quickRulesJson": "{\"status\":\"clear_for_case_manager\",\"recommended_stage\":\"Investigation\",\"evidence_gap\":false}"
+      },
+      "expectedOutput": {
+        "caseManagerDecisions": {
+          "version": 1,
+          "stagesEntered": [
+            {
+              "stageName": "Investigation"
+            }
+          ]
+        },
+        "nextStage": "InvestigationRouting",
+        "nextStageId": "Stage_Corr4a",
+        "requiresEscalation": false,
+        "humanGate": "Investigator",
+        "completionRuleSatisfied": false,
+        "actionTaken": false
+      },
+      "simulationInstructions": "",
+      "expectedAgentBehavior": "Route the complete MedicaidPCS evidence packet to Stage_Corr4a for a grounded first-pass investigation recommendation and required human investigator confirmation; do not make a fraud or repayment determination.",
+      "simulateInput": false,
+      "inputGenerationInstructions": "",
+      "simulateTools": false,
+      "evalSetId": "71359cdc-5a5f-4961-b709-3741c3f2f92d",
+      "createdAt": "2026-08-07T22:52:01.852Z",
+      "updatedAt": "2026-08-07T22:52:01.852Z",
+      "source": "manual"
+    },
+    {
+      "id": "337df979-276b-4eaa-976a-064c6cb3a7c4",
+      "name": "hospice-provider-wait-route",
+      "inputs": {
+        "caseId": "PI-HSP-2026-0042",
+        "currentStage": "Stage_Evcol2",
+        "groundingJson": "{\"caseType\":\"StateMedicaidHospice\",\"claimTotalBilled\":3250,\"thresholdExceeded\":true,\"hospitalRecordAvailable\":false,\"serviceEvidenceExtracted\":true}",
+        "quickRulesJson": "{\"status\":\"blocked\",\"recommended_stage\":\"ProviderResponse\",\"provider_wait_required\":true}"
+      },
+      "expectedOutput": {
+        "caseManagerDecisions": {
+          "version": 1,
+          "stagesEntered": [
+            {
+              "stageName": "Provider record request"
+            }
+          ]
+        },
+        "nextStage": "ProviderResponse",
+        "nextStageId": "Stage_Prreq6",
+        "requiresEscalation": false,
+        "humanGate": "Provider Records",
+        "completionRuleSatisfied": false,
+        "actionTaken": false
+      },
+      "simulationInstructions": "",
+      "expectedAgentBehavior": "Route the StateMedicaidHospice case to Stage_Prreq6 because the $2,500 threshold is met and the hospital record is still pending; preserve the 72-hour provider-request path and make no fraud determination.",
+      "simulateInput": false,
+      "inputGenerationInstructions": "",
+      "simulateTools": false,
+      "evalSetId": "71359cdc-5a5f-4961-b709-3741c3f2f92d",
+      "createdAt": "2026-08-07T22:52:02.207Z",
+      "updatedAt": "2026-08-07T22:52:02.207Z",
+      "source": "manual"
+    },
+    {
+      "id": "22845265-a3a3-419b-91d5-63e6ca95c45e",
+      "name": "hospice-open-investigation-route",
+      "inputs": {
+        "caseId": "PI-HSP-2026-0042",
+        "currentStage": "Stage_Prreq6",
+        "groundingJson": "{\"caseType\":\"StateMedicaidHospice\",\"claimTotalBilled\":3250,\"hospitalRecordAvailable\":true,\"institutionalEncounterExtracted\":true,\"patientClass\":\"Observation\",\"locationConflictMinutes\":360,\"reviewIndicatorOnly\":true}",
+        "quickRulesJson": "{\"status\":\"clear_for_case_manager\",\"recommended_stage\":\"Investigation\",\"location_conflict_minutes\":360}"
+      },
+      "expectedOutput": {
+        "caseManagerDecisions": {
+          "version": 1,
+          "stagesEntered": [
+            {
+              "stageName": "Investigation"
+            }
+          ]
+        },
+        "nextStage": "InvestigationRouting",
+        "nextStageId": "Stage_Corr4a",
+        "requiresEscalation": false,
+        "humanGate": "Investigator",
+        "completionRuleSatisfied": false,
+        "actionTaken": false
+      },
+      "simulationInstructions": "",
+      "expectedAgentBehavior": "Recommend opening a true investigation for human confirmation based on the July 14 360-minute location-conflict indicator, call the encounter Observation rather than inpatient, and explicitly state that the conflict is not proof of fraud or repayment liability.",
+      "simulateInput": false,
+      "inputGenerationInstructions": "",
+      "simulateTools": false,
+      "evalSetId": "71359cdc-5a5f-4961-b709-3741c3f2f92d",
+      "createdAt": "2026-08-07T22:52:02.542Z",
+      "updatedAt": "2026-08-07T22:52:02.542Z",
+      "source": "manual"
+    },
+    {
+      "id": "bfb8d21d-43f4-40e9-8ce5-b7fd834ad86b",
+      "name": "supervisor-review-route",
+      "inputs": {
+        "caseId": "PI-HSP-2026-0042",
+        "currentStage": "Stage_Corr4a",
+        "groundingJson": "{\"caseType\":\"StateMedicaidHospice\",\"investigatorDecision\":\"Open true investigation\",\"investigatorFindings\":\"Claimed home service conflicts with the Observation encounter by 360 minutes\",\"supervisorReviewRequired\":true}",
+        "quickRulesJson": "{\"supervisor_gate_required\":true,\"location_conflict_minutes\":360}"
+      },
+      "expectedOutput": {
+        "caseManagerDecisions": {
+          "version": 1,
+          "stagesEntered": [
+            {
+              "stageName": "Supervisor review"
+            }
+          ]
+        },
+        "nextStage": "SupervisorAction",
+        "nextStageId": "Stage_Supv7a",
+        "requiresEscalation": true,
+        "humanGate": "Supervisor",
+        "completionRuleSatisfied": false
+      },
+      "simulationInstructions": "",
+      "expectedAgentBehavior": "Use the grounded investigator findings to route to Stage_Supv7a, invoke SupervisorEscalation once with the evidence packet, and leave disposition and any adverse or financial action to the human supervisor.",
+      "simulateInput": false,
+      "inputGenerationInstructions": "",
+      "simulateTools": false,
+      "evalSetId": "71359cdc-5a5f-4961-b709-3741c3f2f92d",
+      "createdAt": "2026-08-07T22:52:02.884Z",
+      "updatedAt": "2026-08-07T22:52:02.884Z",
+      "source": "manual"
+    }
+  ],
   "modelSettings": [],
   "agentMemoryEnabled": false,
   "agentMemorySettings": [],

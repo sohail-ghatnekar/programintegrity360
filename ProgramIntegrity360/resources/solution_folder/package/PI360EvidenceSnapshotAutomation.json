@@ -8,6 +8,7 @@
     "isOverridable": true,
     "dependencies": [],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -18,7 +19,6 @@
       "description": "Portable evidence completeness automation for Program Integrity case routing."
     },
     "locks": [],
-    "key": "86dcc831-9532-40a1-9a96-309010314afc",
-    "files": []
+    "key": "86dcc831-9532-40a1-9a96-309010314afc"
   }
 }

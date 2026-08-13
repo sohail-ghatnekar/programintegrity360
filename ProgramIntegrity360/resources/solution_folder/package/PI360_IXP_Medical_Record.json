@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 IXP Medical Record",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "e0fafcd3-755c-4551-b399-eef50efbadf7",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360 IXP Medical Record"
+    },
+    "locks": [],
+    "key": "6723f34d-3350-4a4d-8d9a-24940583f264",
+    "files": []
+  }
+}

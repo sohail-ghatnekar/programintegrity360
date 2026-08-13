@@ -2,6 +2,14 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import type { ReactNode } from 'react';
 import { UiPath } from '@uipath/uipath-typescript/core';
 import type { UiPathSDKConfig } from '@uipath/uipath-typescript/core';
+import { User } from '@uipath/uipath-typescript/conversational-agent';
+import {
+  completePkceAuthorization,
+  createPkceAuthorizationRequest,
+  getPkceTransactionKey,
+  storeSdkOAuthToken,
+} from '../auth/pkce';
+import type { OAuthTokenResponse, PublicOAuthConfig } from '../auth/pkce';
 
 const AUTHENTICATED_USER_NAME = 'Authenticated UiPath user';
 
@@ -18,22 +26,60 @@ export interface AuthContextType {
 
 type SdkFactory = (config: UiPathSDKConfig) => UiPath;
 
+export type PkceClient = {
+  clear: (clientId?: string) => void;
+  completeAuthorization: (config: PublicOAuthConfig) => Promise<OAuthTokenResponse>;
+  isCallback: () => boolean;
+  startAuthorization: (config: PublicOAuthConfig) => Promise<void>;
+  storeToken: (clientId: string, token: OAuthTokenResponse) => void;
+};
+
 type AuthProviderProps = {
   children: ReactNode;
   config: UiPathSDKConfig;
+  pkceClient?: PkceClient;
   sdkFactory?: SdkFactory;
 };
 
 type CallbackCompletion = {
-  result: Promise<boolean>;
+  result: Promise<OAuthTokenResponse>;
   timeoutId?: ReturnType<typeof setTimeout>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const defaultSdkFactory: SdkFactory = (config) => new UiPath(config);
+const defaultPkceClient: PkceClient = {
+  clear: (clientId) => {
+    if (clientId) {
+      sessionStorage.removeItem(getPkceTransactionKey(clientId));
+    }
+  },
+  completeAuthorization: completePkceAuthorization,
+  isCallback: () => {
+    const callbackUrl = new URL(window.location.href);
+    return callbackUrl.searchParams.has('code') && callbackUrl.searchParams.has('state');
+  },
+  startAuthorization: async (config) => {
+    const authorizationUrl = await createPkceAuthorizationRequest(config);
+    window.location.assign(authorizationUrl);
+  },
+  storeToken: storeSdkOAuthToken,
+};
 const CALLBACK_COMPLETION_TTL_MS = 60_000;
 const callbackCompletions = new Map<string, CallbackCompletion>();
+
+function getPublicOAuthConfig(config: UiPathSDKConfig): PublicOAuthConfig {
+  if (!config.clientId || !config.redirectUri || !config.scope) {
+    throw new Error('PI360 requires public OAuth configuration');
+  }
+
+  return {
+    clientId: config.clientId,
+    redirectUri: config.redirectUri,
+    scope: config.scope,
+  };
+}
 
 function clearOAuthSession(clientId?: string) {
   if (clientId) {
@@ -41,6 +87,15 @@ function clearOAuthSession(clientId?: string) {
   }
   sessionStorage.removeItem('uipath_sdk_oauth_context');
   sessionStorage.removeItem('uipath_sdk_code_verifier');
+}
+
+function normalizeProfileValue(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized || null;
 }
 
 function removeOAuthCallbackParameters() {
@@ -62,13 +117,16 @@ function getCallbackCompletionKey(clientId?: string) {
   return (hash >>> 0).toString(36);
 }
 
-function getCallbackCompletion(key: string, callbackSdk: UiPath): Promise<boolean> {
+function getCallbackCompletion(
+  key: string,
+  completeAuthorization: () => Promise<OAuthTokenResponse>,
+): Promise<OAuthTokenResponse> {
   const existing = callbackCompletions.get(key);
   if (existing) {
     return existing.result;
   }
 
-  const result = Promise.resolve().then(() => callbackSdk.completeOAuth());
+  const result = Promise.resolve().then(completeAuthorization);
   callbackCompletions.set(key, { result });
 
   const scheduleSettledCompletionExpiry = () => {
@@ -104,6 +162,7 @@ function dismissCallbackCompletion(key: string) {
 export const AuthProvider: React.FC<AuthProviderProps> = ({
   children,
   config,
+  pkceClient = defaultPkceClient,
   sdkFactory = defaultSdkFactory,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -138,41 +197,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       setIsLoading(true);
       setError(null);
 
-      if (sdk.isInOAuthCallback()) {
+      let activeSdk = sdk;
+
+      if (pkceClient.isCallback()) {
+        const publicOAuthConfig = getPublicOAuthConfig(config);
         const callbackKey = getCallbackCompletionKey(config.clientId);
-        let completed: boolean;
+        let token: OAuthTokenResponse;
         try {
-          completed = await getCallbackCompletion(callbackKey, sdk);
+          token = await getCallbackCompletion(
+            callbackKey,
+            () => pkceClient.completeAuthorization(publicOAuthConfig),
+          );
+
+          if (!isCurrent()) {
+            return;
+          }
+
+          pkceClient.storeToken(publicOAuthConfig.clientId, token);
         } catch {
           if (!isCurrent()) {
             return;
           }
 
           clearOAuthSession(config.clientId);
+          pkceClient.clear(config.clientId);
+          removeOAuthCallbackParameters();
           dismissCallbackCompletion(callbackKey);
           failAuthentication();
           setIsLoading(false);
-          return;
-        }
-
-        if (!completed) {
-          if (!isCurrent()) {
-            return;
-          }
-
-          clearOAuthSession(config.clientId);
-          dismissCallbackCompletion(callbackKey);
-          failAuthentication();
-          setIsLoading(false);
-          return;
-        }
-
-        if (!isCurrent()) {
           return;
         }
 
         removeOAuthCallbackParameters();
         dismissCallbackCompletion(callbackKey);
+        activeSdk = sdkFactory(config);
+        setSdk(activeSdk);
       }
 
       if (!isCurrent()) {
@@ -180,7 +239,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       }
 
       try {
-        setAuthenticationState(sdk.isAuthenticated());
+        const authenticated = activeSdk.isAuthenticated();
+        setAuthenticationState(authenticated);
+
+        if (authenticated) {
+          try {
+            const settings = await new User(activeSdk).getSettings();
+            if (!isCurrent()) {
+              return;
+            }
+
+            setCurrentUserName(normalizeProfileValue(settings?.name) || AUTHENTICATED_USER_NAME);
+            setCurrentUserEmail(normalizeProfileValue(settings?.email));
+          } catch {
+            if (!isCurrent()) {
+              return;
+            }
+
+            setCurrentUserName(AUTHENTICATED_USER_NAME);
+            setCurrentUserEmail(null);
+          }
+        }
       } catch {
         failAuthentication();
       } finally {
@@ -195,7 +274,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     return () => {
       active = false;
     };
-  }, [config.clientId, sdk]);
+  }, [config, pkceClient, sdk, sdkFactory]);
 
   const login = async () => {
     const generation = ++authGenerationRef.current;
@@ -203,7 +282,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     setError(null);
 
     try {
-      await sdk.initialize();
+      await pkceClient.startAuthorization(getPublicOAuthConfig(config));
       if (generation !== authGenerationRef.current) {
         return;
       }
@@ -231,6 +310,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
   const logout = () => {
     authGenerationRef.current += 1;
     clearOAuthSession(config.clientId);
+    pkceClient.clear(config.clientId);
+    removeOAuthCallbackParameters();
 
     setIsAuthenticated(false);
     setError(null);

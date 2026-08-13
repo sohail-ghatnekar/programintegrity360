@@ -1,0 +1,38 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360RecoveryAuthorizationActionApp",
+    "kind": "app",
+    "type": "codedAction",
+    "apiVersion": "apps.uipath.com/v1",
+    "projectKey": "ec7a30ac-2270-421a-b5f7-0d9676d3bbe4",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "name": "PI360RecoveryAuthorizationActionApp",
+        "kind": "package"
+      }
+    ],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360RecoveryAuthorizationActionApp",
+      "description": null,
+      "version": "1.0.0",
+      "routingName": null,
+      "appSystemName": null,
+      "package": {
+        "key": "eb0ebd1d-1112-4cac-8768-03575403b597"
+      },
+      "externalClientId": null,
+      "actionSchema": null
+    },
+    "locks": [],
+    "key": "cc65fd9e-f779-447e-a45d-24fda4ee318e"
+  }
+}

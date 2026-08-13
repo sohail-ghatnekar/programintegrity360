@@ -1,151 +1,198 @@
-# Data Model — Program Integrity 360 (Data Fabric entities)
+# Data model — Program Integrity 360
 
-All entities live in **UiPath Data Fabric** (managed via `/uipath-platform`). Every write also appends an
-`InvestigationAction` row so the case carries a complete, immutable audit trail. IDs, values, and examples
-must match `CANON.md`.
+The `uipathlabs/Playground` implementation uses the nine existing PI360 Data Fabric entities through the live `Program Integrity Fabric` connection. The design is additive: it preserves every entity ID, adds no entity or relationship object, and uses stable business identifiers for logical joins. All records are synthetic.
 
-Legend: 🔑 primary key · 🔗 foreign key · ⚙️ system/audit field.
+## Ownership and write paths
 
----
+| Runtime component | Data Fabric responsibility |
+|---|---|
+| `PI360ApiWorkflows / IntakeClaimByCaseType` | Creates the Case aggregate or returns the existing row for the same `case_id` |
+| `PI360CaseManagerFlow` | Creates Provider, Claim, PCS Attendant and EVV, Risk Signal, and intake Evidence Document records |
+| `PI360 IXP Medical Record` | Returns extracted admission/discharge dates and normalized encounter metadata for the hospital-evidence write |
+| `PI360ApiWorkflows / IntakeHospitalRecord` | Consumes the medical-record RPA output plus the correlated provider message, then creates the hospice hospital Evidence Document and an Investigation Action |
+| `PI360DecisionPacketAutomation` | Produces the supervisor packet; the Case task captures its outputs |
+| Human investigator and supervisor tasks | Supply findings, decision, rationale, and next steps to the Case context |
+| `PI360ApiWorkflows / CloseCaseAndEmitMetrics` | Creates the final Decision and closure Investigation Action, then updates the Case to Closed |
+| `PI360 Send Outlook Email` | Communicates the already-approved closure; it is not a Data Fabric writer |
 
-## 1. ProgramIntegrityCase
-The case aggregate root; drives the Maestro case lifecycle.
+The Flow tolerates an already-existing Provider or Attendant master row so a new Case can reuse stable participants. Case, Claim, EVV, Signal, Document, Action, and Decision IDs are case-scoped to avoid collisions.
 
-| Field | Type | Notes / example |
+## Entity catalog
+
+| Entity | Live ID | Natural key | Parent join | Runtime writer |
+|---|---|---|---|---|
+| `PI360ProgramIntegrityCase` | `497c2d5c-7492-f111-b338-000d3ab4d3b7` | `case_id` | aggregate root | API Workflow intake and closure |
+| `PI360Provider` | `6e7c2d5c-7492-f111-b338-000d3ab4d3b7` | `provider_id` | reused by Case and Claim | Flow |
+| `PI360Attendant` | `827c2d5c-7492-f111-b338-000d3ab4d3b7` | `attendant_id` | reused by Case, Claim, and EVV | Flow, PCS branch only |
+| `PI360Claim` | `947c2d5c-7492-f111-b338-000d3ab4d3b7` | `claim_id` | `case_id` | Flow |
+| `PI360EvvVisit` | `b2acb462-7492-f111-b338-000d3ab4d3b7` | `evv_id` | `attendant_id`, `member_id` | Flow, PCS branch only |
+| `PI360RiskSignal` | `c6acb462-7492-f111-b338-000d3ab4d3b7` | `signal_id` | `case_id` | Flow |
+| `PI360EvidenceDocument` | `deacb462-7492-f111-b338-000d3ab4d3b7` | `doc_id` | `case_id` | Flow and API Workflow |
+| `PI360InvestigationAction` | `f2acb462-7492-f111-b338-000d3ab4d3b7` | `action_id` | `case_id` | API Workflow |
+| `PI360Decision` | `05adb462-7492-f111-b338-000d3ab4d3b7` | `decision_id` | `case_id` | API Workflow closure |
+
+## Complete field schema
+
+Types shown below are the UiPath Data Fabric field types. `*` marks a required, unique natural key.
+
+### PI360ProgramIntegrityCase
+
+| Fields | Type |
+|---|---|
+| `case_id`* | String |
+| `case_type`, `title`, `program`, `trigger_type`, `trigger_ref`, `requester_email`, `maestro_instance_id` | String |
+| `provider_id`, `member_id`, `member_name`, `member_medicaid_id`, `attendant_id`, `caregiver_name` | String |
+| `member_date_of_birth`, `service_period_start`, `service_period_end`, `alert_date` | Date |
+| `claim_total_billed`, `claim_threshold`, `risk_signal_count`, `potential_exposure_low`, `potential_exposure_period_estimate`, `potential_exposure_high` | Decimal |
+| `priority` | `PI360Priority` choice |
+| `stage` | `PI360CaseStage` choice |
+| `status` | `PI360CaseStatus` choice |
+| `exposure_disclaimer`, `assigned_investigator`, `assigned_supervisor`, `disposition` | String |
+| `opened_at`, `sla_due`, `closed_at`, `created_at`, `updated_at` | DateTime with timezone |
+
+Accepted `case_type` values are `MedicaidPCS` and `StateMedicaidHospice`. The active stage values are Intake `0`, Evidence `1`, Document Extraction `2`, Correlation `3`, Investigator `4`, Provider Request `5`, Supervisor `6`, Action Execution `7`, and Closure `8`. Status values are Open `0`, In Review `1`, Awaiting Provider `2`, Pending Approval `3`, and Closed `4`.
+
+### PI360Provider
+
+| Fields | Type |
+|---|---|
+| `provider_id`* | String |
+| `name`, `medicaid_provider_id`, `npi`, `address`, `enrollment_status`, `prior_integrity_history`, `watch_list_reason` | String |
+| `active_attendant_count` | Decimal |
+| `watch_list` | Boolean |
+
+### PI360Attendant
+
+| Fields | Type |
+|---|---|
+| `attendant_id`* | String |
+| `name`, `provider_id`, `role`, `credential_id`, `missing_docs` | String |
+| `credential_expiry` | Date |
+| `personnel_docs_complete` | Boolean |
+
+### PI360Claim
+
+| Fields | Type |
+|---|---|
+| `claim_id`* | String |
+| `case_id`, `case_type`, `program`, `provider_id`, `attendant_id`, `member_id` | String |
+| `date_of_service` | Date |
+| `units_billed`, `unit_rate`, `billed_amount`, `evv_supported_units`, `timesheet_supported_units`, `poc_daily_units`, `improper_units`, `unit_minutes` | Decimal |
+| `claim_lines_json` | Multiline text |
+| `flagged_line_id`, `service_type`, `place_of_service_code`, `place_of_service_description`, `source_claim_status`, `notes`, `method_flag` | String |
+| `claimed_service_start_at`, `claimed_service_end_at` | DateTime with timezone |
+| `status` | `PI360ClaimStatus` choice |
+
+The hospice row is an aggregate claim header. `claim_lines_json` retains the Beeceptor lines while `flagged_line_id` and the claimed interval normalize the line under review.
+
+### PI360EvvVisit
+
+| Fields | Type |
+|---|---|
+| `evv_id`* | String |
+| `attendant_id`, `member_id`, `start_time`, `end_time`, `overlaps_with` | String |
+| `service_date` | Date |
+| `units` | Decimal |
+| `capture_method` | `PI360CaptureMethod` choice |
+| `gps_confirmed` | `PI360GpsConfirmed` choice |
+
+This entity is PCS-specific and has no `case_id`; the logical link is through attendant and member identifiers.
+
+### PI360RiskSignal
+
+| Fields | Type |
+|---|---|
+| `signal_id`* | String |
+| `case_id`, `name`, `result_value`, `computed_by` | String |
+| `rule_expression`, `inputs` | Multiline text |
+| `severity` | `PI360Priority` choice |
+| `computed_at` | DateTime with timezone |
+
+For hospice, the persisted signal represents a location/time conflict for review. It is not a fraud or coverage determination.
+
+### PI360EvidenceDocument
+
+| Fields | Type |
+|---|---|
+| `doc_id`* | String |
+| `case_id`, `source_system`, `storage_uri`, `validated_by`, `ixp_model`, `ixp_model_version` | String |
+| `doc_type` | `PI360DocType` choice |
+| `extracted_fields` | Multiline text |
+| `extraction_confidence` | Decimal |
+| `validation_status` | `PI360ValidationStatus` choice |
+| `reference_only` | Boolean |
+| `patient_class`, `encounter_id`, `facility_name`, `care_area`, `encounter_disposition`, `note` | String |
+| `encounter_arrival_at`, `encounter_discharge_at` | DateTime with timezone |
+
+The Flow writes `<case_id>-SERVICE-EVIDENCE` for initial claim/timesheet evidence. The BPMN response path writes `<case_id>-HOSPITAL-RECORD` only after medical-record extraction, preventing intake metadata from masquerading as a returned provider record.
+
+Hospital-evidence contract: BPMN passes the complete `Orchestrator.RunJob` response from `PI360 IXP Medical Record` as `documentInput` and the correlated provider message as `providerMessageInput`. `IntakeHospitalRecord` searches the nested job response for `out_AdmissionDate`, `out_DischargeDate`, `out_PatientClass`, `out_EncounterId`, `out_FacilityName`, `out_CareArea`, `out_ArrivalAt`, `out_DischargeAt`, `out_Disposition`, `out_StorageUri`, and `out_ExtractionConfidence`. Provider-message values are secondary fallbacks; document-specific demo defaults are used only when neither source supplies a field.
+
+### PI360InvestigationAction
+
+| Fields | Type |
+|---|---|
+| `action_id`* | String |
+| `case_id`, `action_type`, `actor` | String |
+| `actor_kind` | `PI360ActorKind` choice |
+| `timestamp` | DateTime with timezone |
+| `detail`, `before_value`, `after_value` | Multiline text |
+
+This is the shared audit stream for provider-response intake and approved closure.
+
+### PI360Decision
+
+| Fields | Type |
+|---|---|
+| `decision_id`* | String |
+| `case_id`, `decision_type`, `recommended_by`, `decided_by` | String |
+| `decision_role` | `PI360DecisionRole` choice |
+| `rationale` | Multiline text |
+| `adverse_or_financial`, `approved` | Boolean |
+| `decided_at` | DateTime with timezone |
+
+Only the supervisor-approved closure path writes this entity.
+
+## Logical relationship map
+
+```text
+PI360ProgramIntegrityCase (case_id)
+├── PI360Claim.case_id
+├── PI360RiskSignal.case_id
+├── PI360EvidenceDocument.case_id
+├── PI360InvestigationAction.case_id
+└── PI360Decision.case_id
+
+PI360Provider.provider_id
+├── PI360ProgramIntegrityCase.provider_id
+└── PI360Claim.provider_id
+
+PI360Attendant.attendant_id
+├── PI360ProgramIntegrityCase.attendant_id
+├── PI360Claim.attendant_id
+└── PI360EvvVisit.attendant_id
+```
+
+Member identity is intentionally denormalized across Case, Claim, and EVV because no standalone member entity is introduced at the tenant object cap.
+
+## Scenario write matrix
+
+| Entity | MedicaidPCS | StateMedicaidHospice |
 |---|---|---|
-| 🔑 case_id | Text | `PI-PCS-2026-0041` |
-| title | Text | Harbor Home Support Services — PCS billing integrity review |
-| program | Choice | `Medicaid PCS` |
-| trigger_type | Choice | `Claims Analytics Alert` |
-| trigger_ref | Text | `ALERT-CA-2026-7781` |
-| 🔗 provider_id | Text | `PRV-100482` |
-| 🔗 attendant_id | Text | `ATT-2087` |
-| service_period_start | Date | 2026-03-01 |
-| service_period_end | Date | 2026-05-31 |
-| priority | Choice | `High` / Medium / Low |
-| stage | Choice | one of the 9 stages (see docs/02) |
-| status | Choice | Open / In Review / Awaiting Provider / Pending Approval / Closed |
-| risk_signal_count | Number | 5 |
-| potential_exposure_low | Currency | 172.80 (reviewed 4-claim sample) |
-| potential_exposure_period_estimate | Currency | 1600.00 (full 44-visit period projection) |
-| potential_exposure_high | Currency | 42000.00 (provider-wide indicative, pending audit) |
-| exposure_disclaimer | Text | "Indicative range, subject to human validation. Not a determination." |
-| assigned_investigator | Text | e.g. `inv.taylor` |
-| assigned_supervisor | Text | e.g. `sup.morgan` |
-| sla_due | DateTime | intake SLA |
-| ⚙️ created_at / updated_at | DateTime | |
+| Case | Intake create; closure update | Intake create; closure update |
+| Provider | Create or reuse | Create or reuse |
+| Attendant | Create or reuse | Not written by the Flow branch |
+| Claim | Create | Create aggregate header |
+| EVV | Create | Not written |
+| Risk Signal | PCS validation signal | Threshold/location-review signal |
+| Evidence Document | Service/timesheet evidence | Initial service evidence plus later hospital record |
+| Investigation Action | Closure audit | Hospital-response audit plus closure audit |
+| Decision | Approved closure | Approved closure |
 
-## 2. Provider
-| Field | Type | Example |
-|---|---|---|
-| 🔑 provider_id | Text | `PRV-100482` |
-| name | Text | Harbor Home Support Services |
-| medicaid_provider_id | Text | `MPI-4471902` |
-| npi | Text | `1730456789` |
-| address | Text | 2200 Marina Blvd, Suite 210 |
-| enrollment_status | Choice | Active |
-| active_attendant_count | Number | 22 |
-| prior_integrity_history | Text | 1 education letter (2024), no sanctions |
-| watch_list | Boolean | set true at closure |
+## Idempotency and safety
 
-## 3. Attendant
-| Field | Type | Example |
-|---|---|---|
-| 🔑 attendant_id | Text | `ATT-2087` |
-| name | Text | Jordan Ellis |
-| 🔗 provider_id | Text | `PRV-100482` |
-| role | Choice | Personal Care Attendant |
-| credential_id | Text | `PCA-556210` |
-| credential_expiry | Date | 2026-03-31 |
-| personnel_docs_complete | Boolean | false |
-| missing_docs | Text[] | ["Signed training acknowledgment","Current background-check attestation"] |
-
-## 4. Claim
-| Field | Type | Example |
-|---|---|---|
-| 🔑 claim_id | Text | `CLM-0491` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| 🔗 attendant_id | Text | `ATT-2087` |
-| member_id | Text | `MBR-33915` |
-| date_of_service | Date | 2026-04-14 |
-| units_billed | Number | 24 |
-| unit_rate | Currency | 7.20 |
-| billed_amount | Currency | 172.80 |
-| evv_supported_units | Number | 16 |
-| timesheet_supported_units | Number | 16 |
-| improper_units | Number | 8 (deterministic: billed − min(evv,timesheet)) |
-| status | Choice | Under Review / Cleared / Flagged |
-
-## 5. EVVVisit
-| Field | Type | Example |
-|---|---|---|
-| 🔑 evv_id | Text | `EVV-88231` |
-| 🔗 attendant_id | Text | `ATT-2087` |
-| member_id | Text | `MBR-33915` |
-| service_date | Date | 2026-04-14 |
-| start_time | Text (HH:MM) | 08:00  *(Data Fabric has no native TIME type; stored as HH:MM string, consumed by the deterministic overlap calc)* |
-| end_time | Text (HH:MM) | 12:00 |
-| units | Number | 16 |
-| capture_method | Choice | Mobile-GPS / Telephony / Manual |
-| gps_confirmed | Choice | Yes / No / N/A |
-| overlaps_with | Text | `EVV-88237` (set by RS-01 calc) |
-
-## 6. RiskSignal
-| Field | Type | Example |
-|---|---|---|
-| 🔑 signal_id | Text | `RS-01` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| name | Text | Overlapping visits |
-| rule_expression | Text | the exact deterministic rule (auditable) |
-| inputs | JSON | the records/values evaluated |
-| result_value | Text | "1 overlap on 2026-04-14 (90 min)" |
-| severity | Choice | High / Medium / Low |
-| computed_by | Text | `deterministic-calc-v1` (never an agent) |
-| computed_at | DateTime | |
-
-## 7. EvidenceDocument
-| Field | Type | Example |
-|---|---|---|
-| 🔑 doc_id | Text | `DOC-TS-0416` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| doc_type | Choice | Timesheet / Plan of Care / Service Note / Personnel Packet / Correspondence |
-| source_system | Text | Provider portal / Legacy care-mgmt (RPA) / Records-request inbox |
-| storage_uri | Text | bucket path |
-| extracted_fields | JSON | IXP output |
-| extraction_confidence | Number | 0.0–1.0 |
-| validation_status | Choice | Auto-confirmed / Needs review / Human-validated |
-| validated_by | Text | investigator id, if human-validated |
-
-## 8. InvestigationAction  (the audit trail)
-| Field | Type | Example |
-|---|---|---|
-| 🔑 action_id | Text | `ACT-...` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| action_type | Choice | Signal computed / Doc extracted / Human validated / Edit / Request sent / Response received / Approval / Action executed |
-| actor | Text | user id, `system`, or agent name |
-| actor_kind | Choice | Human / System / Agent |
-| timestamp | DateTime | |
-| detail | Text | human-readable description |
-| before_value / after_value | JSON | for edits |
-
-## 9. Decision
-| Field | Type | Example |
-|---|---|---|
-| 🔑 decision_id | Text | `DEC-...` |
-| 🔗 case_id | Text | `PI-PCS-2026-0041` |
-| decision_type | Choice | Proceed to records request / Refer for audit / Open overpayment recovery / Provider education / Close-no-action |
-| recommended_by | Text | Investigation Planning Agent (recommendation only) |
-| decided_by | Text | supervisor id (the human who approves) |
-| decision_role | Choice | Investigator / Supervisor |
-| rationale | Text | narrative + citations |
-| adverse_or_financial | Boolean | true → supervisor approval required |
-| approved | Boolean | |
-| decided_at | DateTime | |
-
----
-
-## Relationships (summary)
-- One **ProgramIntegrityCase** → one Provider, one Attendant, many Claims/EVVVisits/RiskSignals/EvidenceDocuments/InvestigationActions/Decisions.
-- **Claim** ↔ **EVVVisit** matched on (attendant, member, date). Mismatch drives RS-04.
-- **RiskSignal.computed_by** is always `deterministic-calc-v1` — agents never populate it.
-- Every state change → one **InvestigationAction** (immutable append-only).
+- Intake queries by `case_id` after a duplicate-create response and returns the existing Case.
+- Provider and Attendant are stable master records; their Flow nodes merge create-success and already-existing paths.
+- Case-scoped child natural keys prevent cross-case collisions.
+- Closure requires `supervisorApproved = true`; the agent cannot directly create a final Decision.
+- Data Fabric stores review evidence and human decisions. A time/location conflict remains an indicator, not an autonomous finding of fraud or intent.

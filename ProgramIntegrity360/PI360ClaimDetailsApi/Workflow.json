@@ -1,0 +1,210 @@
+{
+  "document": {
+    "dsl": "1.0.0",
+    "name": "PI360ClaimDetailsApi",
+    "tags": {
+      "projectId": "75f76069-d12e-42bf-83f9-d83645ef5231"
+    },
+    "version": "0.6.0",
+    "namespace": "pi360.claims",
+    "metadata": {
+      "variables": {
+        "schema": {
+          "format": "json",
+          "document": {
+            "type": "object",
+            "properties": {},
+            "title": "Variables"
+          }
+        }
+      }
+    }
+  },
+  "input": {
+    "schema": {
+      "format": "json",
+      "document": {
+        "type": "object",
+        "properties": {
+          "caseType": {
+            "type": "string",
+            "enum": [
+              "MedicaidPCS",
+              "StateMedicaidHospice"
+            ],
+            "default": "MedicaidPCS",
+            "description": "CaseType selects the published Beeceptor claim-detail route."
+          },
+          "caseId": {
+            "type": "string",
+            "default": "PI-PCS-2026-0041",
+            "description": "Expected Program Integrity case identifier."
+          },
+          "claimThreshold": {
+            "type": "number",
+            "default": 2500,
+            "description": "Threshold used by the hospice intake rule."
+          }
+        },
+        "required": [
+          "caseType"
+        ],
+        "title": "Inputs"
+      }
+    }
+  },
+  "output": {
+    "schema": {
+      "format": "json",
+      "document": {
+        "type": "object",
+        "properties": {
+          "workflowName": {
+            "type": "string"
+          },
+          "caseType": {
+            "type": "string"
+          },
+          "caseId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "recordsAffected": {
+            "type": "number"
+          },
+          "claimCount": {
+            "type": "number"
+          },
+          "lineCount": {
+            "type": "number"
+          },
+          "totalUnits": {
+            "type": "number"
+          },
+          "totalBilled": {
+            "type": "number"
+          },
+          "claimThreshold": {
+            "type": "number"
+          },
+          "thresholdExceeded": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "sourceEndpoint": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          }
+        },
+        "title": "Outputs"
+      }
+    }
+  },
+  "do": [
+    {
+      "Sequence_1": {
+        "do": [
+          {
+            "WorkflowStart": {
+              "set": "${Object.entries($workflow.definition?.document?.metadata?.variables?.schema?.document?.properties || {}).reduce((acc, [name, def]) => ({ ...acc, [name]: def?.default }), {}) }",
+              "output": {
+                "as": "${$input}"
+              },
+              "export": {
+                "as": "{ ...$context, variables: { ...$context.variables, ...$output } }"
+              },
+              "metadata": {
+                "activityType": "Assign",
+                "displayName": "Workflow start",
+                "fullName": "Assign",
+                "isTransparent": true
+              }
+            }
+          },
+          {
+            "FetchClaimDetails": {
+              "call": "UiPath.Http",
+              "with": {
+                "connector": "uipath-uipath-http",
+                "connectionId": "ImplicitConnection",
+                "connectionResourceId": "ImplicitConnection",
+                "method": "GET",
+                "endpoint": "/http-request",
+                "bodyParameters": {
+                  "authentication": "manual",
+                  "method": "GET",
+                  "url": "${$workflow.input.caseType === \"StateMedicaidHospice\" ? \"https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice\" : \"https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS\"}",
+                  "headers": {}
+                }
+              },
+              "export": {
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"http_request_1\": $output } }"
+              },
+              "metadata": {
+                "fullName": "Connector",
+                "activityType": "Connector",
+                "displayName": "Fetch Medicaid Claim Details",
+                "uiPathActivityTypeId": "5c4cc855-b42a-37e6-b910-de8588998fce",
+                "assemblyQualifiedName": "Connector",
+                "configuration": "{\"essentialConfiguration\":{\"connectorVersion\":\"\",\"executionType\":null,\"customFieldsRequestDetails\":null,\"instanceParameters\":{\"version\":\"1.0.0\",\"connectorKey\":\"uipath-uipath-http\",\"activityType\":\"Curated\",\"objectName\":\"http-request\",\"httpMethod\":\"GET\",\"operation\":null,\"eventOperation\":null,\"eventMode\":null,\"connectorObjects\":null,\"previewEndpoint\":null},\"objectName\":\"http-request\",\"operation\":null,\"packageVersion\":\"1.0.0\",\"httpMethod\":\"GET\",\"path\":\"/http-request\",\"unifiedTypesCompatible\":true,\"savedJitInputFieldId\":\"in_http-request\"}}"
+              }
+            }
+          },
+          {
+            "NormalizeClaimDetails": {
+              "run": {
+                "script": {
+                  "language": "javascript",
+                  "arguments": "${{\n  \"$context\": $context,\n  \"$workflow\": $workflow,\n  \"$input\": $input\n}}",
+                  "code": "const requestedCaseType = String($workflow.input.caseType || 'MedicaidPCS');\nconst allowedCaseTypes = ['MedicaidPCS', 'StateMedicaidHospice'];\nconst envelope = $context.outputs.http_request_1 || {};\nconst raw = envelope.content !== undefined ? envelope.content : envelope;\nconst body = typeof raw === 'string' ? JSON.parse(raw) : raw;\nconst summary = body && body.claimSummary ? body.claimSummary : {};\nconst claimThreshold = Number($workflow.input.claimThreshold ?? 2500);\nconst claimCount = Number(summary.claimCount ?? 0);\nconst lineCount = Number(summary.lineCount ?? (Array.isArray(body?.claimDetails) ? body.claimDetails.length : 0));\nconst totalUnits = Number(summary.totalUnitsBilled ?? 0);\nconst totalBilled = Number(summary.totalBilledAmount ?? 0);\nconst sourceEndpoint = requestedCaseType === 'StateMedicaidHospice'\n  ? 'https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice'\n  : 'https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS';\nif (!allowedCaseTypes.includes(requestedCaseType)) {\n  return { workflowName: 'PullClaims', caseType: requestedCaseType, caseId: String($workflow.input.caseId || ''), status: 'InvalidRequest', recordsAffected: 0, claimCount: 0, lineCount: 0, totalUnits: 0, totalBilled: 0, claimThreshold, thresholdExceeded: false, message: `Unsupported CaseType '${requestedCaseType}'.`, sourceEndpoint, payload: {} };\n}\nif (!body || String(body.caseType || '') !== requestedCaseType) {\n  return { workflowName: 'PullClaims', caseType: requestedCaseType, caseId: String($workflow.input.caseId || ''), status: 'InvalidResponse', recordsAffected: 0, claimCount: 0, lineCount: 0, totalUnits: 0, totalBilled: 0, claimThreshold, thresholdExceeded: false, message: 'Claim response CaseType did not match the requested route.', sourceEndpoint, payload: body || {} };\n}\nreturn { workflowName: 'PullClaims', caseType: requestedCaseType, caseId: String(body.caseId || $workflow.input.caseId || ''), status: 'Completed', recordsAffected: lineCount, claimCount, lineCount, totalUnits, totalBilled, claimThreshold, thresholdExceeded: requestedCaseType === 'StateMedicaidHospice' && totalBilled >= claimThreshold, message: `Retrieved ${claimCount} claim(s) and ${lineCount} service line(s) for ${requestedCaseType}.`, sourceEndpoint, payload: body };"
+                }
+              },
+              "export": {
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"NormalizeClaimDetails\": $output } }"
+              },
+              "metadata": {
+                "activityType": "JsInvoke",
+                "displayName": "Normalize Claim Detail Response",
+                "fullName": "JsInvoke",
+                "outputName": "NormalizeClaimDetails",
+                "showHeader": true
+              }
+            }
+          },
+          {
+            "ReturnClaimDetails": {
+              "response": "${$context.outputs.NormalizeClaimDetails}",
+              "markJobAsFailed": false,
+              "then": "end",
+              "export": {
+                "as": "{ ...$context, outputs: { ...$context?.outputs, \"ReturnClaimDetails\": $output } }"
+              },
+              "metadata": {
+                "activityType": "Response",
+                "displayName": "Return Claim Details",
+                "fullName": "Response",
+                "outputName": "ReturnClaimDetails",
+                "showHeader": true
+              }
+            }
+          }
+        ],
+        "metadata": {
+          "activityType": "Sequence",
+          "displayName": "Claim Detail API",
+          "fullName": "Sequence"
+        }
+      }
+    }
+  ],
+  "evaluate": {
+    "mode": "strict",
+    "language": "javascript"
+  }
+}

@@ -9,6 +9,9 @@ const sdkMocks = vi.hoisted(() => ({
   getActionTasks: vi.fn(),
   getExecutionHistory: vi.fn(),
   tasksGetAll: vi.fn(),
+  entitiesGetById: vi.fn(),
+  entitiesGetAllRecords: vi.fn(),
+  choiceSetsGetById: vi.fn(),
 }));
 
 const authState = vi.hoisted(() => ({
@@ -34,6 +37,16 @@ vi.mock('@uipath/uipath-typescript/cases', () => ({
 vi.mock('@uipath/uipath-typescript/tasks', () => ({
   Tasks: class Tasks {
     getAll = sdkMocks.tasksGetAll;
+  },
+}));
+
+vi.mock('@uipath/uipath-typescript/entities', () => ({
+  Entities: class Entities {
+    getById = sdkMocks.entitiesGetById;
+    getAllRecords = sdkMocks.entitiesGetAllRecords;
+  },
+  ChoiceSets: class ChoiceSets {
+    getById = sdkMocks.choiceSetsGetById;
   },
 }));
 
@@ -749,6 +762,70 @@ describe('useCaseWorkspace', () => {
       'Unable to load live UiPath case data: PIMS access denied (403).',
     ]);
     expect(result.current.warnings.join(' ')).not.toContain('No instances found');
+  });
+
+  it('keeps live Data Fabric case data visible when optional PIMS enrichment fails', async () => {
+    authState.current = { isAuthenticated: true, isLoading: false, sdk: {} as UiPath };
+    sdkMocks.casesGetAll.mockRejectedValueOnce(new Error('PIMS access denied (403)'));
+    const ids = uipathConfig.entityIds;
+    const expectedNames: Record<string, string> = {
+      [ids.cases]: 'PI360ProgramIntegrityCase',
+      [ids.providers]: 'PI360Provider',
+      [ids.attendants]: 'PI360Attendant',
+      [ids.claims]: 'PI360Claim',
+      [ids.evvVisits]: 'PI360EvvVisit',
+      [ids.riskSignals]: 'PI360RiskSignal',
+      [ids.evidenceDocuments]: 'PI360EvidenceDocument',
+      [ids.investigationActions]: 'PI360InvestigationAction',
+      [ids.decisions]: 'PI360Decision',
+    };
+    sdkMocks.entitiesGetById.mockImplementation(async (id: string) => ({
+      name: expectedNames[id],
+      fields: [],
+    }));
+    sdkMocks.entitiesGetAllRecords.mockImplementation(async (id: string) => ({
+      items: id === ids.cases ? [{
+        Id: 'hospice-record-id',
+        CaseId: 'PI-HSP-2026-0042',
+        CaseType: 'StateMedicaidHospice',
+        MemberId: 'MBR-071426',
+        MemberName: 'Jordan Ellis',
+        Title: 'Hospice location conflict review',
+        Program: 'State Medicaid Hospice',
+        ProviderId: 'PRV-100482',
+        AttendantId: 'ATT-HSP-4401',
+        Stage: 'Automated evidence collection',
+        Status: 'Open',
+        Priority: 'High',
+        UpdatedAt: '2026-07-20T09:00:00-05:00',
+      }] : [],
+      hasNextPage: false,
+      supportsPageJump: false,
+    }));
+    const configuredOptions = hookOptions({
+      listCases: vi.fn(),
+      loadWorkspace: vi.fn(),
+      refreshTasks: vi.fn(),
+    });
+    const options = {
+      demoRepository: configuredOptions.demoRepository,
+      runtimeConfig: {
+        ...configuredOptions.runtimeConfig,
+        entityIds: ids,
+      },
+    };
+
+    const { result } = renderHook(() => useCaseWorkspace(options));
+
+    await waitFor(() => expect(result.current.status).toBe('live'));
+    expect(result.current.workspace?.case).toMatchObject({
+      id: 'PI-HSP-2026-0042',
+      caseType: 'StateMedicaidHospice',
+      memberName: 'Jordan Ellis',
+    });
+    expect(result.current.warnings).toEqual([
+      'Data Fabric loaded, but UiPath case/task enrichment is unavailable: PIMS access denied (403).',
+    ]);
   });
 
   it('preserves workspace rediscovery truncation when the selected case is on the failed page', async () => {

@@ -1,0 +1,69 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360ApiWorkflows",
+    "kind": "process",
+    "type": "api",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "Package",
+        "name": "ProgramIntegrity360.Api.PI360ApiWorkflows"
+      }
+    ],
+    "runtimeDependencies": [
+      {
+        "bindingType": "Connection",
+        "bindingKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+        "bindingValues": {
+          "connectionId": {
+            "defaultValue": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+            "isExpression": false,
+            "displayName": "Program Integrity Fabric"
+          }
+        },
+        "bindingMetadata": {
+          "connector": "uipath-uipath-dataservice",
+          "useConnectionService": "true",
+          "activityName": "PI360 Program Integrity Case Upsert",
+          "bindingsVersion": "2.2",
+          "displayLabel": "Program Integrity Fabric"
+        },
+        "resourceKind": "Connection"
+      }
+    ],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Api",
+      "name": "PI360ApiWorkflows",
+      "package": {
+        "name": "ProgramIntegrity360.Api.PI360ApiWorkflows",
+        "key": "ProgramIntegrity360.Api.PI360ApiWorkflows:1.0.0"
+      },
+      "packageName": "ProgramIntegrity360.Api.PI360ApiWorkflows",
+      "packageVersion": "1.0.0",
+      "entryPointUniqueId": "d525fb99-f53c-4fd9-bf44-99988c748d77",
+      "entryPointName": "Main.json",
+      "inputArgumentsSchemaV2": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"workflowName\": {\n      \"type\": \"string\",\n      \"description\": \"Simplified PI360 stage automation contract name.\"\n    },\n    \"caseType\": {\n      \"type\": \"string\",\n      \"description\": \"MedicaidPCS or StateMedicaidHospice.\"\n    },\n    \"caseId\": {\n      \"type\": \"string\",\n      \"description\": \"Program Integrity case identifier.\"\n    },\n    \"providerId\": {\n      \"type\": \"string\",\n      \"description\": \"Billing or servicing provider identifier.\"\n    },\n    \"claimTotalBilled\": {\n      \"type\": \"number\",\n      \"description\": \"Claim aggregate used by deterministic threshold logic.\"\n    },\n    \"hospitalRecordAvailable\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the requested hospital record has returned.\"\n    },\n    \"investigatorProceed\": {\n      \"type\": \"boolean\",\n      \"description\": \"Human investigator gate for the provider record request.\"\n    },\n    \"supervisorApproved\": {\n      \"type\": \"boolean\",\n      \"description\": \"Human supervisor gate for closure and communication.\"\n    },\n    \"caseInput\": {\n      \"type\": \"object\",\n      \"additionalProperties\": true,\n      \"description\": \"Case trigger details, including CaseType, case ID, requester email, and optional Maestro instance ID.\"\n    },\n    \"claimInput\": {\n      \"type\": \"object\",\n      \"additionalProperties\": true,\n      \"description\": \"Claim trigger details used to initialize the case header.\"\n    },\n    \"memberInput\": {\n      \"type\": \"object\",\n      \"additionalProperties\": true,\n      \"description\": \"Member trigger details used to initialize the case header.\"\n    },\n    \"providerInput\": {\n      \"type\": \"object\",\n      \"additionalProperties\": true,\n      \"description\": \"Provider trigger details used to initialize the case header.\"\n    },\n    \"serviceEventInput\": {\n      \"type\": \"object\",\n      \"additionalProperties\": true,\n      \"description\": \"Service-event trigger details used to initialize the case header.\"\n    },\n    \"documentInput\": {\n      \"type\": \"object\",\n      \"additionalProperties\": true,\n      \"description\": \"Document trigger details used to initialize the case header.\"\n    }\n  },\n  \"required\": []\n}",
+      "outputArgumentsSchemaV2": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"workflowName\": {\n      \"type\": \"string\"\n    },\n    \"caseType\": {\n      \"type\": \"string\"\n    },\n    \"caseId\": {\n      \"type\": \"string\"\n    },\n    \"status\": {\n      \"type\": \"string\"\n    },\n    \"gated\": {\n      \"type\": \"boolean\"\n    },\n    \"recordsAffected\": {\n      \"type\": \"number\"\n    },\n    \"persistedCaseId\": {\n      \"type\": \"string\"\n    },\n    \"registrationMode\": {\n      \"type\": \"string\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    },\n    \"payload\": {\n      \"type\": \"object\"\n    }\n  },\n  \"required\": []\n}",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180,
+      "entryPoints": "[{\"UniqueId\":\"d525fb99-f53c-4fd9-bf44-99988c748d77\",\"Path\":\"Main.json\",\"DisplayName\":\"Program Integrity 360 Case Lifecycle API Contracts\",\"InputArguments\":\"{\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"workflowName\\\": {\\n      \\\"type\\\": \\\"string\\\",\\n      \\\"description\\\": \\\"Simplified PI360 stage automation contract name.\\\"\\n    },\\n    \\\"caseType\\\": {\\n      \\\"type\\\": \\\"string\\\",\\n      \\\"description\\\": \\\"MedicaidPCS or StateMedicaidHospice.\\\"\\n    },\\n    \\\"caseId\\\": {\\n      \\\"type\\\": \\\"string\\\",\\n      \\\"description\\\": \\\"Program Integrity case identifier.\\\"\\n    },\\n    \\\"providerId\\\": {\\n      \\\"type\\\": \\\"string\\\",\\n      \\\"description\\\": \\\"Billing or servicing provider identifier.\\\"\\n    },\\n    \\\"claimTotalBilled\\\": {\\n      \\\"type\\\": \\\"number\\\",\\n      \\\"description\\\": \\\"Claim aggregate used by deterministic threshold logic.\\\"\\n    },\\n    \\\"hospitalRecordAvailable\\\": {\\n      \\\"type\\\": \\\"boolean\\\",\\n      \\\"description\\\": \\\"Whether the requested hospital record has returned.\\\"\\n    },\\n    \\\"investigatorProceed\\\": {\\n      \\\"type\\\": \\\"boolean\\\",\\n      \\\"description\\\": \\\"Human investigator gate for the provider record request.\\\"\\n    },\\n    \\\"supervisorApproved\\\": {\\n      \\\"type\\\": \\\"boolean\\\",\\n      \\\"description\\\": \\\"Human supervisor gate for closure and communication.\\\"\\n    },\\n    \\\"caseInput\\\": {\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"additionalProperties\\\": true,\\n      \\\"description\\\": \\\"Case trigger details, including CaseType, case ID, requester email, and optional Maestro instance ID.\\\"\\n    },\\n    \\\"claimInput\\\": {\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"additionalProperties\\\": true,\\n      \\\"description\\\": \\\"Claim trigger details used to initialize the case header.\\\"\\n    },\\n    \\\"memberInput\\\": {\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"additionalProperties\\\": true,\\n      \\\"description\\\": \\\"Member trigger details used to initialize the case header.\\\"\\n    },\\n    \\\"providerInput\\\": {\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"additionalProperties\\\": true,\\n      \\\"description\\\": \\\"Provider trigger details used to initialize the case header.\\\"\\n    },\\n    \\\"serviceEventInput\\\": {\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"additionalProperties\\\": true,\\n      \\\"description\\\": \\\"Service-event trigger details used to initialize the case header.\\\"\\n    },\\n    \\\"documentInput\\\": {\\n      \\\"type\\\": \\\"object\\\",\\n      \\\"additionalProperties\\\": true,\\n      \\\"description\\\": \\\"Document trigger details used to initialize the case header.\\\"\\n    }\\n  },\\n  \\\"required\\\": []\\n}\",\"OutputArguments\":\"{\\n  \\\"type\\\": \\\"object\\\",\\n  \\\"properties\\\": {\\n    \\\"workflowName\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"caseType\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"caseId\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"status\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"gated\\\": {\\n      \\\"type\\\": \\\"boolean\\\"\\n    },\\n    \\\"recordsAffected\\\": {\\n      \\\"type\\\": \\\"number\\\"\\n    },\\n    \\\"persistedCaseId\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"registrationMode\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"message\\\": {\\n      \\\"type\\\": \\\"string\\\"\\n    },\\n    \\\"payload\\\": {\\n      \\\"type\\\": \\\"object\\\"\\n    }\\n  },\\n  \\\"required\\\": []\\n}\",\"Type\":6,\"TargetRuntime\":null,\"ContentRoot\":null,\"DataVariation\":null,\"Id\":3997539}]",
+      "tags": []
+    },
+    "locks": [],
+    "key": "02f01ee0-324d-4397-8433-5f074899a866",
+    "files": []
+  }
+}

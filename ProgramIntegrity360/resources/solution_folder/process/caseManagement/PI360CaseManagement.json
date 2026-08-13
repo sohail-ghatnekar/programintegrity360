@@ -9,102 +9,48 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360CaseManagement"
+        "name": "PI360CaseManagement",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [
       {
         "bindingType": "process",
-        "bindingKey": "solution_folder.PI360EvidenceSnapshotAutomation",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "PI360EvidenceSnapshotAutomation",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
+        "bindingKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+        "bindingValues": {},
+        "bindingMetadata": {
+          "activityName": "UiPath Case Agent",
+          "bindingsVersion": "2.2",
+          "solutionsSupport": "true",
+          "isSolutionResource": true
         },
-        "resourceKind": "Process"
-      },
-      {
-        "bindingType": "process",
-        "bindingKey": "solution_folder.PI360CaseManagerAgent",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "PI360CaseManagerAgent",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
-        "bindingMetadata": {},
-        "resourceKind": "Process"
-      },
-      {
-        "bindingType": "process",
-        "bindingKey": "solution_folder.PI360DecisionPacketAutomation",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "PI360DecisionPacketAutomation",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
-        "resourceKind": "Process"
+        "resourceKind": "Process",
+        "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+        "resourceName": "PI360CaseManagerAgent",
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       },
       {
         "bindingType": "app",
-        "bindingKey": "solution_folder.pi360-escalation-action-app",
+        "bindingKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
         "bindingValues": {
-          "name": {
-            "defaultValue": "pi360-escalation-action-app",
-            "isExpression": false
-          },
           "folderPath": {
             "defaultValue": "solution_folder",
             "isExpression": false
           }
         },
         "bindingMetadata": {
+          "activityName": "Human - confirm true investigation and record findings",
           "bindingsVersion": "2.2",
-          "solutionsSupport": "true"
+          "solutionsSupport": "true",
+          "isSolutionResource": true
         },
         "resourceKind": "App",
         "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
         "resourceName": "pi360-escalation-action-app",
-        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
-      },
-      {
-        "bindingType": "app",
-        "bindingKey": "solution_folder.pi360-recovery-approval",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "pi360-recovery-approval",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "solution_folder",
-            "isExpression": false
-          }
-        },
-        "bindingMetadata": {
-          "bindingsVersion": "2.2",
-          "solutionsSupport": "true"
-        },
-        "resourceKind": "App",
-        "resourceKey": "f03d4cd5-2d9b-4202-b8df-9042004b7325",
-        "resourceName": "pi360-recovery-approval",
-        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       }
     ],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -123,7 +69,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "1e19a003-38dc-4bd3-a70e-14f262d4c19c",
-    "files": []
+    "key": "1e19a003-38dc-4bd3-a70e-14f262d4c19c"
   }
 }

@@ -9,11 +9,12 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360DecisionPacketAutomation"
+        "name": "PI360DecisionPacketAutomation",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -39,7 +40,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "4b3445e2-e309-4462-98b1-ee5a8e19c24b",
-    "files": []
+    "key": "4b3445e2-e309-4462-98b1-ee5a8e19c24b"
   }
 }

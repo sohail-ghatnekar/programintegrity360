@@ -5,11 +5,13 @@
 **/.env.*
 !**/.env.example
 **/.uipath/
+**/__uipath/
 **/.local/
 **/__pycache__/
 **/*.pyc
 **/*.log
 **/*.nupkg
 **/.playwright-mcp/
+.worktrees/
 ProgramIntegrity360/.solution-packages/
 *.uis

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { ProcessedClaim } from '../hooks/useClaims';
+import { buildMaestroProcessUrl } from '../services/uipath/cloudLinks';
 
 interface ClaimsDataGridProps {
   claims: ProcessedClaim[];
@@ -14,7 +15,7 @@ type SortField = 'applicantName' | 'eligibilityStatus' | 'addressVerifiedFlag' |
 type SortDirection = 'asc' | 'desc';
 
 const PROCESS_KEY = import.meta.env.VITE_MAESTRO_PROCESS_KEY || 'd0d245fb-a685-4784-9320-5de1601d3463';
-const DEFAULT_FOLDER_KEY = import.meta.env.VITE_MAESTRO_FOLDER_KEY || '88686c50-0dff-4b68-a7d9-77e4ef9db33b';
+const DEFAULT_FOLDER_KEY = import.meta.env.VITE_MAESTRO_FOLDER_KEY || '5db31dd1-1073-4f9e-b44b-76f5484e03c4';
 
 function renderVerificationIcon(state: ProcessedClaim['addressVerificationState']) {
   if (state === 'loading') {
@@ -91,7 +92,13 @@ export const ClaimsDataGrid = ({ claims, onClaimSelect, selectedClaim: _selected
       return;
     }
 
-    const url = `https://staging.uipath.com/uipathlabs/Playground/maestro_/processes/${PROCESS_KEY}/instances/${maestroKey}?folderKey=${folderKey}`;
+    const url = buildMaestroProcessUrl({
+      folderKey,
+      instanceKey: maestroKey,
+      organizationName: 'uipathlabs',
+      processKey: PROCESS_KEY,
+      tenantName: 'Playground',
+    });
     window.open(url, '_blank');
   };
 

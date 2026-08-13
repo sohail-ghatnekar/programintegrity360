@@ -1,0 +1,40 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360ClaimDetailsApi",
+    "kind": "process",
+    "type": "api",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "2b115f5e-5658-4c0e-b9b3-8abc0b169713",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "name": "PI360ClaimDetailsApi",
+        "kind": "package"
+      }
+    ],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Api",
+      "name": "PI360ClaimDetailsApi",
+      "package": {
+        "key": "d4fc01a6-9cba-4245-bfca-2bfc9e0726a9"
+      },
+      "packageName": "ProgramIntegrity360.api.PI360ClaimDetailsApi",
+      "inputArguments": "{}",
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180
+    },
+    "locks": [],
+    "key": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4"
+  }
+}

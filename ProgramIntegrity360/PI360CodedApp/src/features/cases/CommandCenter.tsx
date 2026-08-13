@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Badge,
   Button,
@@ -11,14 +11,25 @@ import {
 } from '@uipath/apollo-wind';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CaseSummary } from './types';
+import type { CaseType } from './caseIntakeCatalog';
+import type { CaseStartOutcome, CaseStartStatus } from './useCaseWorkspace';
+import { StartCaseDialog } from './StartCaseDialog';
 
 type CommandCenterProps = {
   cases: readonly CaseSummary[];
   selectedCaseId?: string;
   onSelectCase: (caseId: string) => void;
+  identityEmail?: string | null;
+  isAuthenticated?: boolean;
+  caseStartStatus?: CaseStartStatus;
+  caseStartMessage?: string | null;
+  onStartCase?: (input: {
+    caseType: CaseType;
+    requesterEmail: string;
+  }) => Promise<CaseStartOutcome>;
 };
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 function priorityVariant(priority: CaseSummary['priority']) {
   if (priority === 'High') return 'error' as const;
@@ -26,18 +37,48 @@ function priorityVariant(priority: CaseSummary['priority']) {
   return 'secondary' as const;
 }
 
-export function CommandCenter({ cases, selectedCaseId, onSelectCase }: CommandCenterProps) {
+export function CommandCenter({
+  cases,
+  selectedCaseId,
+  onSelectCase,
+  identityEmail = null,
+  isAuthenticated = false,
+  caseStartStatus = 'idle',
+  caseStartMessage = null,
+  onStartCase = async () => {
+    throw new Error('Connect UiPath to start a case.');
+  },
+}: CommandCenterProps) {
   const [page, setPage] = useState(0);
-  const pageCount = Math.max(1, Math.ceil(cases.length / PAGE_SIZE));
+  const orderedCases = useMemo(() => [...cases].sort((left, right) => {
+    const updated = Date.parse(right.sourceUpdatedAt) - Date.parse(left.sourceUpdatedAt);
+    return updated || right.id.localeCompare(left.id);
+  }), [cases]);
+  const pageCount = Math.max(1, Math.ceil(orderedCases.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
   const visibleCases = useMemo(
-    () => cases.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
-    [cases, safePage],
+    () => orderedCases.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
+    [orderedCases, safePage],
   );
   const highPriority = cases.filter((candidate) => candidate.priority === 'High').length;
   const inReview = cases.filter((candidate) => candidate.status.toLowerCase().includes('review')).length;
   const start = cases.length === 0 ? 0 : safePage * PAGE_SIZE + 1;
   const end = Math.min((safePage + 1) * PAGE_SIZE, cases.length);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount - 1));
+  }, [pageCount]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [selectedCaseId]);
+
+  const headCaseId = orderedCases[0]?.id;
+  useEffect(() => {
+    if (selectedCaseId && selectedCaseId === headCaseId) {
+      setPage(0);
+    }
+  }, [headCaseId, selectedCaseId]);
 
   return (
     <section aria-labelledby="command-center-heading" className="min-w-0">
@@ -57,13 +98,22 @@ export function CommandCenter({ cases, selectedCaseId, onSelectCase }: CommandCe
         />
       </dl>
 
-      <div className="mt-5 overflow-hidden border border-slate-200 bg-white">
+      <section aria-labelledby="case-queue-heading" className="mt-5 overflow-hidden border border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
           <div>
-            <h2 className="text-sm font-semibold text-slate-950">Case queue</h2>
+            <h2 id="case-queue-heading" className="text-sm font-semibold text-slate-950">Case queue</h2>
             <p className="mt-0.5 text-xs text-slate-500">Select a case to open its six-stage workspace.</p>
           </div>
-          <Badge variant="outline">{cases.length} total</Badge>
+          <div className="flex flex-wrap items-start justify-end gap-2">
+            <Badge variant="outline" className="mt-1">{cases.length} total</Badge>
+            <StartCaseDialog
+              identityEmail={identityEmail}
+              isAuthenticated={isAuthenticated}
+              startStatus={caseStartStatus}
+              startMessage={caseStartMessage}
+              onStartCase={onStartCase}
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -121,18 +171,16 @@ export function CommandCenter({ cases, selectedCaseId, onSelectCase }: CommandCe
 
         <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-4 py-2">
           <span className="text-xs tabular-nums text-slate-500">Showing {start}-{end} of {cases.length}</span>
-          {pageCount > 1 && (
-            <div className="flex gap-1">
-              <Button type="button" variant="outline" size="icon" aria-label="Previous page" disabled={safePage === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
-                <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-              </Button>
-              <Button type="button" variant="outline" size="icon" aria-label="Next page" disabled={safePage >= pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>
-                <ChevronRight aria-hidden="true" className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <div className="flex gap-1">
+            <Button type="button" variant="outline" size="icon" aria-label="Previous page" disabled={safePage === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="outline" size="icon" aria-label="Next page" disabled={safePage >= pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>
+              <ChevronRight aria-hidden="true" className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      </section>
     </section>
   );
 }

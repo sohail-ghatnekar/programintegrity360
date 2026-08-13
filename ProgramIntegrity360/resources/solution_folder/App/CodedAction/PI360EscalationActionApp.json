@@ -1,0 +1,38 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EscalationActionApp",
+    "kind": "app",
+    "type": "codedAction",
+    "apiVersion": "apps.uipath.com/v1",
+    "projectKey": "e0eab46c-4d80-4aac-8ef9-47644098ceaf",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "name": "PI360EscalationActionApp",
+        "kind": "package"
+      }
+    ],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360EscalationActionApp",
+      "description": null,
+      "version": "1.0.0",
+      "routingName": null,
+      "appSystemName": null,
+      "package": {
+        "key": "1358edb0-6f6c-4267-a180-2f862e29713d"
+      },
+      "externalClientId": null,
+      "actionSchema": null
+    },
+    "locks": [],
+    "key": "03d46443-0ae3-460a-8ad5-dce6e8fdea62"
+  }
+}

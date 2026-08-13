@@ -1,106 +1,79 @@
 # Program Integrity 360
 
-**A UiPath demo: Medicaid Personal Care Services (PCS) program-integrity investigation for State HHS / SLED.**
+Program Integrity 360 is a UiPath public-sector demo for two state Medicaid claim-review scenarios:
 
-Program Integrity 360 turns a single claims-analytics alert into an organized, auditable investigation
-that a human owns from start to finish. It shows RPA, IDP/IXP, agents, human-in-the-loop, a coded-app
-investigator workbench, and Maestro case orchestration working as one system on **one realistic case**.
+- Primary: `PI-HSP-2026-0042`, a State Medicaid Hospice claim for Jordan Ellis.
+- Fallback: `PI-PCS-2026-0041`, the existing Medicaid Personal Care Services case.
 
-> ⚠️ **Positioning (non-negotiable in this demo):** the system **identifies risk signals, organizes
-> evidence, and routes decisions to humans**. It does **not** make a fraud determination. Deterministic
-> code — not the agents — computes every overlap, overage, and unsupported unit. Every adverse or
-> financial action is gated by a human approval. All data is **synthetic**.
+All people, providers, claims, and documents are synthetic. The solution identifies review indicators, organizes evidence, and routes decisions to people. It does not autonomously determine fraud, intent, coverage, payment, or recovery.
 
----
+## Primary story
 
-## The case
-- **Case:** `PI-PCS-2026-0041` — Harbor Home Support Services (provider), Jordan Ellis (attendant)
-- **Program:** Medicaid Personal Care Services
-- **Trigger:** claims analytics alert `ALERT-CA-2026-7781`
-- **What we find (as risk signals, not conclusions):** an overlapping-visit conflict on 2026-04-14,
-  manual EVV entries with no GPS, billed units above the plan of care, timesheet mismatches, and an
-  incomplete personnel packet with a lapsed certification.
-- **Where it lands:** investigator validates → provider records request + wait state → supervisor
-  approves disposition → referral packet + overpayment recovery opened → case closed and provider
-  added to monitoring.
+Harbor Home Support Services billed 52 units and $3,250 for in-home hospice personal care. The $3,250 claim exceeds the demo threshold of $2,500. One line reports service at Jordan Ellis's home from 09:00 to 15:00 on July 14, 2026. The supplied hospital record places Jordan in a hospital observation encounter from 08:20 on July 14 through 10:00 on July 16.
 
-Everything about the case (IDs, dates, numbers, math) is fixed in **`CANON.md`** — read that first.
+The six-hour overlap is a deterministic location/time conflict and a review indicator only. The medical record says `Observation`, not inpatient, so the PCS policy's inpatient restriction is not applicable to this encounter. An investigator and supervisor retain every consequential decision.
 
----
+## Runtime architecture
 
-## How the pieces fit together
+The Case plan is the lifecycle authority. Intake persists the Case in Data Fabric; Data Fabric is the persistent system of record for the Case and its linked evidence, rule, action, and decision records. The Case controls the human investigator and supervisor boundaries and persists the approved closure disposition.
 
-```
-                    Claims Analytics Alert (ALERT-CA-2026-7781)
-                                     │
-              /uipath-api-workflow  ─┤ create case in Data Fabric
-                                     ▼
-        ┌───────────────  /uipath-maestro-case : PI-PCS-2026-0041  ───────────────┐
-        │  (owns the 9-stage lifecycle, gates, SLAs, human tasks)                  │
-        │                                                                          │
-        │  Stage 2  Evidence collection ── /uipath-maestro-bpmn                     │
-        │             ├── /uipath-rpa           pull EVV + Plan of Care (legacy, no API)
-        │             ├── /uipath-api-workflow  pull claims + provider enrollment (API)
-        │             └── /uipath-platform      land into Data Fabric + storage buckets
-        │  Stage 3  Extraction ────────── /uipath-ixp  (timesheets, POC, notes, personnel, corr.)
-        │             └── /uipath-human-in-the-loop  validate low-confidence fields
-        │  (deterministic calc) ────────  RS-01..RS-05 risk signals + exposure math
-        │  Stage 4  Correlation/plan ──── /uipath-agents (Correlation, Planning) — grounded
-        │  Stage 5  Investigator review ─ /uipath-human-in-the-loop + /uipath-coded-apps
-        │  Stage 6  Records request ───── /uipath-maestro-bpmn + wait state + response intake
-        │  Stage 7  Supervisor approval ─ /uipath-human-in-the-loop (adverse/financial gate)
-        │  Stage 8  Execute action ────── /uipath-maestro-bpmn (referral packet, recovery, notice)
-        │  Stage 9  Closure & monitor ─── /uipath-maestro-bpmn + /uipath-insights
-        └──────────────────────────────────────────────────────────────────────────┘
-                                     │
-      /uipath-coded-apps : "Program Integrity 360" investigator workbench (9 screens)
-      /uipath-insights   : operational + program-integrity metrics
-      /uipath-solution   : packages all projects into one deployable Program Integrity 360 .uipx
-```
+Its Evidence acquisition and validation stage first runs `PI360 IXP Timesheet`, then invokes `PI360CaseManagerFlow`. The Flow uses `PI360ClaimDetailsApi` with HTTP `GET` to retrieve CaseType-specific claim details; writes provider, claim, PCS attendant/EVV, risk-signal, and intake-evidence records through the `Program Integrity Fabric` connection; runs an explicitly labeled RPA service-evidence placeholder; and uses `PI360QuickRulesCodedAgent` plus `PI360CaseManagerAgent` to calculate and explain routing.
 
-The **Summary Agent** drafts the investigator- and supervisor-facing narrative at each human gate,
-always labeling **FACT (cited)** vs **INFERENCE (for human review)**.
+For `StateMedicaidHospice`, the Provider record request stage invokes `PI360AdHocReviewBpmn` only after the investigator-proceed gate. The BPMN runs an explicitly labeled RPA provider-request placeholder, waits for either the correlated provider message or `P3D` (72 hours), runs `PI360 IXP Medical Record` on a response, and passes the completed RPA job output into `PI360ApiWorkflows` to persist the hospital evidence and audit action before returning control to Investigation. A missing response remains awaiting provider; no analysis is claimed.
 
----
+Supervisor review runs `PI360DecisionPacketAutomation` before the human task. Closure invokes `PI360ApiWorkflows` to create the approved Decision and audit action and update the Case, then runs `PI360 Send Outlook Email`. The email is downstream of the human gate and carries the approved disposition, evidence summary, and next steps.
 
-## Repo map
-| Path | What's in it | Skill |
-|---|---|---|
-| `CANON.md` | Single source of truth (read first) | — |
-| `docs/` | Outline, architecture, stages, demo script, checklist, skill map, review | `/uipath-planner`, `/uipath-review` |
-| `data/` | Synthetic sample data (9 entity JSON files) | `/uipath-platform` |
-| `maestro-case/` | Case plan (`caseplan.json`) + task breakdown | `/uipath-maestro-case` |
-| `maestro-bpmn/` | 4 deterministic subprocess specs | `/uipath-maestro-bpmn` |
-| `rpa/` | Legacy-system pull specs | `/uipath-rpa` |
-| `api-workflows/` | Modern API lookup/outbound specs | `/uipath-api-workflow` |
-| `ixp/` | Document taxonomy + extraction config | `/uipath-ixp` |
-| `agents/` | 4 grounded agent specs + prompts | `/uipath-agents` |
-| `hitl/` | Human task designs (validate, exception, approve) | `/uipath-human-in-the-loop` |
-| `coded-app/` | Investigator workbench spec + wireframes | `/uipath-coded-apps` |
-| `platform/` | Data Fabric, queues, buckets, triggers | `/uipath-platform` |
-| `insights/` | Metrics view | `/uipath-insights` |
-| `connector-builder/` | Mock external-system connector pattern | `/uipath-connector-builder` |
-| `test/` | Test plan + smoke tests | `/uipath-test` |
-| `solution/` | Packaging + deploy commands | `/uipath-solution` |
+## Six-stage lifecycle
 
----
+1. Intake and triage receives only `caseType` and `caseworkerEmail`. `caseType` selects `MedicaidPCS` or `StateMedicaidHospice`; the Case hydrates that scenario's synthetic fixture data, generates a unique Case ID, and persists the Case to Data Fabric.
+2. Evidence acquisition and validation runs the timesheet extraction RPA and invokes `PI360CaseManagerFlow` for claim facts, Data Fabric evidence writes, deterministic rules, and routing.
+3. Provider record request is hospice-only: `PI360AdHocReviewBpmn` applies the investigator-proceed gate, a message/timer response race, medical-record extraction, and hospital-evidence persistence.
+4. Investigation uses the Agentic Caseworker for a grounded first pass, then requires an investigator to decide whether to open a true investigation.
+5. Supervisor review creates the decision packet, then presents investigator findings and a selectable Agentic Evidence view.
+6. Closure and communication persists the human-approved disposition and audit trail, then sends the closure summary through RPA.
 
-## Run it as a live demo
-1. Read `docs/04-demo-script.md` — a ~12-minute screen-by-screen narration.
-2. Reset state with `docs/05-launch-checklist.md`.
-3. Smoke-test with `test/test-plan.md`.
+Deterministic rules calculate the $2,500 hospice threshold and the 360-minute hospice conflict. Agents explain and route; people decide.
 
-## Deploy it
-Target: **staging.uipath.com**, org **uipathlabs**, tenant **Playground**. Solution name **Program Integrity 360**.
-See `solution/deploy.md` for the exact `uip login` + `uip solution pack/publish/deploy/activate` sequence.
-Deployment requires an interactive browser login and pushes to a live tenant, so it is run by a human
-operator, not automatically.
+## Integrations
 
-## Why it's defensible for a public-sector buyer
-- **Auditability:** every action writes an immutable `InvestigationAction` row; risk signals store their
-  exact rule and inputs.
-- **Transparency:** the reconciliation screen shows the arithmetic; agents cite sources and separate fact
-  from inference.
-- **Process control:** Maestro enforces the stage gates and SLAs.
-- **Human oversight:** agents recommend, humans decide; adverse/financial actions require supervisor
-  approval; the phrase "fraud determination" is never applied to system output.
+- PCS claim detail: `https://medicaid-claim-demo.free.beeceptor.com/MedicaidPCS`
+- Hospice claim detail: `https://medicaid-claim-demo.free.beeceptor.com/StateMedicaidHospice`
+- Claim retrieval: `PI360ClaimDetailsApi` uses HTTP `GET` to the route selected by `CaseType`
+- Evidence routing: `PI360CaseManagerFlow` uses `PI360QuickRulesCodedAgent` and `PI360CaseManagerAgent`
+- Data Fabric: Flow and API Workflow activities use the live `Program Integrity Fabric` connection
+- Hospice provider wait: `PI360AdHocReviewBpmn`, including a correlated message catch and visible `P3D` timer
+- Document extraction: `PI360 IXP Timesheet` and `PI360 IXP Medical Record`
+- Human-review packet: `PI360DecisionPacketAutomation`
+- Closure communication: `PI360 Send Outlook Email`
+- Storage buckets: Timesheets, Hospital Records, and Policy Docs in `AMER Presales/Public Sector/ProgramIntegrity360`
+- Hosted coded app: `https://uipathlabs.uipath.host/pi360-coded-app`
+
+The provider-request and generic service-evidence steps are intentionally explicit RPA placeholders because no provider portal or production service-evidence automation is in scope. They are deployable process bindings, not mock API branches, and can be replaced without changing Case or BPMN routing.
+
+The existing coded-app visual design is intentionally preserved. Version 0.6.1 changes the shared case contracts, orchestration, evidence, and live Data Fabric records; the app retains its clearly labeled PCS demo-data fallback.
+
+## Repository map
+
+| Path | Purpose |
+|---|---|
+| `CANON.md` | Authoritative facts and controls for both scenarios |
+| `ProgramIntegrity360/` | Packaged UiPath Case, Flow, BPMN, RPA, agent, API workflow, and app projects |
+| `data/` | Canonical synthetic fixtures |
+| `documents/` | Generated PCS evidence PDFs |
+| `ixp/` | Extraction taxonomy and model instructions |
+| `platform/` | Data Fabric, bucket, and cloud migration ledger |
+| `docs/04-demo-script.md` | Hospice-first walkthrough and PCS fallback |
+| `docs/05-launch-checklist.md` | Demo and deployment checks |
+| `solution/` | Solution packaging and deployment guidance |
+| `test/` | Contract and fixture tests |
+
+## Target
+
+- Cloud: `cloud.uipath.com`
+- Organization: `uipathlabs`
+- Tenant: `Playground`
+- Folder: `AMER Presales/Public Sector/ProgramIntegrity360`
+- Active solution version: `0.6.1`
+- Rollback version: `0.5.1`
+
+See `solution/deploy.md` for deployment and `platform/cloud-playground-migration.json` for durable live identifiers.

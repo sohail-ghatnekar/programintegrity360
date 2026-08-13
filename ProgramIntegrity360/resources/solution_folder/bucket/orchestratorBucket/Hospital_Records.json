@@ -1,0 +1,25 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "Hospital Records",
+    "kind": "bucket",
+    "type": "orchestratorBucket",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Orchestrator",
+      "name": "Hospital Records",
+      "tags": []
+    },
+    "locks": [],
+    "key": "72623e80-55ba-4cfc-abd1-343af54beae0",
+    "files": []
+  }
+}

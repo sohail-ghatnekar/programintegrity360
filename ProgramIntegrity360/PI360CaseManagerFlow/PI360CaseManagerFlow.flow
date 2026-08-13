@@ -1,7 +1,8 @@
 {
   "id": "3da6bf1e-3d42-4cd4-aa75-072a12d49572",
-  "version": "1.0.0",
+  "version": "1.9",
   "name": "PI360CaseManagerFlow",
+  "runtime": "maestro",
   "nodes": [
     {
       "id": "start",
@@ -15,7 +16,11 @@
         "output": {
           "type": "object",
           "description": "Case routing payload supplied by the case manager or test harness.",
-          "source": "null",
+          "source": {
+            "type": "literal",
+            "expression": "null",
+            "fieldType": "string"
+          },
           "var": "output"
         }
       },
@@ -33,20 +38,371 @@
         "label": "Normalize case facts"
       },
       "inputs": {
-        "script": "const raw = ($vars.start && $vars.start.output) || {};\nconst payload = raw.payload || raw.case || raw;\nconst quickRules = payload.quickRules || payload.rules || {};\nreturn {\n  caseId: String(payload.caseId || payload.id || 'PI-PCS-2026-0041'),\n  currentStage: String(payload.currentStage || payload.stage || 'Stage_Aintk1'),\n  claimsAvailable: Boolean(payload.claimsAvailable ?? true),\n  evvAvailable: Boolean(payload.evvAvailable ?? true),\n  planOfCareAvailable: Boolean(payload.planOfCareAvailable ?? true),\n  enrollmentAvailable: Boolean(payload.enrollmentAvailable ?? true),\n  providerPacketAvailable: Boolean(payload.providerPacketAvailable ?? !payload.providerResponseNeeded),\n  grounding: payload,\n  quickRules\n};"
+        "script": "const raw = ($vars.start && $vars.start.output) || {};\nconst caseInput = raw.caseInput || {};\nconst claimInput = raw.claimInput || {};\nconst memberInput = raw.memberInput || {};\nconst providerInput = raw.providerInput || {};\nconst serviceEventInput = raw.serviceEventInput || {};\nconst documentInput = raw.documentInput || {};\nconst caseType = String(caseInput.caseType || caseInput.case_type || claimInput.caseType || claimInput.case_type || '').trim();\nconst allowedCaseTypes = ['MedicaidPCS', 'StateMedicaidHospice'];\nif (!allowedCaseTypes.includes(caseType)) {\n  throw new Error(`Unsupported CaseType '${caseType}'. Expected MedicaidPCS or StateMedicaidHospice.`);\n}\nconst isHospice = caseType === 'StateMedicaidHospice';\nconst caseId = String(caseInput.caseId || caseInput.case_id || (isHospice ? 'PI-HSP-2026-0042' : 'PI-PCS-2026-0041'));\nconst currentStage = String(caseInput.currentStage || caseInput.current_stage || 'Stage_Aintk1');\nconst hospitalRecordAvailable = Boolean(documentInput.hospitalRecordAvailable ?? documentInput.hospital_record_available ?? false);\nconst providerResponseNeeded = isHospice && !hospitalRecordAvailable;\nconst providerResponseReceived = !providerResponseNeeded;\nconst riskScore = Number(caseInput.riskScore ?? caseInput.risk_score ?? (isHospice ? 82 : 72));\nconst unsupportedUnits = Number(serviceEventInput.unsupportedUnits ?? serviceEventInput.unsupported_units ?? 0);\nconst patientClass = String(documentInput.patientClass ?? documentInput.patient_class ?? (isHospice ? 'Observation' : ''));\nreturn {\n  caseId,\n  caseType,\n  currentStage,\n  isHospice,\n  claimThreshold: 2500,\n  riskScore,\n  unsupportedUnits,\n  missingEvidenceCount: Number(documentInput.missingEvidenceCount ?? documentInput.missing_evidence_count ?? 0),\n  providerResponseNeeded,\n  providerResponseReceived,\n  hospitalRecordAvailable,\n  claimedServiceStartAt: String(serviceEventInput.claimedServiceStartAt ?? serviceEventInput.claimed_service_start_at ?? serviceEventInput.startAt ?? ''),\n  claimedServiceEndAt: String(serviceEventInput.claimedServiceEndAt ?? serviceEventInput.claimed_service_end_at ?? serviceEventInput.endAt ?? ''),\n  encounterArrivalAt: String(documentInput.encounterArrivalAt ?? documentInput.encounter_arrival_at ?? ''),\n  encounterDischargeAt: String(documentInput.encounterDischargeAt ?? documentInput.encounter_discharge_at ?? ''),\n  patientClass,\n  caseInput,\n  claimInput,\n  memberInput,\n  providerInput,\n  serviceEventInput,\n  documentInput\n};"
       },
       "outputs": {
         "output": {
           "type": "object",
           "description": "Normalized case routing facts.",
-          "source": "=result.response",
+          "source": {
+            "type": "literal",
+            "expression": "=result.response",
+            "fieldType": "string"
+          },
           "var": "output"
         },
         "error": {
           "type": "object",
           "description": "Error information if the script fails",
-          "source": "=result.Error",
+          "source": {
+            "type": "literal",
+            "expression": "=result.Error",
+            "fieldType": "string"
+          },
           "var": "error"
+        }
+      }
+    },
+    {
+      "id": "claimDetailsByCaseType",
+      "type": "uipath.core.api-workflow.6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "API - retrieve CaseType claim details"
+      },
+      "inputs": {
+        "caseType": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseType",
+          "fieldType": "string"
+        },
+        "caseId": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseId",
+          "fieldType": "string"
+        },
+        "claimThreshold": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.claimThreshold",
+          "fieldType": "number"
+        }
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "source": {
+            "type": "literal",
+            "expression": "=this",
+            "fieldType": "string"
+          },
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "workflowName": {
+                "type": "string"
+              },
+              "caseType": {
+                "type": "string"
+              },
+              "caseId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "recordsAffected": {
+                "type": "number"
+              },
+              "claimCount": {
+                "type": "number"
+              },
+              "lineCount": {
+                "type": "number"
+              },
+              "totalUnits": {
+                "type": "number"
+              },
+              "totalBilled": {
+                "type": "number"
+              },
+              "claimThreshold": {
+                "type": "number"
+              },
+              "thresholdExceeded": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "sourceEndpoint": {
+                "type": "string"
+              },
+              "payload": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": {
+            "type": "literal",
+            "expression": "=Error",
+            "fieldType": "string"
+          },
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    {
+      "id": "quickRulesByCaseType",
+      "type": "uipath.core.agent.fabc409c-d468-4964-92e0-2171e0ced3ba",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Rules - evaluate CaseType evidence gates",
+        "icon": "coded-agent"
+      },
+      "inputs": {
+        "case_id": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseId",
+          "fieldType": "string"
+        },
+        "case_type": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseType",
+          "fieldType": "string"
+        },
+        "current_stage": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.currentStage",
+          "fieldType": "string"
+        },
+        "risk_score": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.riskScore",
+          "fieldType": "number"
+        },
+        "claim_total_billed": {
+          "type": "jsExpression",
+          "expression": "$vars.claimDetailsByCaseType.output.totalBilled",
+          "fieldType": "number"
+        },
+        "claim_threshold": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.claimThreshold",
+          "fieldType": "number"
+        },
+        "unsupported_units": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.unsupportedUnits",
+          "fieldType": "number"
+        },
+        "missing_evidence_count": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.missingEvidenceCount",
+          "fieldType": "number"
+        },
+        "provider_response_needed": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.providerResponseNeeded",
+          "fieldType": "boolean"
+        },
+        "provider_response_received": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.providerResponseReceived",
+          "fieldType": "boolean"
+        },
+        "claimed_service_start_at": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.claimedServiceStartAt",
+          "fieldType": "string"
+        },
+        "claimed_service_end_at": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.claimedServiceEndAt",
+          "fieldType": "string"
+        },
+        "encounter_arrival_at": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.encounterArrivalAt",
+          "fieldType": "string"
+        },
+        "encounter_discharge_at": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.encounterDischargeAt",
+          "fieldType": "string"
+        },
+        "patient_class": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.patientClass",
+          "fieldType": "string"
+        },
+        "supervisor_approved": false,
+        "proposed_action": "open true investigation for human confirmation",
+        "gating_json": {
+          "type": "jsExpression",
+          "expression": "JSON.stringify({ reviewIndicatorOnly: true, overlapMinutes: 360, patientClass: $vars.normalizeCase.output.patientClass, hospitalRecordAvailable: $vars.normalizeCase.output.hospitalRecordAvailable })",
+          "fieldType": "string"
+        }
+      },
+      "outputs": {
+        "output": {
+          "type": "object",
+          "source": {
+            "type": "literal",
+            "expression": "=this",
+            "fieldType": "string"
+          },
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "case_id": {
+                "description": "Program Integrity case identifier.",
+                "title": "Case Id",
+                "type": "string"
+              },
+              "status": {
+                "description": "blocked or clear_for_case_manager.",
+                "title": "Status",
+                "type": "string"
+              },
+              "recommended_stage": {
+                "description": "Recommended next ad-hoc stage for the Case Manager agent.",
+                "title": "Recommended Stage",
+                "type": "string"
+              },
+              "blockers": {
+                "description": "Blocking rule failures that must be resolved before closure.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Blockers",
+                "type": "array"
+              },
+              "warnings": {
+                "description": "Non-blocking issues for the case manager to review.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Warnings",
+                "type": "array"
+              },
+              "facts_checked": {
+                "description": "Primitive facts used by the deterministic rules.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Facts Checked",
+                "type": "array"
+              },
+              "supervisor_gate_required": {
+                "default": false,
+                "description": "True when the proposed action requires supervisor approval.",
+                "title": "Supervisor Gate Required",
+                "type": "boolean"
+              },
+              "provider_wait_required": {
+                "default": false,
+                "description": "True when provider response is still required.",
+                "title": "Provider Wait Required",
+                "type": "boolean"
+              },
+              "evidence_gap": {
+                "default": false,
+                "description": "True when material evidence is missing.",
+                "title": "Evidence Gap",
+                "type": "boolean"
+              },
+              "location_conflict_minutes": {
+                "default": 0,
+                "description": "Minutes where claimed home service intersects the institutional encounter.",
+                "title": "Location Conflict Minutes",
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": {
+            "type": "literal",
+            "expression": "=Error",
+            "fieldType": "string"
+          },
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
         }
       }
     },
@@ -58,7 +414,7 @@
         "label": "Supervisor gate?"
       },
       "inputs": {
-        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Supv7a'",
+        "expression": "!($vars.normalizeCase.output.caseType === 'MedicaidPCS' && Number($vars.quickRulesByCaseType.output.location_conflict_minutes || 0) >= 360) && $vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Supv7a'",
         "trueLabel": "Escalate",
         "falseLabel": "Continue"
       }
@@ -71,19 +427,27 @@
         "label": "Prepare escalation packet"
       },
       "inputs": {
-        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Supv7a' };"
+        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nreturn { ...route, recommendedStageId: 'Stage_Supv7a', routeReason: String(route.routeReason || 'The grounded recommendation requires supervisor review before the case proceeds.') };"
       },
       "outputs": {
         "output": {
           "type": "object",
           "description": "Supervisor escalation payload.",
-          "source": "=result.response",
+          "source": {
+            "type": "literal",
+            "expression": "=result.response",
+            "fieldType": "string"
+          },
           "var": "output"
         },
         "error": {
           "type": "object",
           "description": "Error information if the script fails",
-          "source": "=result.Error",
+          "source": {
+            "type": "literal",
+            "expression": "=result.Error",
+            "fieldType": "string"
+          },
           "var": "error"
         }
       }
@@ -96,7 +460,7 @@
         "label": "Provider response needed?"
       },
       "inputs": {
-        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Prreq6'",
+        "expression": "($vars.normalizeCase.output.caseType === 'StateMedicaidHospice' && Number($vars.claimDetailsByCaseType.output.totalBilled || 0) >= Number($vars.claimDetailsByCaseType.output.claimThreshold || 2500) && $vars.normalizeCase.output.hospitalRecordAvailable !== true) || (!($vars.normalizeCase.output.caseType === 'MedicaidPCS' && Number($vars.quickRulesByCaseType.output.location_conflict_minutes || 0) >= 360) && $vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Prreq6')",
         "trueLabel": "Await response",
         "falseLabel": "Evaluate closure"
       }
@@ -109,19 +473,27 @@
         "label": "Route to provider response"
       },
       "inputs": {
-        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Prreq6' };"
+        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nconst normalized = $vars.normalizeCase.output || {};\nconst claimDetails = $vars.claimDetailsByCaseType.output || {};\nconst claimThreshold = Number(claimDetails.claimThreshold || 2500);\nconst totalBilled = Number(claimDetails.totalBilled || 0);\nconst deterministicHospiceProviderRequest = normalized.caseType === 'StateMedicaidHospice' && totalBilled >= claimThreshold && normalized.hospitalRecordAvailable !== true;\nconst deterministicReason = `StateMedicaidHospice billed total ${totalBilled} meets the ${claimThreshold} threshold and the hospital record is not yet available.`;\nconst routeReason = deterministicHospiceProviderRequest ? deterministicReason : String(route.routeReason || 'The Case Manager agent selected Provider Request based on grounded evidence requirements.');\nreturn { ...route, recommendedStageId: 'Stage_Prreq6', routeReason };"
       },
       "outputs": {
         "output": {
           "type": "object",
           "description": "Provider-response route payload.",
-          "source": "=result.response",
+          "source": {
+            "type": "literal",
+            "expression": "=result.response",
+            "fieldType": "string"
+          },
           "var": "output"
         },
         "error": {
           "type": "object",
           "description": "Error information if the script fails",
-          "source": "=result.Error",
+          "source": {
+            "type": "literal",
+            "expression": "=result.Error",
+            "fieldType": "string"
+          },
           "var": "error"
         }
       }
@@ -134,7 +506,7 @@
         "label": "Closure ready?"
       },
       "inputs": {
-        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Clos9a'",
+        "expression": "!($vars.normalizeCase.output.caseType === 'MedicaidPCS' && Number($vars.quickRulesByCaseType.output.location_conflict_minutes || 0) >= 360) && $vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Clos9a'",
         "trueLabel": "Close",
         "falseLabel": "Investigate"
       }
@@ -147,19 +519,27 @@
         "label": "Route to closure"
       },
       "inputs": {
-        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Clos9a' };"
+        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nreturn { ...route, recommendedStageId: 'Stage_Clos9a', routeReason: String(route.routeReason || 'The grounded facts satisfy the existing lower-risk closure route.') };"
       },
       "outputs": {
         "output": {
           "type": "object",
           "description": "Closure route payload.",
-          "source": "=result.response",
+          "source": {
+            "type": "literal",
+            "expression": "=result.response",
+            "fieldType": "string"
+          },
           "var": "output"
         },
         "error": {
           "type": "object",
           "description": "Error information if the script fails",
-          "source": "=result.Error",
+          "source": {
+            "type": "literal",
+            "expression": "=result.Error",
+            "fieldType": "string"
+          },
           "var": "error"
         }
       }
@@ -172,19 +552,27 @@
         "label": "Route to investigation"
       },
       "inputs": {
-        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Corr4a' };"
+        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nconst conflictMinutes = Number($vars.quickRulesByCaseType.output.location_conflict_minutes || 0);\nconst deterministicReason = $vars.normalizeCase.output.caseType === 'MedicaidPCS' && conflictMinutes >= 360 ? `MedicaidPCS has ${conflictMinutes} conflict minutes, meeting the 360-minute review threshold; route to Investigation for human confirmation.` : String(route.routeReason || 'The grounded recommendation routes the case to Investigation for human confirmation.');\nreturn { ...route, recommendedStageId: 'Stage_Corr4a', routeReason: deterministicReason };"
       },
       "outputs": {
         "output": {
           "type": "object",
           "description": "Investigation route payload.",
-          "source": "=result.response",
+          "source": {
+            "type": "literal",
+            "expression": "=result.response",
+            "fieldType": "string"
+          },
           "var": "output"
         },
         "error": {
           "type": "object",
           "description": "Error information if the script fails",
-          "source": "=result.Error",
+          "source": {
+            "type": "literal",
+            "expression": "=result.Error",
+            "fieldType": "string"
+          },
           "var": "error"
         }
       }
@@ -196,7 +584,39 @@
       "display": {
         "label": "End - escalation prepared"
       },
-      "inputs": {}
+      "inputs": {},
+      "outputs": {
+        "caseId": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseId"
+        },
+        "caseType": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseType"
+        },
+        "claimCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimCount"
+        },
+        "lineCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.lineCount"
+        },
+        "totalUnits": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalUnits"
+        },
+        "totalBilled": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalBilled"
+        },
+        "claimThreshold": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimThreshold"
+        },
+        "thresholdExceeded": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.thresholdExceeded"
+        },
+        "recommendedStageId": {
+          "source": "=js:$vars.prepareSupervisorEscalation.output.recommendedStageId"
+        },
+        "routeReason": {
+          "source": "=js:$vars.prepareSupervisorEscalation.output.routeReason"
+        }
+      }
     },
     {
       "id": "endProvider",
@@ -205,7 +625,39 @@
       "display": {
         "label": "End - await provider"
       },
-      "inputs": {}
+      "inputs": {},
+      "outputs": {
+        "caseId": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseId"
+        },
+        "caseType": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseType"
+        },
+        "claimCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimCount"
+        },
+        "lineCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.lineCount"
+        },
+        "totalUnits": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalUnits"
+        },
+        "totalBilled": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalBilled"
+        },
+        "claimThreshold": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimThreshold"
+        },
+        "thresholdExceeded": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.thresholdExceeded"
+        },
+        "recommendedStageId": {
+          "source": "=js:$vars.routeProviderResponse.output.recommendedStageId"
+        },
+        "routeReason": {
+          "source": "=js:$vars.routeProviderResponse.output.routeReason"
+        }
+      }
     },
     {
       "id": "endClosure",
@@ -214,7 +666,39 @@
       "display": {
         "label": "End - closure"
       },
-      "inputs": {}
+      "inputs": {},
+      "outputs": {
+        "caseId": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseId"
+        },
+        "caseType": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseType"
+        },
+        "claimCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimCount"
+        },
+        "lineCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.lineCount"
+        },
+        "totalUnits": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalUnits"
+        },
+        "totalBilled": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalBilled"
+        },
+        "claimThreshold": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimThreshold"
+        },
+        "thresholdExceeded": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.thresholdExceeded"
+        },
+        "recommendedStageId": {
+          "source": "=js:$vars.routeClosure.output.recommendedStageId"
+        },
+        "routeReason": {
+          "source": "=js:$vars.routeClosure.output.routeReason"
+        }
+      }
     },
     {
       "id": "endInvestigation",
@@ -223,58 +707,38 @@
       "display": {
         "label": "End - investigate"
       },
-      "inputs": {}
-    },
-    {
-      "id": "rpaEvidenceCompletenessSnapshot1",
-      "type": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
-      "typeVersion": "1.0.0",
-      "display": {
-        "label": "RPA - evidence completeness snapshot"
-      },
-      "inputs": {
-        "in_CaseId": "=js:$vars.normalizeCase.output.caseId",
-        "in_ClaimsAvailable": "=js:$vars.normalizeCase.output.claimsAvailable",
-        "in_EvvAvailable": "=js:$vars.normalizeCase.output.evvAvailable",
-        "in_PlanOfCareAvailable": "=js:$vars.normalizeCase.output.planOfCareAvailable",
-        "in_EnrollmentAvailable": "=js:$vars.normalizeCase.output.enrollmentAvailable",
-        "in_ProviderPacketAvailable": "=js:$vars.normalizeCase.output.providerPacketAvailable"
-      },
-      "model": {
-        "type": "bpmn:ServiceTask",
-        "serviceType": "Orchestrator.StartJob",
-        "version": "v2",
-        "bindings": {
-          "resource": "process",
-          "resourceSubType": "Process",
-          "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
-          "orchestratorType": "process",
-          "values": {
-            "name": "PI360EvidenceSnapshotAutomation",
-            "folderPath": ""
-          }
+      "inputs": {},
+      "outputs": {
+        "caseId": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseId"
         },
-        "projectId": "58e4aa89-7358-47ee-a0d4-6711e9792208",
-        "projectName": "PI360EvidenceSnapshotAutomation",
-        "context": [
-          {
-            "name": "name",
-            "type": "string",
-            "value": "=bindings.bybLZkmcn",
-            "default": "PI360EvidenceSnapshotAutomation"
-          },
-          {
-            "name": "folderPath",
-            "type": "string",
-            "value": "=bindings.bHJVld2gM",
-            "default": ""
-          },
-          {
-            "name": "_label",
-            "type": "string",
-            "value": "PI360EvidenceSnapshotAutomation"
-          }
-        ]
+        "caseType": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseType"
+        },
+        "claimCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimCount"
+        },
+        "lineCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.lineCount"
+        },
+        "totalUnits": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalUnits"
+        },
+        "totalBilled": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalBilled"
+        },
+        "claimThreshold": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimThreshold"
+        },
+        "thresholdExceeded": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.thresholdExceeded"
+        },
+        "recommendedStageId": {
+          "source": "=js:$vars.routeInvestigation.output.recommendedStageId"
+        },
+        "routeReason": {
+          "source": "=js:$vars.routeInvestigation.output.routeReason"
+        }
       }
     },
     {
@@ -285,10 +749,26 @@
         "label": "Agent - select next case stage"
       },
       "inputs": {
-        "caseId": "=js:$vars.normalizeCase.output.caseId",
-        "currentStage": "=js:$vars.normalizeCase.output.currentStage",
-        "groundingJson": "=js:$vars.buildGroundedAgentContext1.output.groundingJson",
-        "quickRulesJson": "=js:$vars.buildGroundedAgentContext1.output.quickRulesJson"
+        "caseId": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseId",
+          "fieldType": "string"
+        },
+        "currentStage": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.currentStage",
+          "fieldType": "string"
+        },
+        "groundingJson": {
+          "type": "jsExpression",
+          "expression": "$vars.buildGroundedCaseContext.output.groundingJson",
+          "fieldType": "string"
+        },
+        "quickRulesJson": {
+          "type": "jsExpression",
+          "expression": "$vars.buildGroundedCaseContext.output.quickRulesJson",
+          "fieldType": "string"
+        }
       },
       "model": {
         "type": "bpmn:ServiceTask",
@@ -328,14 +808,14 @@
       }
     },
     {
-      "id": "buildGroundedAgentContext1",
+      "id": "buildGroundedCaseContext",
       "type": "core.action.script",
       "typeVersion": "1.0.0",
       "display": {
         "label": "Build grounded agent context"
       },
       "inputs": {
-        "script": "const normalized = $vars.normalizeCase.output;\nconst evidenceSnapshot = $vars.rpaEvidenceCompletenessSnapshot1.output || {};\nreturn {\n  groundingJson: JSON.stringify({\n    ...normalized.grounding,\n    caseId: normalized.caseId,\n    currentStage: normalized.currentStage,\n    evidenceSnapshot\n  }),\n  quickRulesJson: JSON.stringify(normalized.quickRules || {})\n};"
+        "script": "const normalized = $vars.normalizeCase.output;\nconst claimDetails = $vars.claimDetailsByCaseType.output || {};\nconst quickRules = $vars.quickRulesByCaseType.output || {};\nif (String(claimDetails.caseType || '') !== normalized.caseType) {\n  throw new Error(`Claim response CaseType '${claimDetails.caseType}' does not match requested CaseType '${normalized.caseType}'.`);\n}\nconst claimThreshold = Number(claimDetails.claimThreshold ?? normalized.claimThreshold ?? 2500);\nconst totalBilled = Number(claimDetails.totalBilled ?? 0);\nconst thresholdExceeded = Boolean(claimDetails.thresholdExceeded);\nconst locationConflictMinutes = Number(quickRules.location_conflict_minutes || 0);\nconst allowedNextStageIds = ['Stage_Evcol2', 'Stage_Corr4a', 'Stage_Prreq6', 'Stage_Supv7a', 'Stage_Clos9a'];\nconst deterministicProviderRequest = normalized.caseType === 'StateMedicaidHospice' && totalBilled >= claimThreshold && normalized.hospitalRecordAvailable !== true;\nconst deterministicPcsInvestigation = normalized.caseType === 'MedicaidPCS' && locationConflictMinutes >= 360;\nreturn {\n  groundingJson: JSON.stringify({\n    caseId: claimDetails.caseId || normalized.caseId,\n    caseType: claimDetails.caseType || normalized.caseType,\n    currentStage: normalized.currentStage,\n    caseInput: normalized.caseInput,\n    claimInput: normalized.claimInput,\n    memberInput: normalized.memberInput,\n    providerInput: normalized.providerInput,\n    serviceEventInput: normalized.serviceEventInput,\n    documentInput: normalized.documentInput,\n    claimDetails: {\n      claimCount: Number(claimDetails.claimCount || 0),\n      lineCount: Number(claimDetails.lineCount || 0),\n      totalUnits: Number(claimDetails.totalUnits || 0),\n      totalBilled,\n      claimThreshold,\n      thresholdExceeded,\n      sourceEndpoint: claimDetails.sourceEndpoint || '',\n      payload: claimDetails.payload || {}\n    },\n    quickRules,\n    allowedNextStageIds,\n    deterministicFacts: {\n      deterministicProviderRequest,\n      deterministicPcsInvestigation,\n      locationConflictMinutes,\n      patientClass: normalized.patientClass || 'Observation',\n      hospitalRecordAvailable: normalized.hospitalRecordAvailable === true,\n      reviewIndicatorOnly: true\n    },\n    documentProcessing: { executed: false, source: 'supplied metadata only' }\n  }),\n  quickRulesJson: JSON.stringify({ ...quickRules, allowedNextStageIds, deterministicProviderRequest, deterministicPcsInvestigation })\n};"
       },
       "model": {
         "type": "bpmn:ScriptTask"
@@ -349,7 +829,7 @@
         "label": "Evidence stage selected?"
       },
       "inputs": {
-        "expression": "$vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Evcol2'",
+        "expression": "!($vars.normalizeCase.output.caseType === 'MedicaidPCS' && Number($vars.quickRulesByCaseType.output.location_conflict_minutes || 0) >= 360) && $vars.agentSelectNextCaseStage1.output.nextStageId === 'Stage_Evcol2'",
         "trueLabel": "Acquire evidence",
         "falseLabel": "Evaluate other routes"
       },
@@ -365,7 +845,7 @@
         "label": "Route to evidence and validation"
       },
       "inputs": {
-        "script": "const route = $vars.agentSelectNextCaseStage1.output;\nreturn { ...route, selectedStageId: 'Stage_Evcol2' };"
+        "script": "const route = $vars.agentSelectNextCaseStage1.output || {};\nreturn { ...route, recommendedStageId: 'Stage_Evcol2', routeReason: String(route.routeReason || 'Required claim or supplied document metadata is incomplete, so the case remains in evidence review.') };"
       },
       "model": {
         "type": "bpmn:ScriptTask"
@@ -379,9 +859,370 @@
         "label": "End - evidence and validation"
       },
       "inputs": {},
+      "outputs": {
+        "caseId": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseId"
+        },
+        "caseType": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.caseType"
+        },
+        "claimCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimCount"
+        },
+        "lineCount": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.lineCount"
+        },
+        "totalUnits": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalUnits"
+        },
+        "totalBilled": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.totalBilled"
+        },
+        "claimThreshold": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.claimThreshold"
+        },
+        "thresholdExceeded": {
+          "source": "=js:$vars.claimDetailsByCaseType.output.thresholdExceeded"
+        },
+        "recommendedStageId": {
+          "source": "=js:$vars.routeToEvidenceAndValidation1.output.recommendedStageId"
+        },
+        "routeReason": {
+          "source": "=js:$vars.routeToEvidenceAndValidation1.output.routeReason"
+        }
+      },
       "model": {
         "type": "bpmn:EndEvent"
       }
+    },
+    {
+      "id": "dataFabricCreateProvider1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create provider"
+      },
+      "inputs": {
+        "errorHandlingEnabled": true,
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "provider_id": "=js:String($vars.normalizeCase.output.providerInput.providerId || $vars.normalizeCase.output.providerInput.provider_id || $vars.claimDetailsByCaseType.output.payload.provider.providerId || $vars.normalizeCase.output.caseId + \"-PROVIDER\")",
+            "name": "=js:String($vars.normalizeCase.output.providerInput.name || $vars.normalizeCase.output.providerInput.providerName || $vars.normalizeCase.output.providerInput.provider_name || $vars.claimDetailsByCaseType.output.payload.provider.providerName || \"Harbor Home Support Services\")",
+            "medicaid_provider_id": "=js:String($vars.normalizeCase.output.providerInput.medicaidProviderId || $vars.normalizeCase.output.providerInput.medicaid_provider_id || $vars.claimDetailsByCaseType.output.payload.provider.medicaidProviderId || \"\")",
+            "npi": "=js:String($vars.normalizeCase.output.providerInput.npi || $vars.claimDetailsByCaseType.output.payload.provider.npi || \"\")",
+            "address": "=js:String($vars.normalizeCase.output.providerInput.address || \"\")",
+            "enrollment_status": "=js:String($vars.normalizeCase.output.providerInput.enrollmentStatus || $vars.normalizeCase.output.providerInput.enrollment_status || \"Active\")",
+            "watch_list": "=js:Boolean($vars.normalizeCase.output.providerInput.watchList || $vars.normalizeCase.output.providerInput.watch_list || false)",
+            "watch_list_reason": "=js:String($vars.normalizeCase.output.providerInput.watchListReason || $vars.normalizeCase.output.providerInput.watch_list_reason || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360Provider"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360Provider\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateAttendant1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create attendant"
+      },
+      "inputs": {
+        "errorHandlingEnabled": true,
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "attendant_id": "=js:String($vars.normalizeCase.output.serviceEventInput.attendantId || $vars.normalizeCase.output.serviceEventInput.attendant_id || $vars.normalizeCase.output.providerInput.attendantId || ($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0]?.renderingAttendantId || $vars.normalizeCase.output.caseId + \"-ATTENDANT\")",
+            "name": "=js:String($vars.normalizeCase.output.serviceEventInput.caregiverName || $vars.normalizeCase.output.serviceEventInput.caregiver_name || $vars.normalizeCase.output.providerInput.caregiverName || \"Assigned caregiver\")",
+            "provider_id": "=js:String($vars.normalizeCase.output.providerInput.providerId || $vars.normalizeCase.output.providerInput.provider_id || $vars.claimDetailsByCaseType.output.payload.provider.providerId || \"\")",
+            "role": "Personal Care Attendant",
+            "credential_id": "=js:String($vars.normalizeCase.output.providerInput.credentialId || $vars.normalizeCase.output.providerInput.credential_id || \"\")",
+            "personnel_docs_complete": "=js:Boolean($vars.normalizeCase.output.providerInput.personnelDocsComplete ?? $vars.normalizeCase.output.providerInput.personnel_docs_complete ?? true)",
+            "missing_docs": "=js:String($vars.normalizeCase.output.providerInput.missingDocs || $vars.normalizeCase.output.providerInput.missing_docs || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360Attendant"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360Attendant\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateClaim1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create claim"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "claim_id": "=js:String($vars.normalizeCase.output.claimInput.claimId || $vars.normalizeCase.output.claimInput.claim_id || $vars.normalizeCase.output.caseId + \"-\" + ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).claimId || \"CLAIM\"))",
+            "case_id": "=js:$vars.normalizeCase.output.caseId",
+            "provider_id": "=js:String($vars.normalizeCase.output.providerInput.providerId || $vars.normalizeCase.output.providerInput.provider_id || $vars.claimDetailsByCaseType.output.payload.provider.providerId || \"\")",
+            "attendant_id": "=js:String($vars.normalizeCase.output.serviceEventInput.attendantId || $vars.normalizeCase.output.serviceEventInput.attendant_id || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).renderingAttendantId || \"\"))",
+            "member_id": "=js:String($vars.normalizeCase.output.memberInput.memberId || $vars.normalizeCase.output.memberInput.member_id || $vars.claimDetailsByCaseType.output.payload.member.memberId || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).memberId || \"\"))",
+            "date_of_service": "=js:String($vars.normalizeCase.output.serviceEventInput.dateOfService || $vars.normalizeCase.output.serviceEventInput.date_of_service || $vars.normalizeCase.output.claimInput.dateOfService || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).dateOfService || \"\"))",
+            "units_billed": "=js:Number($vars.claimDetailsByCaseType.output.totalUnits || $vars.normalizeCase.output.claimInput.unitsBilled || $vars.normalizeCase.output.claimInput.units_billed || 0)",
+            "unit_rate": "=js:Number($vars.normalizeCase.output.claimInput.unitRate || $vars.normalizeCase.output.claimInput.unit_rate || ((($vars.claimDetailsByCaseType.output.payload.claimDetails || [])[0] || {}).unitRate || 0))",
+            "billed_amount": "=js:Number($vars.claimDetailsByCaseType.output.totalBilled || $vars.normalizeCase.output.claimTotalBilled || 0)",
+            "improper_units": "=js:Number($vars.normalizeCase.output.unsupportedUnits || 0)",
+            "program": "State Medicaid",
+            "case_type": "=js:$vars.normalizeCase.output.caseType",
+            "service_type": "=js:$vars.normalizeCase.output.isHospice ? \"Hospice\" : \"Personal Care Services\"",
+            "place_of_service_code": "=js:String($vars.normalizeCase.output.claimInput.placeOfServiceCode || $vars.normalizeCase.output.claimInput.place_of_service_code || ($vars.normalizeCase.output.isHospice ? \"12\" : \"12\"))",
+            "place_of_service_description": "Home",
+            "claimed_service_start_at": "=js:$vars.normalizeCase.output.claimedServiceStartAt",
+            "claimed_service_end_at": "=js:$vars.normalizeCase.output.claimedServiceEndAt",
+            "source_claim_status": "Submitted",
+            "status": 0
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360Claim"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360Claim\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateEvvVisit1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create EVV visit"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "evv_id": "=js:String($vars.normalizeCase.output.serviceEventInput.evvId || $vars.normalizeCase.output.serviceEventInput.evv_id || $vars.normalizeCase.output.caseId + \"-EVV\")",
+            "attendant_id": "=js:String($vars.normalizeCase.output.serviceEventInput.attendantId || $vars.normalizeCase.output.serviceEventInput.attendant_id || \"\")",
+            "member_id": "=js:String($vars.normalizeCase.output.memberInput.memberId || $vars.normalizeCase.output.memberInput.member_id || \"\")",
+            "service_date": "=js:String($vars.normalizeCase.output.serviceEventInput.dateOfService || $vars.normalizeCase.output.serviceEventInput.date_of_service || \"\")",
+            "start_time": "=js:String($vars.normalizeCase.output.serviceEventInput.startTime || $vars.normalizeCase.output.serviceEventInput.start_time || \"\")",
+            "end_time": "=js:String($vars.normalizeCase.output.serviceEventInput.endTime || $vars.normalizeCase.output.serviceEventInput.end_time || \"\")",
+            "units": "=js:Number($vars.normalizeCase.output.serviceEventInput.units || $vars.claimDetailsByCaseType.output.totalUnits || 0)",
+            "capture_method": 0,
+            "gps_confirmed": 0,
+            "overlaps_with": "=js:String($vars.normalizeCase.output.serviceEventInput.overlapsWith || $vars.normalizeCase.output.serviceEventInput.overlaps_with || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360EvvVisit"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360EvvVisit\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateRiskSignal1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create risk signal"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "signal_id": "=js:$vars.normalizeCase.output.caseId + \"-LOCATION-CONFLICT\"",
+            "case_id": "=js:$vars.normalizeCase.output.caseId",
+            "name": "=js:$vars.normalizeCase.output.isHospice ? \"Institutional encounter overlaps claimed home hospice service\" : \"PCS service evidence inconsistency\"",
+            "rule_expression": "=js:$vars.normalizeCase.output.isHospice ? \"claimed_home_service overlaps hospital encounter\" : \"claim units exceed corroborated service evidence\"",
+            "inputs": "=js:JSON.stringify({caseType:$vars.normalizeCase.output.caseType,claimTotal:$vars.claimDetailsByCaseType.output.totalBilled,claimThreshold:$vars.claimDetailsByCaseType.output.claimThreshold,claimedStart:$vars.normalizeCase.output.claimedServiceStartAt,claimedEnd:$vars.normalizeCase.output.claimedServiceEndAt,encounterArrival:$vars.normalizeCase.output.encounterArrivalAt,encounterDischarge:$vars.normalizeCase.output.encounterDischargeAt})",
+            "result_value": "=js:JSON.stringify({thresholdExceeded:$vars.claimDetailsByCaseType.output.thresholdExceeded,reviewIndicatorOnly:true,expectedOverlapMinutes:$vars.normalizeCase.output.isHospice?360:0})",
+            "severity": 0,
+            "computed_by": "PI360QuickRulesCodedAgent",
+            "computed_at": "=js:new Date().toISOString()"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360RiskSignal"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360RiskSignal\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "dataFabricCreateEvidenceDocument1",
+      "type": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "Data Fabric - create evidence document"
+      },
+      "inputs": {
+        "detail": {
+          "connector": "uipath-uipath-dataservice",
+          "connectionId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionResourceId": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+          "connectionFolderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+          "method": "POST",
+          "endpoint": "/v2/{entityName}/CreateEntityRecord",
+          "bodyParameters": {
+            "doc_id": "=js:String($vars.normalizeCase.output.documentInput.documentId || $vars.normalizeCase.output.documentInput.document_id || $vars.normalizeCase.output.caseId + \"-SERVICE-EVIDENCE\")",
+            "case_id": "=js:$vars.normalizeCase.output.caseId",
+            "doc_type": 0,
+            "source_system": "Orchestrator Storage Bucket",
+            "storage_uri": "=js:String($vars.normalizeCase.output.documentInput.storageUri || $vars.normalizeCase.output.documentInput.storage_uri || $vars.normalizeCase.output.documentInput.fileName || \"\")",
+            "extracted_fields": "=js:JSON.stringify($vars.evidenceSnapshotRpa.output || {})",
+            "extraction_confidence": "=js:Number($vars.normalizeCase.output.documentInput.extractionConfidence || $vars.normalizeCase.output.documentInput.extraction_confidence || 0)",
+            "validation_status": 0,
+            "validated_by": "=js:$vars.normalizeCase.output.documentInput.validatedBy || \"PI360 automation\"",
+            "note": "=js:$vars.normalizeCase.output.isHospice ? \"Claim and service evidence were staged; the provider hospital record is acquired by the ad-hoc BPMN before any location-conflict finding.\" : \"Timesheet evidence was processed for PCS validation.\"",
+            "ixp_model": "PI360 Timesheet Extraction",
+            "ixp_model_version": "live",
+            "reference_only": false,
+            "patient_class": "=js:$vars.normalizeCase.output.patientClass",
+            "encounter_id": "=js:String($vars.normalizeCase.output.documentInput.encounterId || $vars.normalizeCase.output.documentInput.encounter_id || \"\")",
+            "facility_name": "=js:String($vars.normalizeCase.output.documentInput.facilityName || $vars.normalizeCase.output.documentInput.facility_name || \"\")",
+            "care_area": "=js:String($vars.normalizeCase.output.documentInput.careArea || $vars.normalizeCase.output.documentInput.care_area || \"\")",
+            "encounter_arrival_at": "=js:$vars.normalizeCase.output.encounterArrivalAt",
+            "encounter_discharge_at": "=js:$vars.normalizeCase.output.encounterDischargeAt",
+            "encounter_disposition": "=js:String($vars.normalizeCase.output.documentInput.encounterDisposition || $vars.normalizeCase.output.documentInput.encounter_disposition || \"\")"
+          },
+          "queryParameters": {
+            "expansionLevel": 1
+          },
+          "pathParameters": {
+            "entityName": "PI360EvidenceDocument"
+          },
+          "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+          "errorState": {
+            "issues": []
+          },
+          "configuration": "=jsonString:{\"essentialConfiguration\":{\"instanceParameters\":{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"},\"objectName\":\"CreateEntityRecordCurated\",\"operation\":\"create\",\"httpMethod\":\"POST\",\"path\":\"/v2/{entityName}/CreateEntityRecord\",\"packageVersion\":\"1.0.0\",\"connectorVersion\":null,\"executionType\":null,\"customFieldsRequestDetails\":{\"objectActionName\":\"GenerateSchema\",\"parameterValues\":[[\"entityName\",\"PI360EvidenceDocument\"]]},\"unifiedTypesCompatible\":true}}"
+        }
+      }
+    },
+    {
+      "id": "evidenceSnapshotRpa",
+      "type": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "typeVersion": "1.0.0",
+      "display": {
+        "label": "RPA placeholder - extract service evidence"
+      },
+      "inputs": {
+        "in_CaseId": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseId",
+          "fieldType": "string"
+        },
+        "in_ClaimsAvailable": true,
+        "in_EvvAvailable": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseType === \"MedicaidPCS\"",
+          "fieldType": "boolean"
+        },
+        "in_PlanOfCareAvailable": true,
+        "in_EnrollmentAvailable": true,
+        "in_ProviderPacketAvailable": {
+          "type": "jsExpression",
+          "expression": "$vars.normalizeCase.output.caseType === \"StateMedicaidHospice\" ? $vars.normalizeCase.output.hospitalRecordAvailable : true",
+          "fieldType": "boolean"
+        }
+      }
+    },
+    {
+      "id": "pcsEvidenceBranch1",
+      "type": "core.logic.decision",
+      "typeVersion": "1.2",
+      "display": {
+        "label": "PCS evidence branch?"
+      },
+      "inputs": {
+        "trueLabel": "PCS",
+        "falseLabel": "Hospice",
+        "expression": "$vars.normalizeCase.output.caseType === \"MedicaidPCS\""
+      }
+    },
+    {
+      "id": "mergeCaseTypeEvidenceWrites1",
+      "type": "core.logic.merge",
+      "typeVersion": "1.0",
+      "display": {
+        "label": "Merge case-type evidence writes"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "providerCreateOrExisting1",
+      "type": "core.logic.merge",
+      "typeVersion": "1.0",
+      "display": {
+        "label": "Provider create or existing"
+      },
+      "inputs": {}
+    },
+    {
+      "id": "attendantCreateOrExisting1",
+      "type": "core.logic.merge",
+      "typeVersion": "1.0",
+      "display": {
+        "label": "Attendant create or existing"
+      },
+      "inputs": {}
     }
   ],
   "edges": [
@@ -393,31 +1234,31 @@
       "targetPort": "input"
     },
     {
-      "id": "edge-normalize-rpa",
+      "id": "edge-normalize-claim-api",
       "sourceNodeId": "normalizeCase",
       "sourcePort": "success",
-      "targetNodeId": "rpaEvidenceCompletenessSnapshot1",
+      "targetNodeId": "claimDetailsByCaseType",
       "targetPort": "input"
     },
     {
-      "id": "edge-rpa-context",
-      "sourceNodeId": "rpaEvidenceCompletenessSnapshot1",
+      "id": "edge-rules-context",
+      "sourceNodeId": "quickRulesByCaseType",
       "sourcePort": "output",
-      "targetNodeId": "buildGroundedAgentContext1",
+      "targetNodeId": "buildGroundedCaseContext",
       "targetPort": "input"
     },
     {
       "id": "edge-context-agent",
-      "sourceNodeId": "buildGroundedAgentContext1",
+      "sourceNodeId": "buildGroundedCaseContext",
       "sourcePort": "success",
       "targetNodeId": "agentSelectNextCaseStage1",
       "targetPort": "input"
     },
     {
-      "id": "edge-agent-evidence",
+      "id": "edge-agent-provider",
       "sourceNodeId": "agentSelectNextCaseStage1",
       "sourcePort": "output",
-      "targetNodeId": "evidenceStageSelected1",
+      "targetNodeId": "needsProviderResponse",
       "targetPort": "input"
     },
     {
@@ -449,10 +1290,10 @@
       "targetPort": "input"
     },
     {
-      "id": "edge-supervisor-false",
+      "id": "edge-supervisor-closure",
       "sourceNodeId": "needsSupervisorReview",
       "sourcePort": "false",
-      "targetNodeId": "needsProviderResponse",
+      "targetNodeId": "isClosureReady",
       "targetPort": "input"
     },
     {
@@ -470,10 +1311,10 @@
       "targetPort": "input"
     },
     {
-      "id": "edge-provider-false",
+      "id": "edge-provider-evidence",
       "sourceNodeId": "needsProviderResponse",
       "sourcePort": "false",
-      "targetNodeId": "isClosureReady",
+      "targetNodeId": "evidenceStageSelected1",
       "targetPort": "input"
     },
     {
@@ -510,14 +1351,755 @@
       "sourcePort": "success",
       "targetNodeId": "endInvestigation",
       "targetPort": "input"
+    },
+    {
+      "id": "claimDetailsByCaseType-output-dataFabricCreateProvider1-input",
+      "sourceNodeId": "claimDetailsByCaseType",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateProvider1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateClaim1-output-evidenceSnapshotRpa-input",
+      "sourceNodeId": "dataFabricCreateClaim1",
+      "sourcePort": "output",
+      "targetNodeId": "evidenceSnapshotRpa",
+      "targetPort": "input"
+    },
+    {
+      "id": "evidenceSnapshotRpa-output-pcsEvidenceBranch1-input",
+      "sourceNodeId": "evidenceSnapshotRpa",
+      "sourcePort": "output",
+      "targetNodeId": "pcsEvidenceBranch1",
+      "targetPort": "input"
+    },
+    {
+      "id": "pcsEvidenceBranch1-true-dataFabricCreateAttendant1-input",
+      "sourceNodeId": "pcsEvidenceBranch1",
+      "sourcePort": "true",
+      "targetNodeId": "dataFabricCreateAttendant1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateEvvVisit1-output-mergeCaseTypeEvidenceWrites1-input",
+      "sourceNodeId": "dataFabricCreateEvvVisit1",
+      "sourcePort": "output",
+      "targetNodeId": "mergeCaseTypeEvidenceWrites1",
+      "targetPort": "input"
+    },
+    {
+      "id": "pcsEvidenceBranch1-false-mergeCaseTypeEvidenceWrites1-input",
+      "sourceNodeId": "pcsEvidenceBranch1",
+      "sourcePort": "false",
+      "targetNodeId": "mergeCaseTypeEvidenceWrites1",
+      "targetPort": "input"
+    },
+    {
+      "id": "mergeCaseTypeEvidenceWrites1-output-dataFabricCreateRiskSignal1-input",
+      "sourceNodeId": "mergeCaseTypeEvidenceWrites1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateRiskSignal1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateRiskSignal1-output-dataFabricCreateEvidenceDocument1-input",
+      "sourceNodeId": "dataFabricCreateRiskSignal1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateEvidenceDocument1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateEvidenceDocument1-output-quickRulesByCaseType-input",
+      "sourceNodeId": "dataFabricCreateEvidenceDocument1",
+      "sourcePort": "output",
+      "targetNodeId": "quickRulesByCaseType",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateProvider1-output-providerCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateProvider1",
+      "sourcePort": "output",
+      "targetNodeId": "providerCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateProvider1-error-providerCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateProvider1",
+      "sourcePort": "error",
+      "targetNodeId": "providerCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "providerCreateOrExisting1-output-dataFabricCreateClaim1-input",
+      "sourceNodeId": "providerCreateOrExisting1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateClaim1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateAttendant1-output-attendantCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateAttendant1",
+      "sourcePort": "output",
+      "targetNodeId": "attendantCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "dataFabricCreateAttendant1-error-attendantCreateOrExisting1-input",
+      "sourceNodeId": "dataFabricCreateAttendant1",
+      "sourcePort": "error",
+      "targetNodeId": "attendantCreateOrExisting1",
+      "targetPort": "input"
+    },
+    {
+      "id": "attendantCreateOrExisting1-output-dataFabricCreateEvvVisit1-input",
+      "sourceNodeId": "attendantCreateOrExisting1",
+      "sourcePort": "output",
+      "targetNodeId": "dataFabricCreateEvvVisit1",
+      "targetPort": "input"
     }
   ],
   "definitions": [
     {
+      "nodeType": "uipath.core.api-workflow.6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+      "version": "1.0.0",
+      "description": "(In-solution) PI360ClaimDetailsApi",
+      "category": "api-workflow",
+      "tags": [
+        "in-solution",
+        "local"
+      ],
+      "sortOrder": 510,
+      "display": {
+        "label": "PI360ClaimDetailsApi",
+        "icon": "api"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            }
+          ]
+        }
+      ],
+      "toolbarExtensions": {
+        "design": {
+          "actions": [
+            {
+              "id": "open-workflow",
+              "icon": "external-link",
+              "label": "Open"
+            }
+          ]
+        }
+      },
+      "inputDefaults": {
+        "caseType": "",
+        "caseId": "",
+        "claimThreshold": 0
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "caseType": {
+            "type": "string",
+            "description": "MedicaidPCS or StateMedicaidHospice."
+          },
+          "caseId": {
+            "type": "string",
+            "description": "Expected Program Integrity case identifier."
+          },
+          "claimThreshold": {
+            "type": "number",
+            "description": "Hospice intake threshold; defaults to 2500."
+          }
+        }
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "source": "=this",
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "workflowName": {
+                "type": "string"
+              },
+              "caseType": {
+                "type": "string"
+              },
+              "caseId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "recordsAffected": {
+                "type": "number"
+              },
+              "claimCount": {
+                "type": "number"
+              },
+              "lineCount": {
+                "type": "number"
+              },
+              "totalUnits": {
+                "type": "number"
+              },
+              "totalBilled": {
+                "type": "number"
+              },
+              "claimThreshold": {
+                "type": "number"
+              },
+              "thresholdExceeded": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "sourceEndpoint": {
+                "type": "string"
+              },
+              "payload": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.ExecuteApiWorkflowAsync",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Api",
+          "resourceKey": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+          "orchestratorType": "api",
+          "values": {
+            "name": "PI360ClaimDetailsApi",
+            "folderPath": ""
+          }
+        },
+        "projectId": "2b115f5e-5658-4c0e-b9b3-8abc0b169713",
+        "projectName": "PI360ClaimDetailsApi",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "<bindings.name>"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "<bindings.folderPath>"
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360ClaimDetailsApi"
+          }
+        ]
+      },
+      "form": {
+        "id": "activity-properties",
+        "title": "API workflow",
+        "sections": [
+          {
+            "id": "inputs",
+            "title": "Inputs",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.caseType",
+                "type": "text",
+                "label": "caseType"
+              },
+              {
+                "name": "inputs.caseId",
+                "type": "text",
+                "label": "caseId"
+              },
+              {
+                "name": "inputs.claimThreshold",
+                "type": "number",
+                "label": "claimThreshold"
+              }
+            ]
+          }
+        ]
+      },
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      },
+      "projectId": "2b115f5e-5658-4c0e-b9b3-8abc0b169713"
+    },
+    {
+      "nodeType": "uipath.core.agent.fabc409c-d468-4964-92e0-2171e0ced3ba",
+      "version": "1.0.0",
+      "description": "(In-solution) PI360QuickRulesCodedAgent",
+      "category": "agent",
+      "tags": [
+        "in-solution",
+        "local"
+      ],
+      "sortOrder": 505,
+      "display": {
+        "label": "PI360QuickRulesCodedAgent",
+        "icon": "autonomous-agent"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            }
+          ]
+        }
+      ],
+      "toolbarExtensions": {
+        "design": {
+          "actions": [
+            {
+              "id": "open-workflow",
+              "icon": "external-link",
+              "label": "Open"
+            }
+          ]
+        }
+      },
+      "inputDefaults": {
+        "case_id": "",
+        "case_type": "",
+        "current_stage": "",
+        "risk_score": 0,
+        "claim_total_billed": 0,
+        "claim_threshold": 0,
+        "unsupported_units": 0,
+        "missing_evidence_count": 0,
+        "provider_response_needed": false,
+        "provider_response_received": false,
+        "claimed_service_start_at": "",
+        "claimed_service_end_at": "",
+        "encounter_arrival_at": "",
+        "encounter_discharge_at": "",
+        "patient_class": "",
+        "supervisor_approved": false,
+        "proposed_action": "",
+        "gating_json": ""
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "default": "PI-PCS-2026-0041",
+            "description": "Program Integrity case identifier.",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_type": {
+            "description": "Required intake type: MedicaidPCS or StateMedicaidHospice.",
+            "title": "Case Type",
+            "type": "string"
+          },
+          "current_stage": {
+            "default": "Investigation",
+            "description": "Current case stage or state when the rules check starts.",
+            "title": "Current Stage",
+            "type": "string"
+          },
+          "risk_score": {
+            "type": "integer"
+          },
+          "claim_total_billed": {
+            "type": "number"
+          },
+          "claim_threshold": {
+            "type": "number"
+          },
+          "unsupported_units": {
+            "type": "integer"
+          },
+          "missing_evidence_count": {
+            "type": "integer"
+          },
+          "provider_response_needed": {
+            "type": "boolean"
+          },
+          "provider_response_received": {
+            "type": "boolean"
+          },
+          "claimed_service_start_at": {
+            "type": "string"
+          },
+          "claimed_service_end_at": {
+            "type": "string"
+          },
+          "encounter_arrival_at": {
+            "type": "string"
+          },
+          "encounter_discharge_at": {
+            "type": "string"
+          },
+          "patient_class": {
+            "type": "string"
+          },
+          "supervisor_approved": {
+            "type": "boolean"
+          },
+          "proposed_action": {
+            "type": "string"
+          },
+          "gating_json": {
+            "type": "string"
+          }
+        }
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "source": "=this",
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "case_id": {
+                "description": "Program Integrity case identifier.",
+                "title": "Case Id",
+                "type": "string"
+              },
+              "status": {
+                "description": "blocked or clear_for_case_manager.",
+                "title": "Status",
+                "type": "string"
+              },
+              "recommended_stage": {
+                "description": "Recommended next ad-hoc stage for the Case Manager agent.",
+                "title": "Recommended Stage",
+                "type": "string"
+              },
+              "blockers": {
+                "description": "Blocking rule failures that must be resolved before closure.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Blockers",
+                "type": "array"
+              },
+              "warnings": {
+                "description": "Non-blocking issues for the case manager to review.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Warnings",
+                "type": "array"
+              },
+              "facts_checked": {
+                "description": "Primitive facts used by the deterministic rules.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Facts Checked",
+                "type": "array"
+              },
+              "supervisor_gate_required": {
+                "default": false,
+                "description": "True when the proposed action requires supervisor approval.",
+                "title": "Supervisor Gate Required",
+                "type": "boolean"
+              },
+              "provider_wait_required": {
+                "default": false,
+                "description": "True when provider response is still required.",
+                "title": "Provider Wait Required",
+                "type": "boolean"
+              },
+              "evidence_gap": {
+                "default": false,
+                "description": "True when material evidence is missing.",
+                "title": "Evidence Gap",
+                "type": "boolean"
+              },
+              "location_conflict_minutes": {
+                "default": 0,
+                "description": "Minutes where claimed home service intersects the institutional encounter.",
+                "title": "Location Conflict Minutes",
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartAgentJob",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Agent",
+          "resourceKey": "fabc409c-d468-4964-92e0-2171e0ced3ba",
+          "orchestratorType": "agent",
+          "values": {
+            "name": "PI360QuickRulesCodedAgent",
+            "folderPath": ""
+          }
+        },
+        "projectId": "47fa13a5-3cc9-40ee-a687-b9a8fd53b216",
+        "projectName": "PI360QuickRulesCodedAgent",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "<bindings.name>"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "<bindings.folderPath>"
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360QuickRulesCodedAgent"
+          }
+        ]
+      },
+      "form": {
+        "id": "activity-properties",
+        "title": "Agent",
+        "sections": [
+          {
+            "id": "inputs",
+            "title": "Inputs",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.case_id",
+                "type": "text",
+                "label": "case_id"
+              },
+              {
+                "name": "inputs.case_type",
+                "type": "text",
+                "label": "case_type"
+              },
+              {
+                "name": "inputs.current_stage",
+                "type": "text",
+                "label": "current_stage"
+              },
+              {
+                "name": "inputs.risk_score",
+                "type": "number",
+                "label": "risk_score"
+              },
+              {
+                "name": "inputs.claim_total_billed",
+                "type": "number",
+                "label": "claim_total_billed"
+              },
+              {
+                "name": "inputs.claim_threshold",
+                "type": "number",
+                "label": "claim_threshold"
+              },
+              {
+                "name": "inputs.unsupported_units",
+                "type": "number",
+                "label": "unsupported_units"
+              },
+              {
+                "name": "inputs.missing_evidence_count",
+                "type": "number",
+                "label": "missing_evidence_count"
+              },
+              {
+                "name": "inputs.provider_response_needed",
+                "type": "checkbox",
+                "label": "provider_response_needed",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.provider_response_received",
+                "type": "checkbox",
+                "label": "provider_response_received",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.claimed_service_start_at",
+                "type": "text",
+                "label": "claimed_service_start_at"
+              },
+              {
+                "name": "inputs.claimed_service_end_at",
+                "type": "text",
+                "label": "claimed_service_end_at"
+              },
+              {
+                "name": "inputs.encounter_arrival_at",
+                "type": "text",
+                "label": "encounter_arrival_at"
+              },
+              {
+                "name": "inputs.encounter_discharge_at",
+                "type": "text",
+                "label": "encounter_discharge_at"
+              },
+              {
+                "name": "inputs.patient_class",
+                "type": "text",
+                "label": "patient_class"
+              },
+              {
+                "name": "inputs.supervisor_approved",
+                "type": "checkbox",
+                "label": "supervisor_approved",
+                "supportsDynamicValue": true
+              },
+              {
+                "name": "inputs.proposed_action",
+                "type": "text",
+                "label": "proposed_action"
+              },
+              {
+                "name": "inputs.gating_json",
+                "type": "text",
+                "label": "gating_json"
+              }
+            ]
+          }
+        ]
+      },
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      },
+      "projectId": "47fa13a5-3cc9-40ee-a687-b9a8fd53b216"
+    },
+    {
       "nodeType": "core.trigger.manual",
       "version": "1.0.0",
-      "category": "trigger",
       "description": "Start workflow manually",
+      "category": "trigger",
       "tags": [
         "trigger",
         "start",
@@ -550,18 +2132,6 @@
           "visible": true
         }
       ],
-      "model": {
-        "type": "bpmn:StartEvent",
-        "entryPointId": true
-      },
-      "outputDefinition": {
-        "output": {
-          "type": "object",
-          "description": "Data passed when manually triggering the workflow.",
-          "source": "null",
-          "var": "output"
-        }
-      },
       "toolbarExtensions": {
         "design": {
           "actions": [
@@ -572,20 +2142,31 @@
             }
           ]
         }
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "description": "Data passed when manually triggering the workflow.",
+          "source": "null",
+          "var": "output"
+        }
+      },
+      "model": {
+        "type": "bpmn:StartEvent",
+        "entryPointId": true
       }
     },
     {
       "nodeType": "core.action.script",
       "version": "1.0.0",
-      "category": "data-operations",
       "description": "Run custom JavaScript code",
+      "category": "data-operations",
       "tags": [
         "code",
         "javascript",
         "python"
       ],
       "sortOrder": 35,
-      "supportsErrorHandling": true,
       "display": {
         "label": "Script",
         "icon": "code",
@@ -614,11 +2195,8 @@
           ]
         }
       ],
-      "debug": {
-        "runtime": "clientScript"
-      },
-      "model": {
-        "type": "bpmn:ScriptTask"
+      "inputDefaults": {
+        "script": ""
       },
       "inputDefinition": {
         "type": "object",
@@ -633,9 +2211,6 @@
         "required": [
           "script"
         ]
-      },
-      "inputDefaults": {
-        "script": ""
       },
       "outputDefinition": {
         "output": {
@@ -685,6 +2260,12 @@
           }
         }
       },
+      "debug": {
+        "runtime": "clientScript"
+      },
+      "model": {
+        "type": "bpmn:ScriptTask"
+      },
       "form": {
         "id": "script-properties",
         "title": "Script configuration",
@@ -717,8 +2298,8 @@
     {
       "nodeType": "core.logic.decision",
       "version": "1.0.0",
-      "category": "control-flow",
       "description": "Branch based on a true/false condition",
+      "category": "control-flow",
       "tags": [
         "control-flow",
         "if",
@@ -769,11 +2350,9 @@
           "visible": true
         }
       ],
-      "debug": {
-        "runtime": "clientScript"
-      },
-      "model": {
-        "type": "bpmn:InclusiveGateway"
+      "inputDefaults": {
+        "trueLabel": "True",
+        "falseLabel": "False"
       },
       "inputDefinition": {
         "type": "object",
@@ -806,9 +2385,11 @@
           "var": "matchedCaseId"
         }
       },
-      "inputDefaults": {
-        "trueLabel": "True",
-        "falseLabel": "False"
+      "debug": {
+        "runtime": "clientScript"
+      },
+      "model": {
+        "type": "bpmn:InclusiveGateway"
       },
       "form": {
         "id": "decision-properties",
@@ -852,8 +2433,8 @@
     {
       "nodeType": "core.control.end",
       "version": "1.0.0",
-      "category": "control-flow",
       "description": "Mark the end of a workflow path",
+      "category": "control-flow",
       "tags": [
         "control-flow",
         "end",
@@ -888,26 +2469,20 @@
       }
     },
     {
-      "nodeType": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "nodeType": "uipath.core.agent.64ee0873-ac2c-4393-a970-7f67f9c7a423",
       "version": "1.0.0",
-      "category": "rpa-workflow",
-      "runtimeConstraints": {
-        "exclude": [
-          "api-function"
-        ]
-      },
-      "description": "(In-solution) PI360EvidenceSnapshotAutomation",
+      "description": "(In-solution) PI360CaseManagerAgent",
+      "category": "agent",
       "tags": [
         "in-solution",
         "local"
       ],
-      "sortOrder": 530,
-      "supportsErrorHandling": true,
+      "sortOrder": 505,
       "display": {
-        "label": "PI360EvidenceSnapshotAutomation",
-        "icon": "rpa",
-        "iconBackground": "linear-gradient(225deg, #DDFBF1 0%, #DAF3FF 100%)",
-        "iconBackgroundDark": "linear-gradient(225deg, rgba(131, 255, 214, 0.30) 0%, rgba(109, 122, 128, 0.30) 100%)"
+        "label": "PI360CaseManagerAgent",
+        "icon": "coded-agent",
+        "iconBackground": "linear-gradient(225deg, rgba(225, 246, 253, 0.60) 0%, rgba(193, 160, 255, 0.20) 100%)",
+        "iconBackgroundDark": "linear-gradient(225deg, rgba(236, 211, 255, 0.40) 0%, rgba(211, 229, 255, 0.40) 100%)"
       },
       "handleConfiguration": [
         {
@@ -942,18 +2517,483 @@
           ]
         }
       },
+      "inputDefaults": {
+        "caseId": "",
+        "currentStage": "",
+        "groundingJson": "",
+        "quickRulesJson": ""
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "caseId": {
+            "type": "string",
+            "description": "Program Integrity case identifier."
+          },
+          "currentStage": {
+            "type": "string",
+            "description": "Current case stage or state when the routing decision starts."
+          },
+          "groundingJson": {
+            "type": "string",
+            "description": "Serialized JSON containing case facts, evidence, risk signals, timeline, human decisions, and stage completion state."
+          },
+          "quickRulesJson": {
+            "type": "string",
+            "description": "Serialized JSON from the deterministic quick rules check."
+          }
+        }
+      },
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "source": "=this",
+          "var": "output",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "nextStage": {
+                "type": "string",
+                "description": "The recommended next stage name: EvidenceAcquisition, InvestigationRouting, ProviderResponse, SupervisorAction, or Closure."
+              },
+              "nextStageId": {
+                "type": "string",
+                "description": "Exact case stage ID selected by the agent: Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
+              },
+              "routeDecision": {
+                "type": "string",
+                "description": "Short machine-readable routing decision."
+              },
+              "routeReason": {
+                "type": "string",
+                "description": "One or two sentence explanation grounded in the inputs."
+              },
+              "requiresEscalation": {
+                "type": "boolean",
+                "description": "True when a supervisor or policy owner must review before the case proceeds."
+              },
+              "humanGate": {
+                "type": "string",
+                "description": "Human gate that owns the next step, or none."
+              },
+              "completionRuleSatisfied": {
+                "type": "boolean",
+                "description": "True only when the required completed-stage facts are present for closure."
+              },
+              "actionTaken": {
+                "type": "boolean",
+                "description": "False. This agent routes and escalates but does not mutate the case record directly."
+              },
+              "factsUsed": {
+                "type": "array",
+                "description": "Cited facts used by the route decision.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      },
+      "model": {
+        "type": "bpmn:ServiceTask",
+        "serviceType": "Orchestrator.StartAgentJob",
+        "version": "v2",
+        "bindings": {
+          "resource": "process",
+          "resourceSubType": "Agent",
+          "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+          "orchestratorType": "agent",
+          "values": {
+            "name": "PI360CaseManagerAgent",
+            "folderPath": ""
+          }
+        },
+        "projectId": "72209049-a669-4dee-af0f-f67a87df1253",
+        "projectName": "PI360CaseManagerAgent",
+        "context": [
+          {
+            "name": "name",
+            "type": "string",
+            "value": "=bindings.bNmrKcVz5",
+            "default": "PI360CaseManagerAgent"
+          },
+          {
+            "name": "folderPath",
+            "type": "string",
+            "value": "=bindings.b4AcADDYO",
+            "default": ""
+          },
+          {
+            "name": "_label",
+            "type": "string",
+            "value": "PI360CaseManagerAgent"
+          }
+        ]
+      },
+      "form": {
+        "id": "activity-properties",
+        "title": "Autonomous agent",
+        "sections": [
+          {
+            "id": "inputs",
+            "title": "Inputs",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "name": "inputs.caseId",
+                "type": "text",
+                "label": "caseId"
+              },
+              {
+                "name": "inputs.currentStage",
+                "type": "text",
+                "label": "currentStage"
+              },
+              {
+                "name": "inputs.groundingJson",
+                "type": "text",
+                "label": "groundingJson"
+              },
+              {
+                "name": "inputs.quickRulesJson",
+                "type": "text",
+                "label": "quickRulesJson"
+              }
+            ]
+          }
+        ]
+      },
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      }
+    },
+    {
+      "nodeType": "uipath.connector.uipath-uipath-dataservice.create-entity-record",
+      "version": "1.0.0",
+      "category": "connector.68444",
+      "tags": [
+        "connector",
+        "activity"
+      ],
+      "sortOrder": 515,
+      "supportsErrorHandling": true,
+      "description": "Creates a new record for the selected Entity in Data Fabric",
+      "display": {
+        "label": "Create Entity Record",
+        "description": "Creates a new record for the selected Entity in Data Fabric",
+        "icon": "https://cloud.uipath.com/a17c9af1-091d-4dd2-9cec-ed787c6601c8/studio_/typecache/icons/98381fa079bbcf73264f551006d6ef7580fb53992f3d9f94361eb5d9e06040cb.svg",
+        "sourceDisplayName": "UiPath Data Fabric"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input",
+              "label": ""
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output",
+              "label": ""
+            },
+            {
+              "id": "error",
+              "label": "Error",
+              "type": "source",
+              "handleType": "output",
+              "visible": "{inputs.errorHandlingEnabled}",
+              "constraints": {
+                "maxConnections": 1
+              }
+            }
+          ]
+        }
+      ],
+      "model": {
+        "type": "bpmn:SendTask",
+        "serviceType": "Intsvc.ActivityExecution",
+        "bindings": {
+          "resource": "connection",
+          "resourceKey": "",
+          "values": [
+            {
+              "name": "uipath-uipath-dataservice connection",
+              "propertyAttribute": "ConnectionId"
+            },
+            {
+              "name": "FolderKey",
+              "propertyAttribute": "FolderKey"
+            }
+          ]
+        },
+        "context": [
+          {
+            "name": "connectorKey",
+            "type": "string",
+            "value": "uipath-uipath-dataservice"
+          },
+          {
+            "name": "operation",
+            "type": "string"
+          },
+          {
+            "name": "objectName",
+            "value": "CreateEntityRecordCurated",
+            "type": "string"
+          },
+          {
+            "name": "method",
+            "type": "string",
+            "value": "POST"
+          },
+          {
+            "name": "connection",
+            "type": "string",
+            "value": "<bindings.uipath-uipath-dataservice connection>"
+          },
+          {
+            "name": "folderKey",
+            "type": "string",
+            "value": "<bindings.FolderKey>"
+          },
+          {
+            "name": "activityConfigurationVersion",
+            "type": "string",
+            "value": "v1"
+          },
+          {
+            "name": "metadata",
+            "body": {
+              "telemetryData": {
+                "connectorKey": "uipath-uipath-dataservice",
+                "connectorName": "Create Entity Record"
+              },
+              "inputMetadata": {},
+              "errorState": {
+                "hasError": true
+              }
+            },
+            "type": "json"
+          }
+        ]
+      },
+      "form": {
+        "id": "connector-properties",
+        "title": "Connector configuration",
+        "sections": [
+          {
+            "id": "connector",
+            "title": "Connector",
+            "collapsible": true,
+            "defaultExpanded": true,
+            "fields": [
+              {
+                "label": "",
+                "name": "inputs.detail",
+                "type": "custom",
+                "component": "dap-config",
+                "componentProps": {
+                  "connectorDetail": {
+                    "isAppActivity": false,
+                    "packageId": "68444",
+                    "svgIconUrl": "icons/98381fa079bbcf73264f551006d6ef7580fb53992f3d9f94361eb5d9e06040cb.svg",
+                    "displayName": "Create Entity Record",
+                    "assemblyQualifiedName": "UiPath.IntegrationService.Activities.Runtime.Activities.ConnectorActivity, UiPath.IntegrationService.Activities.Runtime, Version=1.30.0.0, Culture=neutral, PublicKeyToken=null",
+                    "description": "Creates a new record for the selected Entity in Data Fabric",
+                    "category": "",
+                    "activityColor": "#E56D5C",
+                    "configuration": "{\"connectorKey\":\"uipath-uipath-dataservice\",\"objectName\":\"CreateEntityRecordCurated\",\"httpMethod\":\"POST\",\"activityType\":\"Curated\",\"version\":\"1.0.0\",\"supportsStreaming\":false,\"subType\":\"standard\"}",
+                    "uiPathActivityTypeId": "dfd2bc7a-ca4b-3316-8a1f-57c9e106dfbf",
+                    "isExperimental": false,
+                    "helpUrlTemplate": "https://docs.uipath.com/{0}/activities/other/latest/integration-service/uipath-uipath-dataservice-Create-Entity-Record",
+                    "isEnabled": true,
+                    "targetPlatform": "CrossPlatform",
+                    "isAdvanced": false,
+                    "isRestricted": false,
+                    "hasWpfOnlyDesigner": false,
+                    "tags": [
+                      ""
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "inputDefinition": {},
+      "inputDefaults": {},
+      "outputDefinition": {
+        "output": {
+          "type": "object",
+          "description": "The return value of the connector.",
+          "source": "=result.response",
+          "var": "output"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error information if the node fails",
+          "source": "=Error",
+          "var": "error",
+          "schema": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "detail",
+              "category",
+              "status"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code as a string"
+              },
+              "message": {
+                "type": "string",
+                "description": "High-level error message"
+              },
+              "detail": {
+                "type": "string",
+                "description": "Detailed error description"
+              },
+              "category": {
+                "type": "string",
+                "description": "Error category"
+              },
+              "status": {
+                "type": "integer",
+                "description": "HTTP status code"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "debug": {
+        "runtime": "bpmnEngine"
+      }
+    },
+    {
+      "nodeType": "uipath.core.rpa-workflow.58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "version": "1.0.0",
+      "category": "rpa-workflow",
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
+        ]
+      },
+      "description": "Builds a deterministic evidence-completeness snapshot for case routing.",
+      "tags": [],
+      "sortOrder": 530,
+      "supportsErrorHandling": true,
+      "display": {
+        "label": "PI360EvidenceSnapshotAutomation",
+        "icon": "rpa"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ]
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "output",
+              "type": "source",
+              "handleType": "output"
+            },
+            {
+              "id": "error",
+              "label": "Error",
+              "type": "source",
+              "handleType": "output",
+              "visible": "{inputs.errorHandlingEnabled}",
+              "constraints": {
+                "maxConnections": 1
+              }
+            }
+          ]
+        }
+      ],
       "model": {
         "type": "bpmn:ServiceTask",
         "serviceType": "Orchestrator.StartJob",
         "version": "v2",
+        "section": "Published",
+        "listingVersion": "1.0.0",
         "bindings": {
           "resource": "process",
           "resourceSubType": "Process",
-          "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+          "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
           "orchestratorType": "process",
           "values": {
             "name": "PI360EvidenceSnapshotAutomation",
-            "folderPath": ""
+            "folderPath": "solution_folder"
           }
         },
         "projectId": "58e4aa89-7358-47ee-a0d4-6711e9792208",
@@ -962,14 +3002,12 @@
           {
             "name": "name",
             "type": "string",
-            "value": "=bindings.bybLZkmcn",
-            "default": "PI360EvidenceSnapshotAutomation"
+            "value": "<bindings.name>"
           },
           {
             "name": "folderPath",
             "type": "string",
-            "value": "=bindings.bHJVld2gM",
-            "default": ""
+            "value": "<bindings.folderPath>"
           },
           {
             "name": "_label",
@@ -996,27 +3034,32 @@
               {
                 "name": "inputs.in_ClaimsAvailable",
                 "type": "checkbox",
-                "label": "in_ClaimsAvailable"
+                "label": "in_ClaimsAvailable",
+                "supportsDynamicValue": true
               },
               {
                 "name": "inputs.in_EvvAvailable",
                 "type": "checkbox",
-                "label": "in_EvvAvailable"
+                "label": "in_EvvAvailable",
+                "supportsDynamicValue": true
               },
               {
                 "name": "inputs.in_PlanOfCareAvailable",
                 "type": "checkbox",
-                "label": "in_PlanOfCareAvailable"
+                "label": "in_PlanOfCareAvailable",
+                "supportsDynamicValue": true
               },
               {
                 "name": "inputs.in_EnrollmentAvailable",
                 "type": "checkbox",
-                "label": "in_EnrollmentAvailable"
+                "label": "in_EnrollmentAvailable",
+                "supportsDynamicValue": true
               },
               {
                 "name": "inputs.in_ProviderPacketAvailable",
                 "type": "checkbox",
-                "label": "in_ProviderPacketAvailable"
+                "label": "in_ProviderPacketAvailable",
+                "supportsDynamicValue": true
               }
             ]
           }
@@ -1119,26 +3162,20 @@
       }
     },
     {
-      "nodeType": "uipath.core.agent.64ee0873-ac2c-4393-a970-7f67f9c7a423",
-      "version": "1.0.0",
-      "category": "agent",
-      "runtimeConstraints": {
-        "exclude": [
-          "api-function"
-        ]
-      },
-      "description": "(In-solution) PI360CaseManagerAgent",
+      "nodeType": "core.logic.decision",
+      "version": "1.2",
+      "category": "control-flow",
+      "description": "Branch on a true or false condition",
       "tags": [
-        "in-solution",
-        "local"
+        "control-flow",
+        "if",
+        "loop",
+        "switch"
       ],
-      "sortOrder": 505,
-      "supportsErrorHandling": true,
+      "sortOrder": 21,
       "display": {
-        "label": "PI360CaseManagerAgent",
-        "icon": "coded-agent",
-        "iconBackground": "linear-gradient(225deg, rgba(225, 246, 253, 0.60) 0%, rgba(193, 160, 255, 0.20) 100%)",
-        "iconBackgroundDark": "linear-gradient(225deg, rgba(236, 211, 255, 0.40) 0%, rgba(211, 229, 255, 0.40) 100%)"
+        "label": "Decision",
+        "icon": "trending-up-down"
       },
       "handleConfiguration": [
         {
@@ -1149,7 +3186,139 @@
               "type": "target",
               "handleType": "input"
             }
-          ]
+          ],
+          "visible": true
+        },
+        {
+          "position": "right",
+          "handles": [
+            {
+              "id": "true",
+              "type": "source",
+              "handleType": "output",
+              "label": "{inputs.trueLabel}",
+              "constraints": {
+                "minConnections": 1
+              }
+            },
+            {
+              "id": "false",
+              "type": "source",
+              "handleType": "output",
+              "label": "{inputs.falseLabel}"
+            }
+          ],
+          "visible": true
+        }
+      ],
+      "debug": {
+        "runtime": "clientScript"
+      },
+      "model": {
+        "type": "bpmn:InclusiveGateway"
+      },
+      "inputDefinition": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "minLength": 1,
+            "errorMessage": "Add a condition"
+          },
+          "trueLabel": {
+            "type": "string"
+          },
+          "falseLabel": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expression"
+        ]
+      },
+      "outputDefinition": {
+        "matchedCase": {
+          "type": "string",
+          "description": "The label of the matched branch (true/false label)",
+          "var": "matchedCase"
+        },
+        "matchedCaseId": {
+          "type": "string",
+          "description": "The branch that was taken (true or false)",
+          "var": "matchedCaseId"
+        }
+      },
+      "inputDefaults": {
+        "trueLabel": "True",
+        "falseLabel": "False"
+      },
+      "form": {
+        "id": "decision-properties",
+        "title": "Decision configuration",
+        "sections": [
+          {
+            "id": "condition",
+            "title": "Condition",
+            "fields": [
+              {
+                "name": "inputs.expression",
+                "type": "custom",
+                "component": "code-editor",
+                "componentProps": {
+                  "singleLine": true,
+                  "mode": "expression",
+                  "toggleable": false,
+                  "language": "javascript",
+                  "returnType": "boolean",
+                  "validationMode": "expression",
+                  "showVariableButton": true,
+                  "placeholder": "$vars.httpRequest1.output.statusCode >= 200 && $vars.httpRequest1.output.statusCode < 300"
+                },
+                "label": "Condition",
+                "description": "The condition must be a JavaScript expression that evaluates to true or false."
+              },
+              {
+                "name": "inputs.trueLabel",
+                "type": "text",
+                "label": "True branch label",
+                "description": "This label appears on the true branch."
+              },
+              {
+                "name": "inputs.falseLabel",
+                "type": "text",
+                "label": "False branch label",
+                "description": "This label appears on the false branch."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "nodeType": "core.logic.merge",
+      "version": "1.0",
+      "category": "control-flow",
+      "description": "Join parallel branches into one path",
+      "tags": [
+        "control-flow",
+        "merge"
+      ],
+      "sortOrder": 20,
+      "display": {
+        "label": "Merge",
+        "icon": "merge"
+      },
+      "handleConfiguration": [
+        {
+          "position": "left",
+          "handles": [
+            {
+              "id": "input",
+              "type": "target",
+              "handleType": "input"
+            }
+          ],
+          "visible": true
         },
         {
           "position": "right",
@@ -1159,234 +3328,21 @@
               "type": "source",
               "handleType": "output"
             }
-          ]
+          ],
+          "visible": true
         }
       ],
-      "toolbarExtensions": {
-        "design": {
-          "actions": [
-            {
-              "id": "open-workflow",
-              "icon": "external-link",
-              "label": "Open"
-            }
-          ]
-        }
-      },
       "model": {
-        "type": "bpmn:ServiceTask",
-        "serviceType": "Orchestrator.StartAgentJob",
-        "version": "v2",
-        "bindings": {
-          "resource": "process",
-          "resourceSubType": "Agent",
-          "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
-          "orchestratorType": "agent",
-          "values": {
-            "name": "PI360CaseManagerAgent",
-            "folderPath": ""
-          }
-        },
-        "projectId": "72209049-a669-4dee-af0f-f67a87df1253",
-        "projectName": "PI360CaseManagerAgent",
-        "context": [
-          {
-            "name": "name",
-            "type": "string",
-            "value": "=bindings.bNmrKcVz5",
-            "default": "PI360CaseManagerAgent"
-          },
-          {
-            "name": "folderPath",
-            "type": "string",
-            "value": "=bindings.b4AcADDYO",
-            "default": ""
-          },
-          {
-            "name": "_label",
-            "type": "string",
-            "value": "PI360CaseManagerAgent"
-          }
+        "type": "bpmn:ParallelGateway"
+      },
+      "runtimeConstraints": {
+        "exclude": [
+          "api-function"
         ]
-      },
-      "form": {
-        "id": "activity-properties",
-        "title": "Autonomous agent",
-        "sections": [
-          {
-            "id": "inputs",
-            "title": "Inputs",
-            "collapsible": true,
-            "defaultExpanded": true,
-            "fields": [
-              {
-                "name": "inputs.caseId",
-                "type": "text",
-                "label": "caseId"
-              },
-              {
-                "name": "inputs.currentStage",
-                "type": "text",
-                "label": "currentStage"
-              },
-              {
-                "name": "inputs.groundingJson",
-                "type": "text",
-                "label": "groundingJson"
-              },
-              {
-                "name": "inputs.quickRulesJson",
-                "type": "text",
-                "label": "quickRulesJson"
-              }
-            ]
-          }
-        ]
-      },
-      "inputDefinition": {
-        "type": "object",
-        "properties": {
-          "caseId": {
-            "type": "string",
-            "description": "Program Integrity case identifier."
-          },
-          "currentStage": {
-            "type": "string",
-            "description": "Current case stage or state when the routing decision starts."
-          },
-          "groundingJson": {
-            "type": "string",
-            "description": "Serialized JSON containing case facts, evidence, risk signals, timeline, human decisions, and stage completion state."
-          },
-          "quickRulesJson": {
-            "type": "string",
-            "description": "Serialized JSON from the deterministic quick rules check."
-          }
-        }
-      },
-      "inputDefaults": {
-        "caseId": "",
-        "currentStage": "",
-        "groundingJson": "",
-        "quickRulesJson": ""
-      },
-      "outputDefinition": {
-        "output": {
-          "type": "object",
-          "source": "=this",
-          "var": "output",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "nextStage": {
-                "type": "string",
-                "description": "The recommended next stage name: EvidenceAcquisition, InvestigationRouting, ProviderResponse, SupervisorAction, or Closure."
-              },
-              "nextStageId": {
-                "type": "string",
-                "description": "Exact case stage ID selected by the agent: Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
-              },
-              "routeDecision": {
-                "type": "string",
-                "description": "Short machine-readable routing decision."
-              },
-              "routeReason": {
-                "type": "string",
-                "description": "One or two sentence explanation grounded in the inputs."
-              },
-              "requiresEscalation": {
-                "type": "boolean",
-                "description": "True when a supervisor or policy owner must review before the case proceeds."
-              },
-              "humanGate": {
-                "type": "string",
-                "description": "Human gate that owns the next step, or none."
-              },
-              "completionRuleSatisfied": {
-                "type": "boolean",
-                "description": "True only when the required completed-stage facts are present for closure."
-              },
-              "actionTaken": {
-                "type": "boolean",
-                "description": "False. This agent routes and escalates but does not mutate the case record directly."
-              },
-              "factsUsed": {
-                "type": "array",
-                "description": "Cited facts used by the route decision.",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "error": {
-          "type": "object",
-          "description": "Error information if the node fails",
-          "source": "=Error",
-          "var": "error",
-          "schema": {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "type": "object",
-            "required": [
-              "code",
-              "message",
-              "detail",
-              "category",
-              "status"
-            ],
-            "properties": {
-              "code": {
-                "type": "string",
-                "description": "Error code as a string"
-              },
-              "message": {
-                "type": "string",
-                "description": "High-level error message"
-              },
-              "detail": {
-                "type": "string",
-                "description": "Detailed error description"
-              },
-              "category": {
-                "type": "string",
-                "description": "Error category"
-              },
-              "status": {
-                "type": "integer",
-                "description": "HTTP status code"
-              }
-            },
-            "additionalProperties": false
-          }
-        }
-      },
-      "debug": {
-        "runtime": "bpmnEngine"
       }
     }
   ],
   "bindings": [
-    {
-      "id": "bybLZkmcn",
-      "name": "name",
-      "type": "string",
-      "resource": "process",
-      "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
-      "default": "PI360EvidenceSnapshotAutomation",
-      "propertyAttribute": "name",
-      "resourceSubType": "Process"
-    },
-    {
-      "id": "bHJVld2gM",
-      "name": "folderPath",
-      "type": "string",
-      "resource": "process",
-      "resourceKey": "58e4aa89-7358-47ee-a0d4-6711e9792208",
-      "propertyAttribute": "folderPath",
-      "resourceSubType": "Process",
-      "default": ""
-    },
     {
       "id": "bNmrKcVz5",
       "name": "name",
@@ -1403,12 +3359,218 @@
       "type": "string",
       "resource": "process",
       "resourceKey": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "default": "",
       "propertyAttribute": "folderPath",
-      "resourceSubType": "Agent",
-      "default": ""
+      "resourceSubType": "Agent"
+    },
+    {
+      "id": "bClaimApiName",
+      "name": "name",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+      "default": "PI360ClaimDetailsApi",
+      "propertyAttribute": "name",
+      "resourceSubType": "Api"
+    },
+    {
+      "id": "bClaimApiFolder",
+      "name": "folderPath",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "6d04d330-e36f-4da8-a0ae-b74fef97f1b4",
+      "default": "",
+      "propertyAttribute": "folderPath",
+      "resourceSubType": "Api"
+    },
+    {
+      "id": "bQuickRulesName",
+      "name": "name",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "fabc409c-d468-4964-92e0-2171e0ced3ba",
+      "default": "PI360QuickRulesCodedAgent",
+      "propertyAttribute": "name",
+      "resourceSubType": "Agent"
+    },
+    {
+      "id": "bQuickRulesFolder",
+      "name": "folderPath",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "fabc409c-d468-4964-92e0-2171e0ced3ba",
+      "default": "",
+      "propertyAttribute": "folderPath",
+      "resourceSubType": "Agent"
+    },
+    {
+      "id": "bPIGnb4vy",
+      "name": "uipath-uipath-dataservice connection",
+      "type": "string",
+      "resource": "connection",
+      "resourceKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "propertyAttribute": "ConnectionId",
+      "default": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d"
+    },
+    {
+      "id": "bKz7X85Ay",
+      "name": "FolderKey",
+      "type": "string",
+      "resource": "connection",
+      "resourceKey": "a0bd364e-c6cc-4749-9f92-f6a46e59fe4d",
+      "propertyAttribute": "FolderKey",
+      "default": "5db31dd1-1073-4f9e-b44b-76f5484e03c4"
+    },
+    {
+      "id": "bJIMbs5yX",
+      "name": "name",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+      "default": "PI360EvidenceSnapshotAutomation",
+      "propertyAttribute": "name",
+      "resourceSubType": "Process"
+    },
+    {
+      "id": "blPybR24v",
+      "name": "folderPath",
+      "type": "string",
+      "resource": "process",
+      "resourceKey": "solution_folder.PI360EvidenceSnapshotAutomation",
+      "default": "solution_folder",
+      "propertyAttribute": "folderPath",
+      "resourceSubType": "Process"
     }
   ],
   "variables": {
+    "globals": [
+      {
+        "id": "caseInput",
+        "direction": "in",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": "Case identity, CaseType, stage, and routing facts.",
+        "triggerNodeId": "start"
+      },
+      {
+        "id": "claimInput",
+        "direction": "in",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": "Claim header and aggregate facts supplied at intake.",
+        "triggerNodeId": "start"
+      },
+      {
+        "id": "memberInput",
+        "direction": "in",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": "Member identity and Medicaid program facts.",
+        "triggerNodeId": "start"
+      },
+      {
+        "id": "providerInput",
+        "direction": "in",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": "Billing and servicing provider facts.",
+        "triggerNodeId": "start"
+      },
+      {
+        "id": "serviceEventInput",
+        "direction": "in",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": "Claimed service dates, times, units, and evidence references.",
+        "triggerNodeId": "start"
+      },
+      {
+        "id": "documentInput",
+        "direction": "in",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": "Storage-bucket document references and supplied availability metadata.",
+        "triggerNodeId": "start"
+      },
+      {
+        "id": "caseId",
+        "direction": "out",
+        "type": "string",
+        "description": "Program Integrity case identifier returned by the Claim API."
+      },
+      {
+        "id": "caseType",
+        "direction": "out",
+        "type": "string",
+        "description": "Validated CaseType returned by the Claim API."
+      },
+      {
+        "id": "claimCount",
+        "direction": "out",
+        "type": "number",
+        "description": "Claim count returned by the Claim API."
+      },
+      {
+        "id": "lineCount",
+        "direction": "out",
+        "type": "number",
+        "description": "Claim line count returned by the Claim API."
+      },
+      {
+        "id": "totalUnits",
+        "direction": "out",
+        "type": "number",
+        "description": "Total claimed units returned by the Claim API."
+      },
+      {
+        "id": "totalBilled",
+        "direction": "out",
+        "type": "number",
+        "description": "Total billed amount returned by the Claim API."
+      },
+      {
+        "id": "claimThreshold",
+        "direction": "out",
+        "type": "number",
+        "description": "Claim threshold evaluated by the routing process."
+      },
+      {
+        "id": "thresholdExceeded",
+        "direction": "out",
+        "type": "boolean",
+        "description": "Whether the Claim API total meets the applicable threshold."
+      },
+      {
+        "id": "recommendedStageId",
+        "direction": "out",
+        "type": "string",
+        "description": "One of Stage_Evcol2, Stage_Corr4a, Stage_Prreq6, Stage_Supv7a, or Stage_Clos9a."
+      },
+      {
+        "id": "routeReason",
+        "direction": "out",
+        "type": "string",
+        "description": "Grounded explanation for the recommended stage."
+      }
+    ],
     "nodes": [
       {
         "id": "start.output",
@@ -1434,6 +3596,223 @@
         "description": "Error information if the script fails",
         "binding": {
           "nodeId": "normalizeCase",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "claimDetailsByCaseType.output",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "workflowName": {
+              "type": "string"
+            },
+            "caseType": {
+              "type": "string"
+            },
+            "caseId": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "recordsAffected": {
+              "type": "number"
+            },
+            "claimCount": {
+              "type": "number"
+            },
+            "lineCount": {
+              "type": "number"
+            },
+            "totalUnits": {
+              "type": "number"
+            },
+            "totalBilled": {
+              "type": "number"
+            },
+            "claimThreshold": {
+              "type": "number"
+            },
+            "thresholdExceeded": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            },
+            "sourceEndpoint": {
+              "type": "string"
+            },
+            "payload": {
+              "type": "object"
+            }
+          }
+        },
+        "binding": {
+          "nodeId": "claimDetailsByCaseType",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "claimDetailsByCaseType.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "claimDetailsByCaseType",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "quickRulesByCaseType.output",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "case_id": {
+              "description": "Program Integrity case identifier.",
+              "title": "Case Id",
+              "type": "string"
+            },
+            "status": {
+              "description": "blocked or clear_for_case_manager.",
+              "title": "Status",
+              "type": "string"
+            },
+            "recommended_stage": {
+              "description": "Recommended next ad-hoc stage for the Case Manager agent.",
+              "title": "Recommended Stage",
+              "type": "string"
+            },
+            "blockers": {
+              "description": "Blocking rule failures that must be resolved before closure.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Blockers",
+              "type": "array"
+            },
+            "warnings": {
+              "description": "Non-blocking issues for the case manager to review.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Warnings",
+              "type": "array"
+            },
+            "facts_checked": {
+              "description": "Primitive facts used by the deterministic rules.",
+              "items": {
+                "type": "string"
+              },
+              "title": "Facts Checked",
+              "type": "array"
+            },
+            "supervisor_gate_required": {
+              "default": false,
+              "description": "True when the proposed action requires supervisor approval.",
+              "title": "Supervisor Gate Required",
+              "type": "boolean"
+            },
+            "provider_wait_required": {
+              "default": false,
+              "description": "True when provider response is still required.",
+              "title": "Provider Wait Required",
+              "type": "boolean"
+            },
+            "evidence_gap": {
+              "default": false,
+              "description": "True when material evidence is missing.",
+              "title": "Evidence Gap",
+              "type": "boolean"
+            },
+            "location_conflict_minutes": {
+              "default": 0,
+              "description": "Minutes where claimed home service intersects the institutional encounter.",
+              "title": "Location Conflict Minutes",
+              "type": "integer"
+            }
+          }
+        },
+        "binding": {
+          "nodeId": "quickRulesByCaseType",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "quickRulesByCaseType.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "quickRulesByCaseType",
           "outputId": "error"
         }
       },
@@ -1564,68 +3943,323 @@
         }
       },
       {
-        "id": "rpaEvidenceCompletenessSnapshot1.output",
-        "type": "object",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "out_EvidenceReady": {
-              "type": "boolean"
-            },
-            "out_MissingEvidenceCsv": {
-              "type": "string"
-            },
-            "out_AutomationSummary": {
-              "type": "string"
-            }
-          }
-        },
+        "id": "endEscalated.caseId",
+        "type": "string",
         "binding": {
-          "nodeId": "rpaEvidenceCompletenessSnapshot1",
-          "outputId": "output"
+          "nodeId": "endEscalated",
+          "outputId": "caseId"
         }
       },
       {
-        "id": "rpaEvidenceCompletenessSnapshot1.error",
-        "type": "object",
-        "description": "Error information if the node fails",
-        "schema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "type": "object",
-          "required": [
-            "code",
-            "message",
-            "detail",
-            "category",
-            "status"
-          ],
-          "properties": {
-            "code": {
-              "type": "string",
-              "description": "Error code as a string"
-            },
-            "message": {
-              "type": "string",
-              "description": "High-level error message"
-            },
-            "detail": {
-              "type": "string",
-              "description": "Detailed error description"
-            },
-            "category": {
-              "type": "string",
-              "description": "Error category"
-            },
-            "status": {
-              "type": "integer",
-              "description": "HTTP status code"
-            }
-          },
-          "additionalProperties": false
-        },
+        "id": "endEscalated.caseType",
+        "type": "string",
         "binding": {
-          "nodeId": "rpaEvidenceCompletenessSnapshot1",
-          "outputId": "error"
+          "nodeId": "endEscalated",
+          "outputId": "caseType"
+        }
+      },
+      {
+        "id": "endEscalated.claimCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "claimCount"
+        }
+      },
+      {
+        "id": "endEscalated.lineCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "lineCount"
+        }
+      },
+      {
+        "id": "endEscalated.totalUnits",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "totalUnits"
+        }
+      },
+      {
+        "id": "endEscalated.totalBilled",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "totalBilled"
+        }
+      },
+      {
+        "id": "endEscalated.claimThreshold",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "claimThreshold"
+        }
+      },
+      {
+        "id": "endEscalated.thresholdExceeded",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "thresholdExceeded"
+        }
+      },
+      {
+        "id": "endEscalated.recommendedStageId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "recommendedStageId"
+        }
+      },
+      {
+        "id": "endEscalated.routeReason",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEscalated",
+          "outputId": "routeReason"
+        }
+      },
+      {
+        "id": "endProvider.caseId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "caseId"
+        }
+      },
+      {
+        "id": "endProvider.caseType",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "caseType"
+        }
+      },
+      {
+        "id": "endProvider.claimCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "claimCount"
+        }
+      },
+      {
+        "id": "endProvider.lineCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "lineCount"
+        }
+      },
+      {
+        "id": "endProvider.totalUnits",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "totalUnits"
+        }
+      },
+      {
+        "id": "endProvider.totalBilled",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "totalBilled"
+        }
+      },
+      {
+        "id": "endProvider.claimThreshold",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "claimThreshold"
+        }
+      },
+      {
+        "id": "endProvider.thresholdExceeded",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "thresholdExceeded"
+        }
+      },
+      {
+        "id": "endProvider.recommendedStageId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "recommendedStageId"
+        }
+      },
+      {
+        "id": "endProvider.routeReason",
+        "type": "string",
+        "binding": {
+          "nodeId": "endProvider",
+          "outputId": "routeReason"
+        }
+      },
+      {
+        "id": "endClosure.caseId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "caseId"
+        }
+      },
+      {
+        "id": "endClosure.caseType",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "caseType"
+        }
+      },
+      {
+        "id": "endClosure.claimCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "claimCount"
+        }
+      },
+      {
+        "id": "endClosure.lineCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "lineCount"
+        }
+      },
+      {
+        "id": "endClosure.totalUnits",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "totalUnits"
+        }
+      },
+      {
+        "id": "endClosure.totalBilled",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "totalBilled"
+        }
+      },
+      {
+        "id": "endClosure.claimThreshold",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "claimThreshold"
+        }
+      },
+      {
+        "id": "endClosure.thresholdExceeded",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "thresholdExceeded"
+        }
+      },
+      {
+        "id": "endClosure.recommendedStageId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "recommendedStageId"
+        }
+      },
+      {
+        "id": "endClosure.routeReason",
+        "type": "string",
+        "binding": {
+          "nodeId": "endClosure",
+          "outputId": "routeReason"
+        }
+      },
+      {
+        "id": "endInvestigation.caseId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "caseId"
+        }
+      },
+      {
+        "id": "endInvestigation.caseType",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "caseType"
+        }
+      },
+      {
+        "id": "endInvestigation.claimCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "claimCount"
+        }
+      },
+      {
+        "id": "endInvestigation.lineCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "lineCount"
+        }
+      },
+      {
+        "id": "endInvestigation.totalUnits",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "totalUnits"
+        }
+      },
+      {
+        "id": "endInvestigation.totalBilled",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "totalBilled"
+        }
+      },
+      {
+        "id": "endInvestigation.claimThreshold",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "claimThreshold"
+        }
+      },
+      {
+        "id": "endInvestigation.thresholdExceeded",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "thresholdExceeded"
+        }
+      },
+      {
+        "id": "endInvestigation.recommendedStageId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "recommendedStageId"
+        }
+      },
+      {
+        "id": "endInvestigation.routeReason",
+        "type": "string",
+        "binding": {
+          "nodeId": "endInvestigation",
+          "outputId": "routeReason"
         }
       },
       {
@@ -1724,16 +4358,16 @@
         }
       },
       {
-        "id": "buildGroundedAgentContext1.output",
+        "id": "buildGroundedCaseContext.output",
         "type": "object",
         "description": "The return value of the script",
         "binding": {
-          "nodeId": "buildGroundedAgentContext1",
+          "nodeId": "buildGroundedCaseContext",
           "outputId": "output"
         }
       },
       {
-        "id": "buildGroundedAgentContext1.error",
+        "id": "buildGroundedCaseContext.error",
         "type": "object",
         "description": "Error information if the script fails",
         "schema": {
@@ -1771,7 +4405,7 @@
           "additionalProperties": false
         },
         "binding": {
-          "nodeId": "buildGroundedAgentContext1",
+          "nodeId": "buildGroundedCaseContext",
           "outputId": "error"
         }
       },
@@ -1844,16 +4478,490 @@
           "nodeId": "routeToEvidenceAndValidation1",
           "outputId": "error"
         }
+      },
+      {
+        "id": "endEvidenceAndValidation1.caseId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "caseId"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.caseType",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "caseType"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.claimCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "claimCount"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.lineCount",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "lineCount"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.totalUnits",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "totalUnits"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.totalBilled",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "totalBilled"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.claimThreshold",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "claimThreshold"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.thresholdExceeded",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "thresholdExceeded"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.recommendedStageId",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "recommendedStageId"
+        }
+      },
+      {
+        "id": "endEvidenceAndValidation1.routeReason",
+        "type": "string",
+        "binding": {
+          "nodeId": "endEvidenceAndValidation1",
+          "outputId": "routeReason"
+        }
+      },
+      {
+        "id": "dataFabricCreateProvider1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateProvider1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateProvider1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateProvider1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateAttendant1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateAttendant1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateAttendant1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateAttendant1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateClaim1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateClaim1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateClaim1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateClaim1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvvVisit1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateEvvVisit1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvvVisit1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateEvvVisit1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateRiskSignal1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateRiskSignal1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateRiskSignal1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateRiskSignal1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvidenceDocument1.output",
+        "type": "object",
+        "description": "The return value of the connector.",
+        "binding": {
+          "nodeId": "dataFabricCreateEvidenceDocument1",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "dataFabricCreateEvidenceDocument1.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "dataFabricCreateEvidenceDocument1",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "evidenceSnapshotRpa.output",
+        "type": "object",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "out_EvidenceReady": {
+              "type": "boolean"
+            },
+            "out_MissingEvidenceCsv": {
+              "type": "string"
+            },
+            "out_AutomationSummary": {
+              "type": "string"
+            }
+          }
+        },
+        "binding": {
+          "nodeId": "evidenceSnapshotRpa",
+          "outputId": "output"
+        }
+      },
+      {
+        "id": "evidenceSnapshotRpa.error",
+        "type": "object",
+        "description": "Error information if the node fails",
+        "schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "detail",
+            "category",
+            "status"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Error code as a string"
+            },
+            "message": {
+              "type": "string",
+              "description": "High-level error message"
+            },
+            "detail": {
+              "type": "string",
+              "description": "Detailed error description"
+            },
+            "category": {
+              "type": "string",
+              "description": "Error category"
+            },
+            "status": {
+              "type": "integer",
+              "description": "HTTP status code"
+            }
+          },
+          "additionalProperties": false
+        },
+        "binding": {
+          "nodeId": "evidenceSnapshotRpa",
+          "outputId": "error"
+        }
+      },
+      {
+        "id": "pcsEvidenceBranch1.matchedCase",
+        "type": "string",
+        "description": "The label of the matched branch (true/false label)",
+        "binding": {
+          "nodeId": "pcsEvidenceBranch1",
+          "outputId": "matchedCase"
+        }
+      },
+      {
+        "id": "pcsEvidenceBranch1.matchedCaseId",
+        "type": "string",
+        "description": "The branch that was taken (true or false)",
+        "binding": {
+          "nodeId": "pcsEvidenceBranch1",
+          "outputId": "matchedCaseId"
+        }
       }
     ]
   },
-  "runtime": "maestro",
   "layout": {
     "nodes": {
       "start": {
         "position": {
-          "x": 256,
-          "y": 144
+          "x": -384,
+          "y": 0
         },
         "size": {
           "width": 96,
@@ -1862,8 +4970,8 @@
       },
       "normalizeCase": {
         "position": {
-          "x": 448,
-          "y": 144
+          "x": -192,
+          "y": 0
         },
         "size": {
           "width": 96,
@@ -1871,10 +4979,30 @@
         },
         "collapsed": false
       },
+      "claimDetailsByCaseType": {
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "quickRulesByCaseType": {
+        "position": {
+          "x": 2304,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
       "needsSupervisorReview": {
         "position": {
-          "x": 1408,
-          "y": 320
+          "x": 3264,
+          "y": 336
         },
         "size": {
           "width": 96,
@@ -1884,8 +5012,8 @@
       },
       "prepareSupervisorEscalation": {
         "position": {
-          "x": 1600,
-          "y": 144
+          "x": 3456,
+          "y": 192
         },
         "size": {
           "width": 96,
@@ -1895,8 +5023,8 @@
       },
       "needsProviderResponse": {
         "position": {
-          "x": 1600,
-          "y": 480
+          "x": 2880,
+          "y": 0
         },
         "size": {
           "width": 96,
@@ -1906,8 +5034,8 @@
       },
       "routeProviderResponse": {
         "position": {
-          "x": 1792,
-          "y": 336
+          "x": 3072,
+          "y": -192
         },
         "size": {
           "width": 96,
@@ -1917,8 +5045,8 @@
       },
       "isClosureReady": {
         "position": {
-          "x": 1792,
-          "y": 624
+          "x": 3456,
+          "y": 480
         },
         "size": {
           "width": 96,
@@ -1928,8 +5056,8 @@
       },
       "routeClosure": {
         "position": {
-          "x": 1984,
-          "y": 528
+          "x": 3648,
+          "y": 384
         },
         "size": {
           "width": 96,
@@ -1939,8 +5067,8 @@
       },
       "routeInvestigation": {
         "position": {
-          "x": 1984,
-          "y": 720
+          "x": 3648,
+          "y": 576
         },
         "size": {
           "width": 96,
@@ -1950,8 +5078,8 @@
       },
       "endEscalated": {
         "position": {
-          "x": 1792,
-          "y": 144
+          "x": 3648,
+          "y": 192
         },
         "size": {
           "width": 96,
@@ -1961,8 +5089,8 @@
       },
       "endProvider": {
         "position": {
-          "x": 1984,
-          "y": 336
+          "x": 3264,
+          "y": -192
         },
         "size": {
           "width": 96,
@@ -1972,8 +5100,8 @@
       },
       "endClosure": {
         "position": {
-          "x": 2176,
-          "y": 528
+          "x": 3840,
+          "y": 384
         },
         "size": {
           "width": 96,
@@ -1983,8 +5111,8 @@
       },
       "endInvestigation": {
         "position": {
-          "x": 2176,
-          "y": 720
+          "x": 3840,
+          "y": 576
         },
         "size": {
           "width": 96,
@@ -1992,40 +5120,164 @@
         },
         "collapsed": false
       },
-      "rpaEvidenceCompletenessSnapshot1": {
-        "position": {
-          "x": 640,
-          "y": 144
-        }
-      },
       "agentSelectNextCaseStage1": {
         "position": {
-          "x": 1024,
-          "y": 144
+          "x": 2688,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
         }
       },
-      "buildGroundedAgentContext1": {
+      "buildGroundedCaseContext": {
         "position": {
-          "x": 832,
-          "y": 144
+          "x": 2496,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
         }
       },
       "evidenceStageSelected1": {
         "position": {
-          "x": 1216,
-          "y": 144
+          "x": 3072,
+          "y": 176
+        },
+        "size": {
+          "width": 96,
+          "height": 96
         }
       },
       "routeToEvidenceAndValidation1": {
         "position": {
-          "x": 1408,
-          "y": -48
+          "x": 3264,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
         }
       },
       "endEvidenceAndValidation1": {
         "position": {
-          "x": 1600,
-          "y": -48
+          "x": 3456,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateProvider1": {
+        "position": {
+          "x": 192,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateAttendant1": {
+        "position": {
+          "x": 1152,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateClaim1": {
+        "position": {
+          "x": 576,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateEvvVisit1": {
+        "position": {
+          "x": 1536,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateRiskSignal1": {
+        "position": {
+          "x": 1920,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "dataFabricCreateEvidenceDocument1": {
+        "position": {
+          "x": 2112,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "evidenceSnapshotRpa": {
+        "position": {
+          "x": 768,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "pcsEvidenceBranch1": {
+        "position": {
+          "x": 960,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "mergeCaseTypeEvidenceWrites1": {
+        "position": {
+          "x": 1728,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "providerCreateOrExisting1": {
+        "position": {
+          "x": 384,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
+        }
+      },
+      "attendantCreateOrExisting1": {
+        "position": {
+          "x": 1344,
+          "y": 0
+        },
+        "size": {
+          "width": 96,
+          "height": 96
         }
       }
     }

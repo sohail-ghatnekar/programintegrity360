@@ -1,0 +1,58 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360EvidenceRoutingFlow",
+    "kind": "process",
+    "type": "flow",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "f0b1a338-4f9e-4d45-9556-0c8fc196f31d",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "kind": "package",
+        "name": "PI360EvidenceRoutingFlow"
+      }
+    ],
+    "runtimeDependencies": [
+      {
+        "bindingType": "connection",
+        "bindingKey": "",
+        "bindingValues": {
+          "connectionId": {
+            "defaultValue": "ImplicitConnection",
+            "isExpression": false
+          }
+        },
+        "bindingMetadata": {
+          "activityName": "Get Medicaid claim details",
+          "bindingsVersion": "2.2",
+          "connector": "uipath-uipath-http",
+          "useConnectionService": "true"
+        },
+        "resourceKind": "Connection",
+        "resourceType": "uipath-uipath-http"
+      }
+    ],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Flow",
+      "name": "PI360EvidenceRoutingFlow",
+      "package": {
+        "key": "64d8b15d-c6da-4754-8164-9b9ce2c2ba06"
+      },
+      "packageName": "PI360AdditiveOrchestration.flow.PI360EvidenceRoutingFlow",
+      "targetFrameworkValue": "Portable",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180
+    },
+    "locks": [],
+    "key": "424c1a9e-e44a-42c9-ad16-ebd819b6cc31",
+    "files": []
+  }
+}

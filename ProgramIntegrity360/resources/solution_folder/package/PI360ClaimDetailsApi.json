@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360ClaimDetailsApi",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "2b115f5e-5658-4c0e-b9b3-8abc0b169713",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360ClaimDetailsApi"
+    },
+    "locks": [],
+    "key": "d4fc01a6-9cba-4245-bfca-2bfc9e0726a9"
+  }
+}

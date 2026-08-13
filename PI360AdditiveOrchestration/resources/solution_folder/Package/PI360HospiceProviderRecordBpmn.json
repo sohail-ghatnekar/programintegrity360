@@ -1,0 +1,23 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360HospiceProviderRecordBpmn",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "2c4d8cf5-c5bb-45cd-b89f-bb5a419437d8",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360HospiceProviderRecordBpmn"
+    },
+    "locks": [],
+    "key": "b2062151-bc7d-4714-9809-e2f37d4ddcd1",
+    "files": []
+  }
+}

@@ -79,6 +79,11 @@ test('keeps completion confirmed and exposes retry when the real workspace refre
   render(<App />);
   expect(await screen.findByText('Live UiPath')).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Start new case' }));
+  expect(screen.getByRole('dialog', { name: 'Start new case' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Requester email' })).toHaveValue('investigator@example.com');
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
   vi.useFakeTimers();
   fireEvent.click(screen.getByRole('button', { name: 'Task Center' }));
   fireEvent.click(screen.getByRole('button', { name: `Open task ${task.id}` }));
@@ -103,4 +108,16 @@ test('keeps completion confirmed and exposes retry when the real workspace refre
   await act(() => vi.advanceTimersByTimeAsync(30_000));
   expect(taskSdk.getById).toHaveBeenCalledTimes(1);
   expect(repository.listCases).toHaveBeenCalledTimes(3);
+});
+
+test('renders an authenticated empty live queue through the real workspace hook', async () => {
+  repository.listCases.mockResolvedValue([]);
+
+  render(<App />);
+
+  expect(await screen.findByText('Live UiPath')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Command center' })).toBeInTheDocument();
+  expect(screen.getByText('No cases available.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start new case' })).toBeEnabled();
+  expect(repository.loadWorkspace).not.toHaveBeenCalled();
 });

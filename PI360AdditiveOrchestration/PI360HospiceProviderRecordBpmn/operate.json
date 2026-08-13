@@ -1,0 +1,11 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/operate",
+  "projectId": "32f1f1f5-99e3-45c8-a181-d8de635110d3",
+  "main": "/content/PI360HospiceProviderRecordBpmn.bpmn#Event_Start",
+  "contentType": "ProcessOrchestration",
+  "targetFramework": "Portable",
+  "runtimeOptions": {
+    "requiresUserInteraction": false,
+    "isAttended": false
+  }
+}

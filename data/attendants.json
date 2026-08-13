@@ -8,5 +8,15 @@
     "credential_expiry": "2026-03-31",
     "personnel_docs_complete": false,
     "missing_docs": ["Signed training acknowledgment", "Current background-check attestation"]
+  },
+  {
+    "attendant_id": "ATT-HSP-4401",
+    "name": "Taylor Brooks",
+    "provider_id": "PRV-100482",
+    "role": "Hospice Caregiver",
+    "credential_id": "HSP-PC-4401",
+    "credential_expiry": "2027-03-31",
+    "personnel_docs_complete": true,
+    "missing_docs": []
   }
 ]

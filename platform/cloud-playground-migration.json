@@ -1,0 +1,146 @@
+{
+  "environment": {
+    "portalUrl": "https://cloud.uipath.com",
+    "apiUrl": "https://api.uipath.com",
+    "organization": "uipathlabs",
+    "tenant": "Playground"
+  },
+  "parentFolder": {
+    "path": "AMER Presales/Public Sector",
+    "key": "7ea9add1-8aa5-4829-8939-0964c751b123"
+  },
+  "solution": {
+    "packageName": "ProgramIntegrity360",
+    "targetPackageVersion": "0.6.1",
+    "packageVersion": "0.6.1",
+    "packageVersionKey": "a149b91c-442c-471c-85f9-430c95f09ae4",
+    "packageSha256": "00f74ecd734d4e34242bc079d3c59a19c5d2d96726642141cb492f65d8b5e581",
+    "deploymentName": "ProgramIntegrity360-cloud-0.5.1",
+    "folderName": "ProgramIntegrity360",
+    "deploymentKey": "ef500f70-0970-4f33-bec2-58ab7f6e6050",
+    "installDeploymentKey": "7f49503d-481f-4a01-a625-3433f541d464",
+    "pipelineDeploymentId": "842064f8-47f1-4a76-d4d8-08def3a91432",
+    "configurationKey": "84306cfc-190d-410e-b51b-b22511f526f5",
+    "instanceId": "dc978ac2-6652-4d01-b64d-1091d500a767_v7",
+    "folderPath": "AMER Presales/Public Sector/ProgramIntegrity360",
+    "folderKey": "5db31dd1-1073-4f9e-b44b-76f5484e03c4",
+    "folderId": 2182825,
+    "activationStatus": "SuccessfulActivate",
+    "studioWebSolutionId": "494be60c-8bb2-4478-3beb-08def46ec69f",
+    "studioWebDesignerUrl": "https://cloud.uipath.com/uipathlabs/studio_/designer/68806a4b-fe40-471c-a67e-1618fd306607?solutionId=494be60c-8bb2-4478-3beb-08def46ec69f",
+    "studioWebProjectCount": 15,
+    "deployedProcessCount": 14,
+    "upgradeCompletedAt": "2026-08-09T15:25:16.936Z",
+    "packagedResourceCount": 34,
+    "packagingNote": "0.6.1 is the packaging-only correction for the 0.6.0 story build. Five deployment-owned shadow resources were excluded before the in-place upgrade."
+  },
+  "rollback": {
+    "packageVersion": "0.5.1",
+    "packageVersionKey": "6a72048e-352a-4516-a49d-64cc2214f5cf",
+    "packageSha256": "067a287fa2a3ca93b79efe2eb82b5c19e41b4d11ecabaea262b3098ee5b1aada",
+    "installDeploymentKey": "7f49503d-481f-4a01-a625-3433f541d464",
+    "pipelineDeploymentId": "30c60010-f31f-4d6e-d26d-08def493cb98",
+    "configurationKey": "41a6ffce-b53d-46cd-8026-8195521aca9c",
+    "instanceId": "4612844a-c4e9-4830-9c4f-cecbe05b1d40_v7",
+    "retained": true
+  },
+  "codedWebApp": {
+    "name": "pi360-coded-app",
+    "version": "0.5.6",
+    "clientId": "57201488-1566-4f9b-a696-1b3773c2af33",
+    "localRedirectUri": "http://localhost:5173",
+    "deployedRedirectUri": "https://uipathlabs.uipath.host/pi360-coded-app",
+    "systemName": "ID278b47bdb4d24033ab498eb94bec6e8b",
+    "packageSha256": "b0f6f050c92336b41ff231e59acd0f47a989d659e682695d4140442637b13958",
+    "appUrl": "https://uipathlabs.uipath.host/pi360-coded-app",
+    "deploymentId": "12eb1198-bd15-49e8-a009-d17410ad0477",
+    "deploymentRevision": 7,
+    "deployedAt": "2026-08-10T17:27:54.940Z",
+    "deploymentNote": "Package-only upgrade from 0.5.5 to 0.5.6; no Studio Web source push was performed.",
+    "entitySource": "Data Fabric using the nine PI360 entity IDs in platform/cloud-playground-entity-ids.json",
+    "oauthValidation": {
+      "status": "PendingAuthenticatedVerification",
+      "requiredUserScopes": [
+        "DataFabric.Data.Read",
+        "DataFabric.Data.Write",
+        "DataFabric.Schema.Read"
+      ],
+      "identityInspection": "The current Playground user receives Forbidden (403) from uip admin external-apps list, so an org administrator must verify the public client's grants if authenticated Data Fabric reads still fail."
+    }
+  },
+  "dataFabric": {
+    "scope": "tenant",
+    "mode": "C-light on nine existing entities because the Playground Data Fabric environment is at its 500-object cap",
+    "choiceSetCount": 10,
+    "entityCount": 9,
+    "recordCount": 59,
+    "recordCounts": {
+      "PI360ProgramIntegrityCase": 2,
+      "PI360Provider": 1,
+      "PI360Attendant": 2,
+      "PI360Claim": 10,
+      "PI360EvvVisit": 12,
+      "PI360RiskSignal": 6,
+      "PI360EvidenceDocument": 9,
+      "PI360InvestigationAction": 15,
+      "PI360Decision": 2
+    },
+    "documentTypeValuesAdded": [
+      "Hospital Record",
+      "Policy Reference",
+      "Hospice Service Record"
+    ],
+    "newEntityCount": 0,
+    "deletesOrRenames": false,
+    "choiceSetIdsFile": "platform/cloud-playground-choiceset-ids.json",
+    "entityIdsFile": "platform/cloud-playground-entity-ids.json"
+  },
+  "beeceptor": {
+    "baseUrl": "https://medicaid-claim-demo.free.beeceptor.com",
+    "MedicaidPCS": "/MedicaidPCS",
+    "StateMedicaidHospice": "/StateMedicaidHospice"
+  },
+  "ixp": {
+    "serviceEvidence": {
+      "projectId": "db86ac99-70f8-80e1-9c2e-42e09362d0cb",
+      "projectName": "pi360_timesheets-46b073f4-ixp",
+      "title": "PI360 Service Evidence Extractor",
+      "modelVersion": 12,
+      "tag": "live",
+      "pinned": true
+    },
+    "institutionalEncounter": {
+      "projectId": "3d9b9c8e-4ac3-80a9-9529-89a013670910",
+      "projectName": "pi360-institutional-encounter-extractor-53d63c92-ixp",
+      "title": "PI360 Institutional Encounter Extractor",
+      "modelVersion": 9,
+      "tag": "live",
+      "pinned": true
+    },
+    "runtimeBinding": "The Case and BPMN invoke the packaged PI360 IXP Timesheet and PI360 IXP Medical Record RPA processes."
+  },
+  "storageBuckets": {
+    "Timesheets": {
+      "key": "ee5b39e1-60de-4ddd-92c3-3bc05d0d74c4",
+      "paths": [
+        "pcs/PI-PCS-2026-0041/incoming/",
+        "pcs/PI-PCS-2026-0041/provider-response/",
+        "hospice/PI-HSP-2026-0042/incoming/"
+      ]
+    },
+    "Hospital Records": {
+      "key": "72623e80-55ba-4cfc-abd1-343af54beae0",
+      "paths": [
+        "hospice/PI-HSP-2026-0042/provider-response/"
+      ]
+    },
+    "Policy Docs": {
+      "key": "27f97497-c423-4204-9a4e-f95bdb37f099",
+      "paths": [
+        "pcs/PI-PCS-2026-0041/incoming/",
+        "reference/policy/"
+      ]
+    }
+  },
+  "lastVerifiedAt": "2026-08-09T15:34:43Z"
+}

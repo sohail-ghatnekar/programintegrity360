@@ -1,0 +1,49 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 IXP Medical Record",
+    "kind": "process",
+    "type": "process",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "e0fafcd3-755c-4551-b399-eef50efbadf7",
+    "isOverridable": true,
+    "dependencies": [
+      {
+        "name": "PI360 IXP Medical Record",
+        "kind": "package"
+      }
+    ],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "type": "Process",
+      "name": "PI360 IXP Medical Record",
+      "package": {
+        "key": "6723f34d-3350-4a4d-8d9a-24940583f264"
+      },
+      "packageName": "ProgramIntegrity360.process.PI360.IXP.Medical.Record",
+      "jobPriority": "Medium",
+      "hiddenForAttendedUser": false,
+      "alwaysRunning": false,
+      "autoStartProcess": false,
+      "jobRecording": "Disabled",
+      "targetFrameworkValue": "Portable",
+      "duration": 40,
+      "frequency": 500,
+      "quality": 100,
+      "remoteControlAccess": "None",
+      "retentionAction": "Delete",
+      "retentionPeriod": 30,
+      "staleRetentionAction": "Delete",
+      "staleRetentionPeriod": 180,
+      "tags": []
+    },
+    "locks": [],
+    "key": "419bd493-4f87-4b00-9101-a146faba464f",
+    "files": []
+  }
+}

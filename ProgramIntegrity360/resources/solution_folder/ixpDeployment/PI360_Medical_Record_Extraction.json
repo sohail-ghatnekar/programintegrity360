@@ -1,0 +1,36 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 Medical Record Extraction",
+    "kind": "ixpDeployment",
+    "apiVersion": "ixp.uipath.com/v1",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "name": "PI360 Medical Record Extraction",
+      "description": "",
+      "modelVersion": 0,
+      "sourcePackageId": "90697dca1a072974",
+      "dataset": "{\"id\":\"6aa58914c82c6a20\",\"owner\":\"pi360-medical-record-extraction-914e1a91-ixp\",\"name\":\"pi360-medical-record-extraction-914e1a91\",\"title\":\"PI360 Medical Record Extraction\",\"description\":\"\",\"created\":\"2026-08-11T16:09:48.465570Z\",\"last_modified\":\"2026-08-11T16:10:21.708288Z\",\"model_family\":\"transformer-english\",\"source_ids\":[\"9094ac3ce8fff3ed\"],\"has_sentiment\":true,\"limited_access\":false,\"entity_defs\":[{\"id\":\"ddd9be08bdc57de4\",\"color\":0,\"name\":\"Boolean\",\"title\":\"Boolean\",\"inherits_from\":[\"0000000000000046\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent boolean values in text.\"},{\"id\":\"55c4d06615e25b4c\",\"color\":1,\"name\":\"Date\",\"title\":\"Date\",\"inherits_from\":[\"0000000000000007\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent dates in text.\"},{\"id\":\"024648c16e2c8f34\",\"color\":2,\"name\":\"Exact Text\",\"title\":\"Exact Text\",\"inherits_from\":[],\"trainable\":true,\"_entity_def_flags\":[\"appears_verbatim\"],\"instructions\":\"Use to represent text that appears verbatim in text.\"},{\"id\":\"0f46bab982ca7e1e\",\"color\":3,\"name\":\"Inferred Text\",\"title\":\"Inferred Text\",\"inherits_from\":[],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use for text that might not appear verbatim in the text.\"},{\"id\":\"0667992973bcf255\",\"color\":4,\"name\":\"Monetary Quantity\",\"title\":\"Monetary Quantity\",\"inherits_from\":[\"0000000000000006\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent monetary values in text.\"},{\"id\":\"ef7bd62cc9147877\",\"color\":5,\"name\":\"Number\",\"title\":\"Number\",\"inherits_from\":[\"0000000000000044\"],\"trainable\":true,\"_entity_def_flags\":[],\"instructions\":\"Use to represent amounts or quantities in text.\"}],\"general_fields\":[],\"label_groups\":[{\"name\":\"default\",\"label_defs\":[{\"name\":\"Discharge Summary\",\"id\":\"4c34e78d367000d4\",\"instructions\":\"Extract general information about the patient's discharge.\",\"moon_form\":[{\"field_id\":\"d6e6814c52f6a159\",\"id\":\"55c4d06615e25b4c\",\"field_type_id\":\"55c4d06615e25b4c\",\"kind\":\"Date\",\"name\":\"Admission Date\",\"instructions\":\"Extract the date the patient was admitted.\"},{\"field_id\":\"938a7cae67d88c76\",\"id\":\"55c4d06615e25b4c\",\"field_type_id\":\"55c4d06615e25b4c\",\"kind\":\"Date\",\"name\":\"Discharge Date\",\"instructions\":\"Extract the date the patient was discharged.\"}]}],\"trainable\":true,\"hidden\":false,\"instructions\":\"Extract information from the discharge summary document.\"}],\"label_defs\":[{\"name\":\"Discharge Summary\",\"id\":\"4c34e78d367000d4\",\"instructions\":\"Extract general information about the patient's discharge.\",\"moon_form\":[{\"field_id\":\"d6e6814c52f6a159\",\"id\":\"55c4d06615e25b4c\",\"field_type_id\":\"55c4d06615e25b4c\",\"kind\":\"Date\",\"name\":\"Admission Date\",\"instructions\":\"Extract the date the patient was admitted.\"},{\"field_id\":\"938a7cae67d88c76\",\"id\":\"55c4d06615e25b4c\",\"field_type_id\":\"55c4d06615e25b4c\",\"kind\":\"Date\",\"name\":\"Discharge Date\",\"instructions\":\"Extract the date the patient was discharged.\"}]}],\"_label_properties\":[],\"_timezone\":\"UTC\",\"_preferred_locales\":{\"default\":\"en_GB\",\"preferences\":[]},\"_dataset_flags\":[\"ixp\"],\"_model_config\":{\"kind\":\"gpt_ixp\",\"model_version\":\"gpt_5_4_2026_03_05\",\"input_config\":{\"mode\":\"text_plus_image\",\"text_config\":{\"kind\":\"uipath_cv_table_only\"}},\"flags\":[],\"iterative_config\":{},\"attribution_method\":\"table_formatted_word_ids\"}}",
+      "fileReference": "90697dca1a072974",
+      "modelUrlName": "pi360-medical-record-extraction-914e1a91-ixp",
+      "sourceDatasetId": "931511597fa0b8d4"
+    },
+    "locks": [],
+    "key": "b534d333-32d1-80a1-943e-6ce03ed61a34",
+    "files": [
+      {
+        "name": "PI360 Medical Record Extraction.ixp",
+        "kind": "ixpDeployment",
+        "url": "https://cloud.uipath.com/a17c9af1-091d-4dd2-9cec-ed787c6601c8/15eb07e5-edfb-4fcc-9229-7681ff056ff0/reinfer_/api/_private/packages/90697dca1a072974/export",
+        "key": "90697dca1a072974"
+      }
+    ]
+  }
+}

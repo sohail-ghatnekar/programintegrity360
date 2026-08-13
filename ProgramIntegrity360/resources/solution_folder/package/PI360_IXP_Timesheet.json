@@ -1,0 +1,26 @@
+{
+  "docVersion": "1.0.0",
+  "resource": {
+    "name": "PI360 IXP Timesheet",
+    "kind": "package",
+    "apiVersion": "orchestrator.uipath.com/v1",
+    "projectKey": "616518cc-4755-4790-a5ad-3f2c7b4191a5",
+    "isOverridable": true,
+    "dependencies": [],
+    "runtimeDependencies": [],
+    "files": [],
+    "folders": [
+      {
+        "fullyQualifiedName": "solution_folder"
+      }
+    ],
+    "spec": {
+      "fileName": null,
+      "fileReference": null,
+      "name": "PI360 IXP Timesheet",
+      "description": null
+    },
+    "locks": [],
+    "key": "d8a8ac1a-bcb8-4342-926c-c15664b5d225"
+  }
+}

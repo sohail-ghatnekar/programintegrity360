@@ -3,38 +3,22 @@
   "resources": [
     {
       "resource": "process",
-      "key": "solution_folder.PI360EvidenceSnapshotAutomation",
-      "value": {
-        "name": { "defaultValue": "PI360EvidenceSnapshotAutomation" },
-        "folderPath": { "defaultValue": "solution_folder" }
-      }
-    },
-    {
-      "resource": "process",
-      "key": "solution_folder.PI360CaseManagerAgent",
-      "value": {
-        "name": { "defaultValue": "PI360CaseManagerAgent" },
-        "folderPath": { "defaultValue": "solution_folder" }
-      },
-      "metadata": { "subType": "Agent" }
-    },
-    {
-      "resource": "process",
-      "key": "solution_folder.PI360DecisionPacketAutomation",
-      "value": {
-        "name": { "defaultValue": "PI360DecisionPacketAutomation" },
-        "folderPath": { "defaultValue": "solution_folder" }
+      "key": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "id": "process64ee0873-ac2c-4393-a970-7f67f9c7a423",
+      "value": {},
+      "metadata": {
+        "ActivityName": "UiPath Case Agent",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
       }
     },
     {
       "resource": "app",
-      "key": "solution_folder.pi360-escalation-action-app",
+      "key": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+      "id": "app54f913fa-10c8-4eec-85ef-58f05e15b6d5",
       "value": {
-        "name": {
-          "defaultValue": "pi360-escalation-action-app",
-          "isExpression": false,
-          "displayName": "App name"
-        },
         "folderPath": {
           "defaultValue": "solution_folder",
           "isExpression": false,
@@ -42,28 +26,169 @@
         }
       },
       "metadata": {
-        "bindingsVersion": "2.2",
-        "solutionsSupport": "true"
+        "ActivityName": "Human - confirm true investigation and record findings",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true"
       }
     },
     {
-      "resource": "app",
-      "key": "solution_folder.pi360-recovery-approval",
+      "resource": "process",
+      "key": "8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
+      "id": "process8dd7c4ad-7050-4e54-b915-854f29fa5fd6",
+      "value": {},
+      "metadata": {
+        "ActivityName": "Flow - acquire and validate claim evidence",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "ProcessOrchestration"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "5fb67ceb-1d49-475b-96a3-1037eb152b2d",
+      "id": "process5fb67ceb-1d49-475b-96a3-1037eb152b2d",
+      "value": {},
+      "metadata": {
+        "ActivityName": "BPMN - request and await hospital record",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "ProcessOrchestration"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "da8d33bc-864b-4ac0-ad48-220a77834bbd",
+      "id": "processda8d33bc-864b-4ac0-ad48-220a77834bbd",
+      "value": {},
+      "metadata": {
+        "ActivityName": "RPA - extract service timesheet",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "4b3445e2-e309-4462-98b1-ee5a8e19c24b",
+      "id": "process4b3445e2-e309-4462-98b1-ee5a8e19c24b",
       "value": {
-        "name": {
-          "defaultValue": "pi360-recovery-approval",
-          "isExpression": false,
-          "displayName": "App name"
-        },
         "folderPath": {
           "defaultValue": "solution_folder",
           "isExpression": false,
           "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360DecisionPacketAutomation",
+          "isExpression": false,
+          "displayName": "Process name"
         }
       },
       "metadata": {
-        "bindingsVersion": "2.2",
-        "solutionsSupport": "true"
+        "ActivityName": "RPA - build supervisor decision packet",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "81823fe7-f177-4719-9dcf-468d15aeb72d",
+      "id": "process81823fe7-f177-4719-9dcf-468d15aeb72d",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360 Send Outlook Email",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "RPA - send closure summary email",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "9c77c6aa-3a07-4053-a559-28c98f2520a3",
+      "id": "process9c77c6aa-3a07-4053-a559-28c98f2520a3",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360ApiWorkflows",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Data Fabric lifecycle API workflows",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Api"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "07bc936d-d767-4ca8-845d-f6be376a0e2b",
+      "id": "process07bc936d-d767-4ca8-845d-f6be376a0e2b",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360TriageAgent",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Agentic Caseworker - explain triage recommendation",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "d7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f",
+      "id": "processd7ec72d4-6fa4-4a00-b86b-dcf4dbe8380f",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360EvidenceCorrelationAgent",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Agentic Caseworker - first-pass investigation recommendation",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Agent"
       }
     }
   ]

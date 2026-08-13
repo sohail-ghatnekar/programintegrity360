@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Process",
+  "Name": "PI360 IXP Medical Record",
+  "Description": null,
+  "MainFile": "Main.xaml"
+}

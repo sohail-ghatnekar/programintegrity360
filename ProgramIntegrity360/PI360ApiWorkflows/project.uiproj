@@ -1,6 +1,6 @@
 {
   "Name": "PI360ApiWorkflows",
   "ProjectType": "Api",
-  "Description": "Program Integrity 360 API workflow contract simulator for intake, evidence lookups, provider records requests, and approved recovery handoff.",
+  "Description": "Deterministic Program Integrity 360 Data Fabric writes for case intake, hospital evidence, investigation actions, supervisor decisions, and final closure state.",
   "MainFile": "Main.json"
 }

@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { getUiPathAuthSetup } from './uipath';
+import { getUiPathAuthSetup, getUiPathRuntimeConfig } from './uipath';
 
 const runtimeMetadata = {
   'uipath:client-id': 'runtime-client-id',
@@ -61,4 +61,22 @@ it('uses local environment fallback only when runtime metadata is absent', () =>
 
   expect(setup.config.clientId).toBe('local-client-id');
   expect(setup.missingFields).toEqual([]);
+});
+
+it('carries the nine configured PI360 Data Fabric entity IDs into the live repository config', () => {
+  const entityIds = {
+    cases: 'case-entity-id',
+    providers: 'provider-entity-id',
+    attendants: 'attendant-entity-id',
+    claims: 'claim-entity-id',
+    evvVisits: 'evv-entity-id',
+    riskSignals: 'risk-entity-id',
+    evidenceDocuments: 'evidence-entity-id',
+    investigationActions: 'action-entity-id',
+    decisions: 'decision-entity-id',
+  };
+
+  const runtime = getUiPathRuntimeConfig({ entityIds });
+
+  expect(runtime.entityIds).toEqual(entityIds);
 });

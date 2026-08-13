@@ -9,6 +9,7 @@ type Pi360RuntimeDefaults = {
   folderId?: number;
   caseProcessName?: string;
   recordAgentName?: string;
+  entityIds?: Record<string, string>;
 };
 
 function readPi360RuntimeDefaults(rootDir: string): Pi360RuntimeDefaults {
@@ -25,6 +26,7 @@ function readPi360RuntimeDefaults(rootDir: string): Pi360RuntimeDefaults {
       folderId: config.folderId,
       caseProcessName: config.caseProcessName,
       recordAgentName: config.recordAgentName,
+      entityIds: config.entityIds,
     };
   } catch {
     return {};

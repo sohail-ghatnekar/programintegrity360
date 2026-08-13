@@ -9,34 +9,27 @@
     "isOverridable": true,
     "dependencies": [
       {
-        "kind": "package",
-        "name": "PI360CaseManagerAgent"
+        "name": "PI360CaseManagerAgent",
+        "kind": "package"
       }
     ],
     "runtimeDependencies": [
       {
         "bindingType": "app",
-        "bindingKey": "pi360-escalation-action-app",
-        "bindingValues": {
-          "name": {
-            "defaultValue": "pi360-escalation-action-app",
-            "isExpression": false
-          },
-          "folderPath": {
-            "defaultValue": "AMER Presales/Public Sector/ProgramIntegrity360",
-            "isExpression": false
-          }
-        },
+        "bindingKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
+        "bindingValues": {},
         "bindingMetadata": {
           "bindingsVersion": "2.2",
-          "solutionsSupport": "true"
+          "solutionsSupport": "true",
+          "isSolutionResource": true
         },
         "resourceKind": "App",
         "resourceKey": "54f913fa-10c8-4eec-85ef-58f05e15b6d5",
         "resourceName": "pi360-escalation-action-app",
-        "folderKey": "298b6df0-eaa5-40a7-a93f-0b179fe7521c"
+        "folderKey": "266a0d11-5995-5740-50a6-d54ca13f62c8"
       }
     ],
+    "files": [],
     "folders": [
       {
         "fullyQualifiedName": "solution_folder"
@@ -56,7 +49,6 @@
       "staleRetentionPeriod": 180
     },
     "locks": [],
-    "key": "64ee0873-ac2c-4393-a970-7f67f9c7a423",
-    "files": []
+    "key": "64ee0873-ac2c-4393-a970-7f67f9c7a423"
   }
 }

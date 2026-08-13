@@ -1,4 +1,72 @@
 {
   "version": "2.0",
-  "resources": []
+  "resources": [
+    {
+      "resource": "process",
+      "key": "9c77c6aa-3a07-4053-a559-28c98f2520a3",
+      "id": "process9c77c6aa-3a07-4053-a559-28c98f2520a3",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        }
+      },
+      "metadata": {
+        "ActivityName": "API: persist hospital evidence to Data Fabric",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Api"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "id": "process58e4aa89-7358-47ee-a0d4-6711e9792208",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360EvidenceSnapshotAutomation",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "RPA placeholder: send provider record request",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    },
+    {
+      "resource": "process",
+      "key": "419bd493-4f87-4b00-9101-a146faba464f",
+      "id": "process419bd493-4f87-4b00-9101-a146faba464f",
+      "value": {
+        "folderPath": {
+          "defaultValue": "solution_folder",
+          "isExpression": false,
+          "displayName": "Folder path"
+        },
+        "name": {
+          "defaultValue": "PI360 IXP Medical Record",
+          "isExpression": false,
+          "displayName": "Process name"
+        }
+      },
+      "metadata": {
+        "ActivityName": "RPA: extract hospital medical record",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "name",
+        "SolutionsSupport": "true",
+        "subType": "Process"
+      }
+    }
+  ]
 }

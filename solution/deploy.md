@@ -1,94 +1,94 @@
-# Deploy — Program Integrity 360
+# Deploy — Program Integrity 360 0.6.1
 
-*Authored per `/uipath-solution`. The EXACT command sequence to deploy the solution to staging.*
+All data and documents are synthetic.
 
-> **Read `CANON.md` first.** Target is canonical (§11). Synthetic data only.
+## Destination
 
-## ⚠️ Human-run, interactive, live tenant
+- Portal: `https://cloud.uipath.com`
+- Organization: `uipathlabs`
+- Tenant: `Playground`
+- Parent folder: `AMER Presales/Public Sector`
+- Solution folder: `AMER Presales/Public Sector/ProgramIntegrity360`
+- Folder key: `5db31dd1-1073-4f9e-b44b-76f5484e03c4`
+- Active package: `ProgramIntegrity360` 0.6.1
+- Rollback package: `ProgramIntegrity360` 0.5.1
+- Upgrade pipeline deployment: `842064f8-47f1-4a76-d4d8-08def3a91432`
+- Studio Web solution: `494be60c-8bb2-4478-3beb-08def46ec69f`
+- Hosted coded app: `https://uipathlabs.uipath.host/pi360-coded-app`
 
-**`uip login` is interactive** — it opens a **browser** for OAuth and authenticates a real human against a **live tenant**. Everything after it (`publish`, `deploy`, `activate`) **pushes to and mutates a live tenant** (`staging.uipath.com` / org `uipathlabs` / tenant `Playground`). **A human runs these commands.** Do not automate `uip login`, and do not run publish/deploy/activate unattended. This document lists the commands as **text to be run by a person**; nothing here has been executed.
+The coded app is not republished in this pass. Its current visual design and deployment remain intact.
 
-## Target
-- Cloud: **`staging.uipath.com`**
-- Organization: **`uipathlabs`**
-- Tenant: **`Playground`**
-- Solution name: **`Program Integrity 360`**
-- Artifact: **`Program Integrity 360.uipx`**
+## Pre-deployment gates
 
-## 0. Prerequisites (human)
-- `uip` CLI installed and on PATH (`uip --version`).
-- Access to org `uipathlabs`, tenant `Playground`, with permission to publish + deploy solutions and manage Data Fabric / queues / buckets / connections / assets.
-- Run all commands from the solution root: `/Users/sohail.ghatnekar/program-integrity-360`.
+1. Verify `uip login status --output json` targets `uipathlabs/Playground`.
+2. Run the complete Python, PDF, coded-app, Case, Flow, API workflow, and agent validation suite.
+3. Run `uip solution resources refresh --solution-folder ProgramIntegrity360 --output json` and inspect warnings and stderr. Remove any deployment-owned `_1` shadow resources before packaging.
+4. Run a dry pack before producing the release archive.
+5. Confirm the active 0.5.1 deployment and folder identifiers still match `platform/cloud-playground-migration.json`.
 
-## 1. Login (interactive — a human does this)
+If an online pack re-imports deployment-owned shadow resources, do not publish that archive. Package from the clean 34-resource source tree without live resource reconciliation, then verify the archive contains no suffixed resource names or shadow IDs.
+
+## Pack and publish
+
+From the repository root:
+
 ```bash
-# Opens a browser for OAuth against the live staging tenant.
-uip login --cloud-url https://staging.uipath.com --organization uipathlabs --tenant Playground
+uip solution pack ProgramIntegrity360 --dry-run --version 0.6.1 --output json
+uip solution pack ProgramIntegrity360 ProgramIntegrity360/.solution-packages --name ProgramIntegrity360 --version 0.6.1 --output json
+uip solution publish ProgramIntegrity360/.solution-packages/ProgramIntegrity360_0.6.1.zip --output json
+uip solution packages list --name ProgramIntegrity360 --limit 50 --output json
 ```
-Verify the session points at the right place before continuing:
+
+The actual pack filename returned by the CLI is authoritative. Verify package metadata, SHA-256, and version before publication.
+
+## Editable Studio Web source
+
 ```bash
-uip config show          # confirm cloud-url = staging.uipath.com, org = uipathlabs, tenant = Playground
+uip solution upload ProgramIntegrity360 --output json
 ```
 
-## 2. Initialize the solution (first time only)
-```bash
-# Run in the solution root. Skip if solution.json already exists (this repo ships one).
-uip solution init "Program Integrity 360"
-```
+Require every per-project error list to be empty and verify the existing Studio Web solution ID. `upload` updates editable source; it does not activate an Orchestrator deployment.
 
-## 3. Restore project + resource references
-```bash
-uip solution restore
-```
-Resolves the 7 bundled projects (P1–P7) and all shared-resource references (entities, queues, buckets, connections, assets) declared in `solution.json`.
+## Existing-folder safety
 
-## 4. Pack
-```bash
-uip solution pack --output "./Program Integrity 360.uipx"
-```
-Produces the versioned `.uipx` (pins each project's exact version — see `project-structure.md`).
+When the deployment name and package name match an existing installation, `uip solution deploy run` upgrades that installation in place. Use the existing deployment name and parent path, confirm that the returned `InstallDeploymentKey` remains `7f49503d-481f-4a01-a625-3433f541d464`, and do not uninstall the solution folder.
 
-## 5. Publish to the tenant feed
-```bash
-uip solution publish "./Program Integrity 360.uipx"
-```
-Uploads the packed solution to the `Playground` tenant feed. If a name+version collision occurs, bump the solution version in `solution.json` (semver) and re-pack (step 4) before re-publishing.
+The 0.6.1 upgrade returned deployment key `ef500f70-0970-4f33-bec2-58ab7f6e6050` and preserved folder key `5db31dd1-1073-4f9e-b44b-76f5484e03c4`. The server reported `SuccessfulActivate`; no parallel solution folder was created.
 
-## 6. Deploy
-```bash
-uip solution deploy --name "Program Integrity 360" --version 1.0.0
-```
-Creates/updates the solution instance and its shared resources in the tenant. Resolve any **unset/unresolved bindings** (connections to legacy-care-mgmt, claims-api, evv-api, records-inbox; assets `pi360.unit_rate` etc.) if prompted — every cross-project reference must bind to a `Playground` tenant object before activation.
+## Activation verification
 
-## 7. Activate
-```bash
-uip solution activate --name "Program Integrity 360" --version 1.0.0
-```
-Turns on the deployed solution (case app, BPMN subprocesses, agents, coded app, triggers).
+After the in-place upgrade reports success, verify:
 
-## 8. Post-deploy verification (human)
-```bash
-# a) Solution is deployed + active
-uip solution list
-uip solution status --name "Program Integrity 360"
+- Package version 0.6.1 and activation `SuccessfulActivate`.
+- The exact existing solution folder key.
+- Case plan, Maestro Flow, API workflow, agent, and process resources.
+- Both Beeceptor routes.
+- Nine PI360 Data Fabric entities and 59 total records.
+- One PCS case and one hospice case by natural key.
+- All nine bucket PDFs by fresh list operations.
+- Service IXP live model 12 and institutional IXP live model 9.
+- The hospice claim: 52 units, $3,250, place of service 12.
+- The institutional record: patient class `Observation` and the exact arrival/discharge interval.
 
-# b) Data Fabric entities exist (expect the 9 from docs/03-data-model.md)
-uip df entities list
+Record the package checksum, upgrade/deployment identifiers, activation state, and verification time in `platform/cloud-playground-migration.json`.
 
-# c) Shared resources are present
-uip orchestrator queues list        # expect pi360-evidence-collection, pi360-records-intake
-uip orchestrator buckets list       # expect pi360-evidence, pi360-referral-packets
-uip orchestrator assets list        # expect pi360.unit_rate=7.20, poc.*, roles.*, autoconfirm_threshold
-```
-**Smoke check (matches `test/test-plan.md` E2E-01):** open the Coded App, confirm case **PI-PCS-2026-0041** loads with priority **High**, the **2026-04-14 90-minute** overlap renders, improper units total **24** ($172.80 sample), and the supervisor gate blocks an adverse action until `sup.morgan` approves. Run the compact smoke-test checklist in the test plan.
+## Manual-trigger smoke tests
 
-## 9. Rollback
-If activation or verification fails, roll back to the previously published solution version:
-```bash
-# Re-deploy + re-activate the last known-good version (example: 0.9.0)
-uip solution deploy   --name "Program Integrity 360" --version 0.9.0
-uip solution activate --name "Program Integrity 360" --version 0.9.0
-```
-The prior published `.uipx` remains in the tenant feed, so rollback is a re-deploy of that version — no re-pack needed. If a fresh deploy must be removed entirely, deactivate/undeploy the failed version, then investigate binding/resource errors before retrying step 6.
+Run only against synthetic test records.
 
-> Command flags follow the `uip solution` lifecycle (`init` → `restore` → `pack` → `publish` → `deploy` → `activate`). Confirm exact flag names against your installed `uip --help` before running, since the CLI evolves. Nothing in this file has been executed.
+- PCS: `CaseType = MedicaidPCS`; claim endpoint `/MedicaidPCS`; no automatic hospital-record request.
+- Hospice: `CaseType = StateMedicaidHospice`; claim endpoint `/StateMedicaidHospice`; $2,500 threshold; 72-hour provider wait when the hospital packet is unavailable; 360-minute review indicator after the packet is received.
+
+Do not complete a real adverse or financial Action Center task.
+
+## Data and model notes
+
+Playground is at its 500-object Data Fabric cap. The C-light schema extends the nine existing PI360 entities and creates no new entities or choice sets. The two IXP projects are published and tagged live, but the authenticated Maestro registry does not yet expose them; the current Flow nodes remain labeled swap-ready mocks until binding is verifiable.
+
+## Rollback
+
+- Keep published package 0.5.1 and its recorded deployment identifiers.
+- Do not delete the 0.5.1 package.
+- Do not uninstall the active solution folder as a rollback technique.
+- If a later activation fails, use the supported in-place rollback/version operation for the existing deployment. Do not uninstall the solution folder.
+- The coded app remains on its current independent deployment and does not require rollback for this solution-only change.

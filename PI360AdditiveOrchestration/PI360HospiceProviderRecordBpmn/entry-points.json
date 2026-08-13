@@ -1,0 +1,76 @@
+{
+  "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+  "$id": "entry-points.json",
+  "entryPoints": [
+    {
+      "filePath": "/content/PI360HospiceProviderRecordBpmn.bpmn#Event_Start",
+      "uniqueId": "653364ff-7770-494b-b2e3-9d0217d16635",
+      "type": "processorchestration",
+      "input": {
+        "type": "object",
+        "properties": {
+          "CaseId": {
+            "type": "string",
+            "default": "PI-HSP-2026-0042",
+            "description": "Program Integrity case identifier."
+          },
+          "CaseType": {
+            "type": "string",
+            "default": "StateMedicaidHospice",
+            "description": "Case scenario contract; this process handles the provider-record hospice route."
+          },
+          "ProviderId": {
+            "type": "string",
+            "default": "PRV-HSP-2042",
+            "description": "Billing or servicing provider identifier."
+          },
+          "HospitalRecordAvailable": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the requested hospital record is available after the response wait."
+          },
+          "InvestigatorProceed": {
+            "type": "boolean",
+            "default": false,
+            "description": "Human investigator approval required before the provider request is issued."
+          }
+        },
+        "required": [
+          "CaseId",
+          "CaseType",
+          "ProviderId",
+          "HospitalRecordAvailable",
+          "InvestigatorProceed"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "ProviderRequestStatus": {
+            "type": "string",
+            "description": "Blocked, TimedOutAwaitingProvider, or Completed provider-record route status."
+          },
+          "HospitalRecordAvailable": {
+            "type": "boolean",
+            "description": "Whether the provider hospital record is available for investigation."
+          },
+          "NextStageId": {
+            "type": "string",
+            "description": "Stage_Corr4a only after successful record intake; otherwise Stage_Prreq6."
+          },
+          "AuditMessage": {
+            "type": "string",
+            "description": "Human-readable orchestration result that never claims analysis on blocked or timed-out routes."
+          }
+        },
+        "required": [
+          "ProviderRequestStatus",
+          "HospitalRecordAvailable",
+          "NextStageId",
+          "AuditMessage"
+        ]
+      },
+      "displayName": "Manual trigger"
+    }
+  ]
+}

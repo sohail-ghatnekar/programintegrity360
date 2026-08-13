@@ -1,0 +1,6 @@
+{
+  "ProjectType": "Api",
+  "Name": "PI360ClaimDetailsApi",
+  "Description": "Retrieves and normalizes Medicaid PCS or State Medicaid Hospice claim details from the published Beeceptor demo API.",
+  "MainFile": "Workflow.json"
+}
