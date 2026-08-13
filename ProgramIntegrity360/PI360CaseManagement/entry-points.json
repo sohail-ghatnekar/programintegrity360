@@ -4,43 +4,23 @@
   "entryPoints": [
     {
       "filePath": "/content/caseplan.json.bpmn#trigger_1",
-      "uniqueId": "340a7d26-e443-48ec-b599-a472a26e10ae",
+      "uniqueId": "0750ed69-925a-49b3-8a92-40a7ad9c105f",
       "type": "CaseManagement",
       "input": {
         "type": "object",
         "properties": {
-          "caseInput": {
-            "type": "object",
-            "additionalProperties": true
+          "caseType": {
+            "type": "string",
+            "title": "caseType"
           },
-          "claimInput": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "memberInput": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "providerInput": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "serviceEventInput": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "documentInput": {
-            "type": "object",
-            "additionalProperties": true
+          "caseworkerEmail": {
+            "type": "string",
+            "title": "caseworkerEmail"
           }
         },
         "required": [
-          "caseInput",
-          "claimInput",
-          "memberInput",
-          "providerInput",
-          "serviceEventInput",
-          "documentInput"
+          "caseType",
+          "caseworkerEmail"
         ]
       },
       "output": {

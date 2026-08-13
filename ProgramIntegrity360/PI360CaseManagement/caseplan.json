@@ -293,139 +293,35 @@
     "variables": {
         "inputs": [
             {
-                "id": "vCaseIn01",
-                "name": "caseInput",
-                "type": "jsonSchema",
+                "id": "vCaseTypeInput",
+                "name": "caseType",
+                "type": "string",
                 "default": "",
                 "elementId": "trigger_1",
-                "required": true,
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
+                "required": true
             },
             {
-                "id": "vClaimIn1",
-                "name": "claimInput",
-                "type": "jsonSchema",
+                "id": "vCaseworkerEmailInput",
+                "name": "caseworkerEmail",
+                "type": "string",
                 "default": "",
                 "elementId": "trigger_1",
-                "required": true,
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "vMemberI1",
-                "name": "memberInput",
-                "type": "jsonSchema",
-                "default": "",
-                "elementId": "trigger_1",
-                "required": true,
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "vProvidr1",
-                "name": "providerInput",
-                "type": "jsonSchema",
-                "default": "",
-                "elementId": "trigger_1",
-                "required": true,
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "vService1",
-                "name": "serviceEventInput",
-                "type": "jsonSchema",
-                "default": "",
-                "elementId": "trigger_1",
-                "required": true,
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "vDocumen1",
-                "name": "documentInput",
-                "type": "jsonSchema",
-                "default": "",
-                "elementId": "trigger_1",
-                "required": true,
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
+                "required": true
             }
         ],
         "outputs": [],
         "inputOutputs": [
             {
-                "id": "caseInput",
-                "name": "caseInput",
-                "type": "jsonSchema",
-                "elementId": "trigger_1",
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
+                "id": "caseType",
+                "name": "caseType",
+                "type": "string",
+                "elementId": "trigger_1"
             },
             {
-                "id": "claimInput",
-                "name": "claimInput",
-                "type": "jsonSchema",
-                "elementId": "trigger_1",
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "memberInput",
-                "name": "memberInput",
-                "type": "jsonSchema",
-                "elementId": "trigger_1",
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "providerInput",
-                "name": "providerInput",
-                "type": "jsonSchema",
-                "elementId": "trigger_1",
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "serviceEventInput",
-                "name": "serviceEventInput",
-                "type": "jsonSchema",
-                "elementId": "trigger_1",
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            },
-            {
-                "id": "documentInput",
-                "name": "documentInput",
-                "type": "jsonSchema",
-                "elementId": "trigger_1",
-                "body": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
+                "id": "caseworkerEmail",
+                "name": "caseworkerEmail",
+                "type": "string",
+                "elementId": "trigger_1"
             },
             {
                 "id": "caseManagerNextStageId",
@@ -455,40 +351,16 @@
                 "inputs": {
                     "outputs": [
                         {
-                            "name": "caseInput",
-                            "type": "jsonSchema",
-                            "source": "=vars.vCaseIn01",
-                            "var": "caseInput"
+                            "name": "caseType",
+                            "type": "string",
+                            "source": "=vars.vCaseTypeInput",
+                            "var": "caseType"
                         },
                         {
-                            "name": "claimInput",
-                            "type": "jsonSchema",
-                            "source": "=vars.vClaimIn1",
-                            "var": "claimInput"
-                        },
-                        {
-                            "name": "memberInput",
-                            "type": "jsonSchema",
-                            "source": "=vars.vMemberI1",
-                            "var": "memberInput"
-                        },
-                        {
-                            "name": "providerInput",
-                            "type": "jsonSchema",
-                            "source": "=vars.vProvidr1",
-                            "var": "providerInput"
-                        },
-                        {
-                            "name": "serviceEventInput",
-                            "type": "jsonSchema",
-                            "source": "=vars.vService1",
-                            "var": "serviceEventInput"
-                        },
-                        {
-                            "name": "documentInput",
-                            "type": "jsonSchema",
-                            "source": "=vars.vDocumen1",
-                            "var": "documentInput"
+                            "name": "caseworkerEmail",
+                            "type": "string",
+                            "source": "=vars.vCaseworkerEmailInput",
+                            "var": "caseworkerEmail"
                         }
                     ],
                     "serviceType": "None"
@@ -502,7 +374,7 @@
             "type": "case-management:Stage",
             "data": {
                 "label": "Intake and triage",
-                "description": "Register six structured intake objects and explain the CaseType profile.",
+                "description": "Validate CaseType and caseworker email, hydrate the matching demo profile, register the case, and explain its routing profile.",
                 "isRequired": true,
                 "parentElement": {
                     "id": "root",
@@ -551,7 +423,7 @@
                                         "id": "vINT1type",
                                         "var": "vINT1type",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
+                                        "value": "=vars.caseType"
                                     },
                                     {
                                         "name": "caseId",
@@ -559,7 +431,15 @@
                                         "id": "vINT1case",
                                         "var": "vINT1case",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                        "value": "=js:`PI-${vars.caseType === 'StateMedicaidHospice' ? 'HSP' : 'PCS'}-${new Date().getUTCFullYear()}-${(`${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`).replace(/[^a-z0-9]/gi, '').toUpperCase().slice(-6).padStart(6, '0')}`"
+                                    },
+                                    {
+                                        "name": "requesterEmail",
+                                        "type": "string",
+                                        "id": "vINT1email",
+                                        "var": "vINT1email",
+                                        "elementId": "Stage_Aintk1-tINT1case",
+                                        "value": "=vars.caseworkerEmail"
                                     },
                                     {
                                         "name": "caseInput",
@@ -567,7 +447,7 @@
                                         "id": "vC1aSe7Qx",
                                         "var": "vC1aSe7Qx",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=vars.caseInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({currentStage: 'Stage_Aintk1', riskScore: 82, title: 'Harbor Home Support Services — hospice location conflict review', program: 'State Medicaid Hospice', triggerType: 'Manual case intake', triggerRef: 'ALERT-HSP-2026-0714'}) : ({currentStage: 'Stage_Aintk1', riskScore: 78, title: 'Harbor Home Support Services — PCS billing integrity review', program: 'Medicaid PCS', triggerType: 'Manual case intake', triggerRef: 'ALERT-CA-2026-7781'})"
                                     },
                                     {
                                         "name": "claimInput",
@@ -575,7 +455,7 @@
                                         "id": "vCl4iM8rP",
                                         "var": "vCl4iM8rP",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=vars.claimInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({claimId: 'CLM-HSP-2026-0714-001', totalUnits: 52, totalBilled: 3250, claimThreshold: 2500, unitRate: 62.5}) : ({claimId: 'CLM-0503', totalUnits: 176, totalBilled: 1267.2, claimThreshold: 0, unitRate: 7.2})"
                                     },
                                     {
                                         "name": "memberInput",
@@ -583,7 +463,7 @@
                                         "id": "vMe2bR6tN",
                                         "var": "vMe2bR6tN",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=vars.memberInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({memberId: 'MBR-071426', medicaidId: 'NMCD-SYN-071426', memberName: 'Jordan Ellis', dateOfBirth: '1991-02-08'}) : ({memberId: 'MBR-33915', medicaidId: 'NMCD-SYN-33915', memberName: 'Synthetic Medicaid Member 33915'})"
                                     },
                                     {
                                         "name": "providerInput",
@@ -591,7 +471,7 @@
                                         "id": "vPr7vD3kL",
                                         "var": "vPr7vD3kL",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=vars.providerInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({providerId: 'PRV-100482', providerName: 'Harbor Home Support Services', caregiverId: 'ATT-HSP-4401', attendantId: 'ATT-HSP-4401', caregiverName: 'Taylor Brooks'}) : ({providerId: 'PRV-100482', providerName: 'Harbor Home Support Services', caregiverId: 'ATT-2087', attendantId: 'ATT-2087', caregiverName: 'Jordan Ellis'})"
                                     },
                                     {
                                         "name": "serviceEventInput",
@@ -599,7 +479,7 @@
                                         "id": "vSv5eN9qR",
                                         "var": "vSv5eN9qR",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=vars.serviceEventInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({lineId: 'LINE-0714-01', dateOfService: '2026-07-14', placeOfServiceCode: '12', placeOfServiceDescription: 'Member home', claimedServiceStartAt: '2026-07-14T09:00:00-05:00', claimedServiceEndAt: '2026-07-14T15:00:00-05:00', servicePeriodStart: '2026-07-13', servicePeriodEnd: '2026-07-16', attendantId: 'ATT-HSP-4401', caregiverName: 'Taylor Brooks', units: 24, unsupportedUnits: 24}) : ({lineId: 'CLM-0503', dateOfService: '2026-04-16', placeOfServiceCode: '12', placeOfServiceDescription: 'Member home', claimedServiceStartAt: '2026-04-16T08:00:00-05:00', claimedServiceEndAt: '2026-04-16T14:00:00-05:00', servicePeriodStart: '2026-03-01', servicePeriodEnd: '2026-05-31', attendantId: 'ATT-2087', caregiverName: 'Jordan Ellis', units: 24, unsupportedUnits: 24})"
                                     },
                                     {
                                         "name": "documentInput",
@@ -607,7 +487,19 @@
                                         "id": "vDo8cU2mK",
                                         "var": "vDo8cU2mK",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=vars.documentInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({timesheetBucketPath: 'Timesheets/hospice/PI-HSP-2026-0042/incoming/01_personal_care_timesheet.pdf', hospitalRecordBucketPath: 'Hospital Records/hospice/PI-HSP-2026-0042/provider-response/jordan_ellis_synthetic_medical_record_packet.pdf', policyBucketPath: 'Policy Docs/reference/policy/03_personal_care_services_policy.pdf', hospitalRecordAvailable: false, patientClass: 'Observation'}) : ({timesheetBucketPath: 'Timesheets/pcs/PI-PCS-2026-0041/incoming/timesheet_0416.pdf', policyBucketPath: 'Policy Docs/reference/policy/03_personal_care_services_policy.pdf', hospitalRecordAvailable: false})"
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "caseId",
+                                        "type": "string",
+                                        "id": "caseId",
+                                        "var": "caseId",
+                                        "value": "caseId",
+                                        "source": "=caseId",
+                                        "target": "=caseId",
+                                        "elementId": "Stage_Aintk1-tINT1case"
                                     }
                                 ]
                             }
@@ -648,7 +540,7 @@
                                         "id": "vTRI1case",
                                         "var": "vTRI1case",
                                         "elementId": "Stage_Aintk1-tTRI1agnt",
-                                        "value": "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
+                                        "value": "=vars.caseId"
                                     },
                                     {
                                         "name": "groundingJson",
@@ -656,7 +548,7 @@
                                         "id": "vTRI1grnd",
                                         "var": "vTRI1grnd",
                                         "elementId": "Stage_Aintk1-tTRI1agnt",
-                                        "value": "=js:JSON.stringify({caseType: vars.caseInput?.caseType ?? vars.caseInput?.case_type, caseInput: vars.caseInput, claimInput: vars.claimInput, instruction: 'Explain deterministic triage only; do not determine fraud or repayment.'})"
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, caseId: vars.caseId, caseworkerEmail: vars.caseworkerEmail, claimProfile: vars.caseType === 'StateMedicaidHospice' ? {totalBilled: 3250, threshold: 2500} : {totalBilled: 1267.2, threshold: 0}, instruction: 'Explain deterministic triage only; do not determine fraud or repayment.'})"
                                     }
                                 ]
                             }
@@ -745,7 +637,7 @@
                                         "id": "vK7mQ2pRt",
                                         "var": "vK7mQ2pRt",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=vars.caseInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({caseId: vars.caseId, caseType: vars.caseType, requesterEmail: vars.caseworkerEmail, currentStage: 'Stage_Evcol2', riskScore: 82, title: 'Harbor Home Support Services — hospice location conflict review', program: 'State Medicaid Hospice', triggerType: 'Manual case intake', triggerRef: 'ALERT-HSP-2026-0714'}) : ({caseId: vars.caseId, caseType: vars.caseType, requesterEmail: vars.caseworkerEmail, currentStage: 'Stage_Evcol2', riskScore: 78, title: 'Harbor Home Support Services — PCS billing integrity review', program: 'Medicaid PCS', triggerType: 'Manual case intake', triggerRef: 'ALERT-CA-2026-7781'})"
                                     },
                                     {
                                         "name": "claimInput",
@@ -753,7 +645,7 @@
                                         "id": "vN4xL8sVu",
                                         "var": "vN4xL8sVu",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=vars.claimInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({claimId: 'CLM-HSP-2026-0714-001', totalUnits: 52, totalBilled: 3250, claimThreshold: 2500, unitRate: 62.5}) : ({claimId: 'CLM-0503', totalUnits: 176, totalBilled: 1267.2, claimThreshold: 0, unitRate: 7.2})"
                                     },
                                     {
                                         "name": "memberInput",
@@ -761,7 +653,7 @@
                                         "id": "vD6qP3wZa",
                                         "var": "vD6qP3wZa",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=vars.memberInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({memberId: 'MBR-071426', medicaidId: 'NMCD-SYN-071426', memberName: 'Jordan Ellis', dateOfBirth: '1991-02-08'}) : ({memberId: 'MBR-33915', medicaidId: 'NMCD-SYN-33915', memberName: 'Synthetic Medicaid Member 33915'})"
                                     },
                                     {
                                         "name": "providerInput",
@@ -769,7 +661,7 @@
                                         "id": "vH2rT9cXm",
                                         "var": "vH2rT9cXm",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=vars.providerInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({providerId: 'PRV-100482', providerName: 'Harbor Home Support Services', caregiverId: 'ATT-HSP-4401', attendantId: 'ATT-HSP-4401', caregiverName: 'Taylor Brooks'}) : ({providerId: 'PRV-100482', providerName: 'Harbor Home Support Services', caregiverId: 'ATT-2087', attendantId: 'ATT-2087', caregiverName: 'Jordan Ellis'})"
                                     },
                                     {
                                         "name": "serviceEventInput",
@@ -777,7 +669,7 @@
                                         "id": "vJ5vB7nKs",
                                         "var": "vJ5vB7nKs",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=vars.serviceEventInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({lineId: 'LINE-0714-01', dateOfService: '2026-07-14', placeOfServiceCode: '12', placeOfServiceDescription: 'Member home', claimedServiceStartAt: '2026-07-14T09:00:00-05:00', claimedServiceEndAt: '2026-07-14T15:00:00-05:00', servicePeriodStart: '2026-07-13', servicePeriodEnd: '2026-07-16', attendantId: 'ATT-HSP-4401', caregiverName: 'Taylor Brooks', units: 24, unsupportedUnits: 24}) : ({lineId: 'CLM-0503', dateOfService: '2026-04-16', placeOfServiceCode: '12', placeOfServiceDescription: 'Member home', claimedServiceStartAt: '2026-04-16T08:00:00-05:00', claimedServiceEndAt: '2026-04-16T14:00:00-05:00', servicePeriodStart: '2026-03-01', servicePeriodEnd: '2026-05-31', attendantId: 'ATT-2087', caregiverName: 'Jordan Ellis', units: 24, unsupportedUnits: 24})"
                                     },
                                     {
                                         "name": "documentInput",
@@ -785,28 +677,28 @@
                                         "id": "vM8yF1qLd",
                                         "var": "vM8yF1qLd",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=vars.documentInput"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({timesheetBucketPath: 'Timesheets/hospice/PI-HSP-2026-0042/incoming/01_personal_care_timesheet.pdf', hospitalRecordBucketPath: 'Hospital Records/hospice/PI-HSP-2026-0042/provider-response/jordan_ellis_synthetic_medical_record_packet.pdf', policyBucketPath: 'Policy Docs/reference/policy/03_personal_care_services_policy.pdf', hospitalRecordAvailable: false, patientClass: 'Observation'}) : ({timesheetBucketPath: 'Timesheets/pcs/PI-PCS-2026-0041/incoming/timesheet_0416.pdf', policyBucketPath: 'Policy Docs/reference/policy/03_personal_care_services_policy.pdf', hospitalRecordAvailable: false})"
                                     }
                                 ],
                                 "outputs": [
                                     {
                                         "name": "caseId",
                                         "type": "string",
-                                        "id": "caseId",
-                                        "var": "caseId",
-                                        "value": "caseId",
+                                        "id": "evidenceCaseId",
+                                        "var": "evidenceCaseId",
+                                        "value": "evidenceCaseId",
                                         "source": "=caseId",
-                                        "target": "=caseId",
+                                        "target": "=evidenceCaseId",
                                         "elementId": "Stage_Evcol2-tCLM2pull"
                                     },
                                     {
                                         "name": "caseType",
                                         "type": "string",
-                                        "id": "caseType",
-                                        "var": "caseType",
-                                        "value": "caseType",
+                                        "id": "evidenceCaseType",
+                                        "var": "evidenceCaseType",
+                                        "value": "evidenceCaseType",
                                         "source": "=caseType",
-                                        "target": "=caseType",
+                                        "target": "=evidenceCaseType",
                                         "elementId": "Stage_Evcol2-tCLM2pull"
                                     },
                                     {
@@ -1043,7 +935,7 @@
                                         "id": "vCOR4grnd",
                                         "var": "vCOR4grnd",
                                         "elementId": "Stage_Corr4a-tCOR4evid",
-                                        "value": "=js:JSON.stringify({caseType: vars.caseType, claimFacts: {claimCount: vars.claimCount, lineCount: vars.lineCount, totalUnits: vars.totalUnits, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded}, routeReason: vars.routeReason, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage, documents: vars.documentInput, instruction: 'Cite persisted Data Fabric facts and RPA evidence. Treat location conflict as an overpayment review indicator, not an automated fraud or intent determination.'})"
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, claimFacts: {claimCount: vars.claimCount, lineCount: vars.lineCount, totalUnits: vars.totalUnits, totalBilled: vars.totalBilled, thresholdExceeded: vars.thresholdExceeded}, routeReason: vars.routeReason, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage, documentProfile: vars.caseType === 'StateMedicaidHospice' ? {timesheetBucketPath: 'Timesheets/hospice/PI-HSP-2026-0042/incoming/01_personal_care_timesheet.pdf', hospitalRecordBucketPath: 'Hospital Records/hospice/PI-HSP-2026-0042/provider-response/jordan_ellis_synthetic_medical_record_packet.pdf', policyBucketPath: 'Policy Docs/reference/policy/03_personal_care_services_policy.pdf'} : {timesheetBucketPath: 'Timesheets/pcs/PI-PCS-2026-0041/incoming/timesheet_0416.pdf', policyBucketPath: 'Policy Docs/reference/policy/03_personal_care_services_policy.pdf'}, instruction: 'Cite persisted Data Fabric facts and RPA evidence. Treat location conflict as an overpayment review indicator, not an automated fraud or intent determination.'})"
                                     }
                                 ]
                             }
@@ -1079,7 +971,7 @@
                                 "priority": "High",
                                 "recipient": {
                                     "Type": 2,
-                                    "Value": "sohail.ghatnekar@uipath.com"
+                                    "Value": "=vars.caseworkerEmail"
                                 },
                                 "labels": "Program Integrity,Investigator Review",
                                 "name": "=bindings.bSupervisorAppName",
@@ -1107,7 +999,7 @@
                                         "id": "vInvEvid1",
                                         "var": "vInvEvid1",
                                         "elementId": "Stage_Corr4a-tREV5task",
-                                        "value": "=js:JSON.stringify({claimInput: vars.claimInput, documentInput: vars.documentInput, totalBilled: vars.totalBilled, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage})"
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, claimProfile: vars.caseType === 'StateMedicaidHospice' ? {claimId: 'CLM-HSP-2026-0714-001', totalUnits: 52, totalBilled: 3250, claimThreshold: 2500} : {claimId: 'CLM-0503', totalUnits: 176, totalBilled: 1267.2, claimThreshold: 0}, documentProfile: vars.caseType === 'StateMedicaidHospice' ? {timesheetBucketPath: 'Timesheets/hospice/PI-HSP-2026-0042/incoming/01_personal_care_timesheet.pdf', hospitalRecordBucketPath: 'Hospital Records/hospice/PI-HSP-2026-0042/provider-response/jordan_ellis_synthetic_medical_record_packet.pdf'} : {timesheetBucketPath: 'Timesheets/pcs/PI-PCS-2026-0041/incoming/timesheet_0416.pdf'}, totalBilled: vars.totalBilled, providerStatus: vars.providerRequestStatus, providerAudit: vars.auditMessage})"
                                     }
                                 ],
                                 "outputs": [
@@ -1390,7 +1282,7 @@
                                         "id": "vREQ6prov",
                                         "var": "vREQ6prov",
                                         "elementId": "Stage_Prreq6-tREQ6send",
-                                        "value": "=js:vars.providerInput?.providerId ?? vars.providerInput?.provider_id"
+                                        "value": "PRV-100482"
                                     },
                                     {
                                         "name": "HospitalRecordAvailable",
@@ -1398,7 +1290,7 @@
                                         "id": "vREQ6hosp",
                                         "var": "vREQ6hosp",
                                         "elementId": "Stage_Prreq6-tREQ6send",
-                                        "value": "=js:Boolean(vars.documentInput?.hospitalRecordAvailable ?? vars.documentInput?.hospital_record_available ?? false)"
+                                        "value": "false"
                                     },
                                     {
                                         "name": "InvestigatorProceed",
@@ -1466,7 +1358,7 @@
                                 {
                                     "rule": "selected-stage-completed",
                                     "id": "Rule_ent6hs",
-                                    "conditionExpression": "=js:((vars.caseInput?.caseType ?? vars.caseInput?.case_type) === 'StateMedicaidHospice') && (vars.recommendedStageId === 'Stage_Prreq6')",
+                                    "conditionExpression": "=js:vars.caseType === 'StateMedicaidHospice' && vars.recommendedStageId === 'Stage_Prreq6'",
                                     "selectedStageId": "Stage_Evcol2"
                                 }
                             ]
@@ -1531,7 +1423,7 @@
                                     {
                                         "name": "in_ProviderName",
                                         "displayName": "in_ProviderName",
-                                        "value": "=js:vars.providerInput?.providerName ?? vars.providerInput?.provider_name ?? 'Harbor Home Support Services'",
+                                        "value": "Harbor Home Support Services",
                                         "type": "string",
                                         "required": false,
                                         "var": "vJpeN4HRI",
@@ -1541,7 +1433,7 @@
                                     {
                                         "name": "in_UnsupportedUnits",
                                         "displayName": "in_UnsupportedUnits",
-                                        "value": "=js:Number(vars.serviceEventInput?.unsupportedUnits ?? vars.serviceEventInput?.unsupported_units ?? 0)",
+                                        "value": "24",
                                         "type": "integer",
                                         "minimum": -2147483648,
                                         "maximum": 2147483647,
@@ -1553,7 +1445,7 @@
                                     {
                                         "name": "in_UnitRate",
                                         "displayName": "in_UnitRate",
-                                        "value": "=js:Number(vars.claimInput?.unitRate ?? vars.claimInput?.unit_rate ?? 0)",
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? 62.5 : 7.2",
                                         "type": "number",
                                         "minimum": -1.7976931348623157e+308,
                                         "maximum": 1.7976931348623157e+308,
@@ -1565,7 +1457,7 @@
                                     {
                                         "name": "in_RiskScore",
                                         "displayName": "in_RiskScore",
-                                        "value": "=js:Number(vars.caseInput?.riskScore ?? vars.caseInput?.risk_score ?? 82)",
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? 82 : 78",
                                         "type": "integer",
                                         "minimum": -2147483648,
                                         "maximum": 2147483647,
@@ -1735,7 +1627,7 @@
                                 "priority": "High",
                                 "recipient": {
                                     "Type": 2,
-                                    "Value": "sohail.ghatnekar@uipath.com"
+                                    "Value": "=vars.caseworkerEmail"
                                 },
                                 "labels": "Program Integrity,Supervisor Approval",
                                 "name": "=bindings.bSupervisorAppName",
@@ -1946,7 +1838,7 @@
                                         "id": "vCLS9email",
                                         "var": "vCLS9email",
                                         "elementId": "Stage_Clos9a-tCLS9case",
-                                        "value": "=js:vars.caseInput?.requesterEmail ?? vars.caseInput?.requester_email"
+                                        "value": "=vars.caseworkerEmail"
                                     },
                                     {
                                         "name": "claimTotalBilled",
@@ -1985,7 +1877,7 @@
                                         "id": "vEmailRecipient",
                                         "var": "vEmailRecipient",
                                         "elementId": "Stage_Clos9a-tsxxZlma3",
-                                        "value": "=js:vars.caseInput?.requesterEmail ?? vars.caseInput?.requester_email"
+                                        "value": "=vars.caseworkerEmail"
                                     },
                                     {
                                         "name": "in_CaseType",
@@ -2076,5 +1968,108 @@
         }
     ],
     "edges": [],
-    "layout": {}
+    "layout": {
+        "nodes": {
+            "trigger_1": {
+                "style": {
+                    "width": 96,
+                    "height": 96
+                },
+                "measured": {
+                    "width": 96,
+                    "height": 96
+                },
+                "width": 96,
+                "height": 96,
+                "position": {
+                    "x": 160,
+                    "y": 208
+                }
+            },
+            "Stage_Aintk1": {
+                "style": {
+                    "width": 304
+                },
+                "measured": {
+                    "width": 304,
+                    "height": 256
+                },
+                "width": 304,
+                "position": {
+                    "x": 320,
+                    "y": 224
+                }
+            },
+            "Stage_Evcol2": {
+                "style": {
+                    "width": 304
+                },
+                "measured": {
+                    "width": 304,
+                    "height": 256
+                },
+                "width": 304,
+                "position": {
+                    "x": 688,
+                    "y": 224
+                }
+            },
+            "Stage_Corr4a": {
+                "style": {
+                    "width": 304
+                },
+                "measured": {
+                    "width": 304,
+                    "height": 304
+                },
+                "width": 304,
+                "position": {
+                    "x": 1056,
+                    "y": 224
+                }
+            },
+            "Stage_Prreq6": {
+                "style": {
+                    "width": 304
+                },
+                "measured": {
+                    "width": 304,
+                    "height": 208
+                },
+                "width": 304,
+                "position": {
+                    "x": 1056,
+                    "y": 544
+                }
+            },
+            "Stage_Supv7a": {
+                "style": {
+                    "width": 304
+                },
+                "measured": {
+                    "width": 304,
+                    "height": 256
+                },
+                "width": 304,
+                "position": {
+                    "x": 1424,
+                    "y": 224
+                }
+            },
+            "Stage_Clos9a": {
+                "style": {
+                    "width": 304
+                },
+                "measured": {
+                    "width": 304,
+                    "height": 304
+                },
+                "width": 304,
+                "position": {
+                    "x": 1424,
+                    "y": 496
+                }
+            }
+        }
+    }
 }

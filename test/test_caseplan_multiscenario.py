@@ -14,14 +14,10 @@ CASEPLAN_PATH = (
     / "PI360CaseManagement"
     / "caseplan.json"
 )
-TASK8_BASELINE_PATH = (
-    ROOT / "test" / "fixtures" / "pi360_task8_cloud_baseline.json"
-)
-TASK8_CLOUD_BASELINE = json.loads(TASK8_BASELINE_PATH.read_text())
-CLOUD_ONLY_TASKS = TASK8_CLOUD_BASELINE["tasks"]
+ENTRY_POINTS_PATH = CASEPLAN_PATH.parent / "entry-points.json"
 FLOW_RESOURCE_KEY = "solution_folder.PI360CaseManagerFlow"
 BPMN_RESOURCE_KEY = "solution_folder.PI360AdHocReviewBpmn"
-CLOUD_STAGE_IDS = {
+REQUIRED_STAGE_IDS = {
     "Stage_Aintk1",
     "Stage_Evcol2",
     "Stage_Corr4a",
@@ -29,25 +25,29 @@ CLOUD_STAGE_IDS = {
     "Stage_Supv7a",
     "Stage_Clos9a",
 }
-CLOUD_TASK_IDS = {
+REQUIRED_TASK_IDS = {
     "tCaseManagerAgent",
     "tINT1case",
     "tTRI1agnt",
     "tCLM2pull",
-    "tUeO6EGo3",
-    "tQAC3rec",
+    "tmXrnnlxY",
     "tCOR4evid",
     "tREV5task",
     "tCMR4route",
     "tREQ6send",
+    "tOsyyZpTf",
+    "tSUP7gate",
+    "tCLS9case",
+    "tsxxZlma3",
+}
+OBSOLETE_PLACEHOLDER_TASK_IDS = {
+    "tUeO6EGo3",
+    "tQAC3rec",
     "tPRV6wait",
     "tH5yKJJef",
     "tPKT7prep",
-    "tSUP7gate",
-    "tCLS9case",
     "thmyc7i2S",
 }
-DORMANT_CLOUD_TASK_IDS = {"tUeO6EGo3", "tH5yKJJef", "thmyc7i2S"}
 
 
 def load_caseplan():
@@ -106,64 +106,34 @@ def is_deterministically_dormant(task):
     )
 
 
-def canonicalize_task_for_cloud_comparison(value):
-    if isinstance(value, dict):
-        canonical = {}
-        for key, item in value.items():
-            key = "JsonSchema" if key == "_jsonSchema" else key[0].upper() + key[1:]
-            canonical[key] = canonicalize_task_for_cloud_comparison(item)
-        return canonical
-    if isinstance(value, list):
-        return [canonicalize_task_for_cloud_comparison(item) for item in value]
-    return value
-
-
-def expected_cloud_task_with_intentional_dormancy(task_id):
-    task = copy.deepcopy(CLOUD_ONLY_TASKS[task_id])
-    if task_id not in DORMANT_CLOUD_TASK_IDS:
-        return task
-
-    task["IsRequired"] = False
-    rules = task["EntryConditions"][0]["Rules"][0]
-    assert len(rules) == 1
-    assert rules[0]["Rule"] == "runs-sequentially"
-    rules[0]["Rule"] = "adhoc"
-    rules[0]["ConditionExpression"] = "=js:false"
-    return task
-
-
-def test_caseplan_stage_and_task_ids_are_a_superset_of_cloud_baseline():
+def test_caseplan_stage_and_task_ids_preserve_current_orchestration():
     caseplan = load_caseplan()
     actual_stage_ids = {stage["id"] for stage in stage_nodes(caseplan)}
+    actual_task_ids = all_task_ids(caseplan)
 
-    assert CLOUD_STAGE_IDS - actual_stage_ids == set()
-    assert CLOUD_TASK_IDS - all_task_ids(caseplan) == set()
+    assert REQUIRED_STAGE_IDS - actual_stage_ids == set()
+    assert REQUIRED_TASK_IDS - actual_task_ids == set()
+    assert OBSOLETE_PLACEHOLDER_TASK_IDS.isdisjoint(actual_task_ids)
 
 
-def test_preserved_ixp_rpa_and_email_tasks_are_present_but_unreachable():
+def test_required_rpa_tasks_are_active_and_bound_to_the_current_journey():
     caseplan = load_caseplan()
-
-    for task_id in DORMANT_CLOUD_TASK_IDS:
-        assert is_deterministically_dormant(task_by_id(caseplan, task_id)), task_id
-
-
-def test_cloud_only_tasks_match_full_authoritative_objects_except_dormancy():
-    caseplan = load_caseplan()
-
-    assert set(CLOUD_ONLY_TASKS) == {
-        "tUeO6EGo3",
-        "tQAC3rec",
-        "tPRV6wait",
-        "tH5yKJJef",
-        "tPKT7prep",
-        "thmyc7i2S",
+    rpa_tasks = {
+        task["id"]: task
+        for stage in stage_nodes(caseplan)
+        for task in stage_tasks(stage)
+        if task["type"] == "rpa"
     }
-    for task_id in CLOUD_ONLY_TASKS:
-        actual = canonicalize_task_for_cloud_comparison(
-            task_by_id(caseplan, task_id)
-        )
-        expected = expected_cloud_task_with_intentional_dormancy(task_id)
-        assert actual == expected, task_id
+    assert set(rpa_tasks) == {"tmXrnnlxY", "tOsyyZpTf", "tsxxZlma3"}
+    assert all(task["isRequired"] is True for task in rpa_tasks.values())
+    assert all(not is_deterministically_dormant(task) for task in rpa_tasks.values())
+    assert rpa_tasks["tmXrnnlxY"]["displayName"] == "RPA - extract service timesheet"
+    assert rpa_tasks["tOsyyZpTf"]["displayName"] == (
+        "RPA - assemble supervisor decision packet"
+    )
+    assert rpa_tasks["tsxxZlma3"]["displayName"] == (
+        "RPA - send closure summary email"
+    )
 
 
 def assert_first_intake_contract(caseplan):
@@ -171,6 +141,7 @@ def assert_first_intake_contract(caseplan):
         "workflowName",
         "caseType",
         "caseId",
+        "requesterEmail",
         "caseInput",
         "claimInput",
         "memberInput",
@@ -178,7 +149,7 @@ def assert_first_intake_contract(caseplan):
         "serviceEventInput",
         "documentInput",
     )
-    object_names = expected_names[3:]
+    object_names = expected_names[4:]
     intake = task_by_id(caseplan, "tINT1case")
     intake_stage, intake_position = task_location(caseplan, intake["id"])
     triage = task_by_id(caseplan, "tTRI1agnt")
@@ -191,25 +162,38 @@ def assert_first_intake_contract(caseplan):
 
     inputs = {item["name"]: item for item in input_items}
     assert inputs["workflowName"]["value"] == "IntakeClaimByCaseType"
-    assert (
-        inputs["caseType"]["value"]
-        == "=js:vars.caseInput?.caseType ?? vars.caseInput?.case_type"
-    )
-    assert (
-        inputs["caseId"]["value"]
-        == "=js:vars.caseInput?.caseId ?? vars.caseInput?.case_id"
-    )
+    assert inputs["caseType"]["value"] == "=vars.caseType"
+    assert inputs["requesterEmail"]["value"] == "=vars.caseworkerEmail"
+    assert inputs["caseId"]["value"].startswith("=js:`PI-${vars.caseType")
+    assert "StateMedicaidHospice" in inputs["caseId"]["value"]
+    assert "HSP" in inputs["caseId"]["value"]
+    assert "PCS" in inputs["caseId"]["value"]
 
     object_ids = []
     for name in object_names:
         item = inputs[name]
         assert item["type"] == "object"
-        assert item["value"] == f"=vars.{name}"
+        assert item["value"].startswith("=js:vars.caseType ===")
+        assert "StateMedicaidHospice" in item["value"]
+        assert "Medicaid" in item["value"] or name != "caseInput"
         assert item["id"] == item["var"]
         assert re.fullmatch(r"v[A-Za-z0-9]{8}", item["id"])
         assert item["elementId"] == intake["elementId"]
         object_ids.append(item["id"])
     assert len(set(object_ids)) == len(object_ids)
+
+    assert intake["data"]["outputs"] == [
+        {
+            "name": "caseId",
+            "type": "string",
+            "id": "caseId",
+            "var": "caseId",
+            "value": "caseId",
+            "source": "=caseId",
+            "target": "=caseId",
+            "elementId": "Stage_Aintk1-tINT1case",
+        }
+    ]
 
     dependency_rules = [
         rule
@@ -225,7 +209,7 @@ def assert_first_intake_contract(caseplan):
     assert intake_position < triage_position
 
 
-def test_caseplan_preserves_shared_six_stage_journey_and_six_object_intake():
+def test_caseplan_preserves_shared_six_stage_journey_with_two_scalar_inputs():
     caseplan = load_caseplan()
     stages = stage_nodes(caseplan)
     assert {stage["id"] for stage in stages} == {
@@ -237,16 +221,28 @@ def test_caseplan_preserves_shared_six_stage_journey_and_six_object_intake():
         "Stage_Clos9a",
     }
 
-    input_names = {item["name"] for item in caseplan["variables"]["inputs"]}
-    assert input_names == {
-        "caseInput",
-        "claimInput",
-        "memberInput",
-        "providerInput",
-        "serviceEventInput",
-        "documentInput",
-    }
-    assert all(item["type"] == "jsonSchema" for item in caseplan["variables"]["inputs"])
+    inputs = caseplan["variables"]["inputs"]
+    assert {item["name"] for item in inputs} == {"caseType", "caseworkerEmail"}
+    assert all(item["type"] == "string" for item in inputs)
+    assert all(item["required"] is True for item in inputs)
+
+    trigger = next(node for node in caseplan["nodes"] if node["id"] == "trigger_1")
+    assert [item["name"] for item in trigger["data"]["inputs"]["outputs"]] == [
+        "caseType",
+        "caseworkerEmail",
+    ]
+
+
+def test_case_entry_point_exposes_only_two_required_strings():
+    entry_point = json.loads(ENTRY_POINTS_PATH.read_text())["entryPoints"][0]
+    input_schema = entry_point["input"]
+
+    assert set(input_schema["properties"]) == {"caseType", "caseworkerEmail"}
+    assert input_schema["required"] == ["caseType", "caseworkerEmail"]
+    assert all(
+        property_schema["type"] == "string"
+        for property_schema in input_schema["properties"].values()
+    )
 
 
 def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
@@ -291,14 +287,13 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
         "serviceEventInput",
         "documentInput",
     ]
-    assert [item["value"] for item in evidence_process["data"]["inputs"]] == [
-        "=vars.caseInput",
-        "=vars.claimInput",
-        "=vars.memberInput",
-        "=vars.providerInput",
-        "=vars.serviceEventInput",
-        "=vars.documentInput",
-    ]
+    assert all(
+        item["value"].startswith("=js:vars.caseType ===")
+        and "StateMedicaidHospice" in item["value"]
+        for item in evidence_process["data"]["inputs"]
+    )
+    assert "vars.caseId" in evidence_process["data"]["inputs"][0]["value"]
+    assert "vars.caseworkerEmail" in evidence_process["data"]["inputs"][0]["value"]
     assert [item["name"] for item in evidence_process["data"]["outputs"]] == [
         "caseId",
         "caseType",
@@ -348,9 +343,8 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     ]
     assert len(provider_rules) == 1
     assert provider_rules[0]["conditionExpression"] == (
-        "=js:((vars.caseInput?.caseType ?? vars.caseInput?.case_type) "
-        "=== 'StateMedicaidHospice') && "
-        "(vars.recommendedStageId === 'Stage_Prreq6')"
+        "=js:vars.caseType === 'StateMedicaidHospice' && "
+        "vars.recommendedStageId === 'Stage_Prreq6'"
     )
     assert provider_rules[0]["selectedStageId"] == "Stage_Evcol2"
 
@@ -373,17 +367,26 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
         for rule in investigation_rules
     )
 
-    active_display_names = [
+    active_display_names = {
         task["displayName"]
         for stage in stage_nodes(caseplan)
         for task in stage_tasks(stage)
         if not is_deterministically_dormant(task)
-    ]
-    forbidden = ("ixp", "rpa", "send closure summary")
+    }
+    assert {
+        "RPA - extract service timesheet",
+        "RPA - assemble supervisor decision packet",
+        "RPA - send closure summary email",
+    }.issubset(active_display_names)
+    obsolete_names = (
+        "ixp extraction timesheet @matt",
+        "ixp extraction medical record @matt",
+        "rpa - send outlook to someone",
+    )
     assert not any(
-        forbidden_name in display_name.lower()
+        obsolete_name in display_name.lower()
         for display_name in active_display_names
-        for forbidden_name in forbidden
+        for obsolete_name in obsolete_names
     )
 
 
@@ -402,17 +405,24 @@ def test_caseplan_keeps_investigator_supervisor_and_closure_human_boundaries():
     assert [task["displayName"] for task in supervisor_human] == [
         "Human - supervisor review and disposition"
     ]
-    assert supervisor_human[0]["entryConditions"][0]["rules"][0][0]["rule"] == (
-        "current-stage-entered"
-    )
-    assert all(
-        "send closure summary" not in task["displayName"].lower()
-        for task in closure
-        if not is_deterministically_dormant(task)
+    supervisor_rule = supervisor_human[0]["entryConditions"][0]["rules"][0][0]
+    assert supervisor_rule["rule"] == "selected-tasks-completed"
+    assert supervisor_rule["selectedTasksIds"] == ["tOsyyZpTf"]
+    assert supervisor_human[0]["data"]["recipient"]["Value"] == (
+        "=vars.caseworkerEmail"
     )
 
+    investigator_human = [task for task in investigation if task["type"] == "action"]
+    assert investigator_human[0]["data"]["recipient"]["Value"] == (
+        "=vars.caseworkerEmail"
+    )
 
-def test_first_intake_task_registers_all_trigger_objects_before_triage():
+    closure_email = next(task for task in closure if task["id"] == "tsxxZlma3")
+    email_inputs = {item["name"]: item for item in closure_email["data"]["inputs"]}
+    assert email_inputs["in_RecipientEmail"]["value"] == "=vars.caseworkerEmail"
+
+
+def test_first_intake_task_hydrates_internal_objects_before_triage():
     caseplan = load_caseplan()
     assert_first_intake_contract(caseplan)
 

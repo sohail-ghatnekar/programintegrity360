@@ -25,7 +25,7 @@ Supervisor review runs `PI360DecisionPacketAutomation` before the human task. Cl
 
 ## Six-stage lifecycle
 
-1. Intake and triage receives six separate manual-trigger objects: `caseInput`, `claimInput`, `memberInput`, `providerInput`, `serviceEventInput`, and `documentInput`. `CaseType` selects `MedicaidPCS` or `StateMedicaidHospice` and Data Fabric persists the Case.
+1. Intake and triage receives only `caseType` and `caseworkerEmail`. `caseType` selects `MedicaidPCS` or `StateMedicaidHospice`; the Case hydrates that scenario's synthetic fixture data, generates a unique Case ID, and persists the Case to Data Fabric.
 2. Evidence acquisition and validation runs the timesheet extraction RPA and invokes `PI360CaseManagerFlow` for claim facts, Data Fabric evidence writes, deterministic rules, and routing.
 3. Provider record request is hospice-only: `PI360AdHocReviewBpmn` applies the investigator-proceed gate, a message/timer response race, medical-record extraction, and hospital-evidence persistence.
 4. Investigation uses the Agentic Caseworker for a grounded first pass, then requires an investigator to decide whether to open a true investigation.

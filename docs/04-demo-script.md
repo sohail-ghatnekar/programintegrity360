@@ -14,65 +14,16 @@ The Case plan owns lifecycle and human checkpoints; Data Fabric is the persisten
 
 ## Manual-trigger inputs
 
-Enter these as six separate JSON inputs, not as one wrapper object:
+Enter only these two case inputs:
 
 ```json
-caseInput = {
-  "caseId": "PI-HSP-2026-0042",
+{
   "caseType": "StateMedicaidHospice",
-  "currentStage": "Stage_Aintk1",
-  "riskScore": 82
+  "caseworkerEmail": "sohail.ghatnekar@uipath.com"
 }
 ```
 
-```json
-claimInput = {
-  "claimId": "CLM-HSP-2026-0714-001",
-  "totalUnits": 52,
-  "totalBilled": 3250.00,
-  "claimThreshold": 2500.00
-}
-```
-
-```json
-memberInput = {
-  "memberId": "MBR-071426",
-  "medicaidId": "NMCD-SYN-071426",
-  "memberName": "Jordan Ellis",
-  "dateOfBirth": "1991-02-08"
-}
-```
-
-```json
-providerInput = {
-  "providerId": "PRV-100482",
-  "providerName": "Harbor Home Support Services",
-  "caregiverId": "ATT-HSP-4401",
-  "caregiverName": "Taylor Brooks"
-}
-```
-
-```json
-serviceEventInput = {
-  "lineId": "LINE-0714-01",
-  "dateOfService": "2026-07-14",
-  "placeOfServiceCode": "12",
-  "placeOfServiceDescription": "Member home",
-  "claimedServiceStartAt": "2026-07-14T09:00:00-05:00",
-  "claimedServiceEndAt": "2026-07-14T15:00:00-05:00",
-  "units": 24
-}
-```
-
-```json
-documentInput = {
-  "timesheetBucketPath": "Timesheets/hospice/PI-HSP-2026-0042/incoming/01_personal_care_timesheet.pdf",
-  "hospitalRecordBucketPath": "Hospital Records/hospice/PI-HSP-2026-0042/provider-response/jordan_ellis_synthetic_medical_record_packet.pdf",
-  "policyBucketPath": "Policy Docs/reference/policy/03_personal_care_services_policy.pdf",
-  "hospitalRecordAvailable": false,
-  "patientClass": "Observation"
-}
-```
+Use `MedicaidPCS` for the PCS branch or `StateMedicaidHospice` for the hospice branch. The Case generates a unique Case ID and hydrates the selected scenario's synthetic claim, member, provider, service, and document data internally.
 
 ## Timed walkthrough
 
@@ -88,7 +39,7 @@ documentInput = {
 
 ### 1. Intake and triage
 
-Show the six inputs and `CaseType = StateMedicaidHospice`, then point out the corresponding Case row in Data Fabric.
+Show the two inputs and `caseType = StateMedicaidHospice`, then point out the corresponding generated Case row in Data Fabric.
 
 Say:
 
