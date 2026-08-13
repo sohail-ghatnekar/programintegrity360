@@ -164,10 +164,7 @@ def assert_first_intake_contract(caseplan):
     assert inputs["workflowName"]["value"] == "IntakeClaimByCaseType"
     assert inputs["caseType"]["value"] == "=vars.caseType"
     assert inputs["requesterEmail"]["value"] == "=vars.caseworkerEmail"
-    assert inputs["caseId"]["value"].startswith("=js:`PI-${vars.caseType")
-    assert "StateMedicaidHospice" in inputs["caseId"]["value"]
-    assert "HSP" in inputs["caseId"]["value"]
-    assert "PCS" in inputs["caseId"]["value"]
+    assert inputs["caseId"]["value"] == "=js:vars['CaseId']"
 
     object_ids = []
     for name in object_names:
@@ -186,11 +183,11 @@ def assert_first_intake_contract(caseplan):
         {
             "name": "caseId",
             "type": "string",
-            "id": "caseId",
-            "var": "caseId",
-            "value": "caseId",
+            "id": "intakeCaseId",
+            "var": "intakeCaseId",
+            "value": "intakeCaseId",
             "source": "=caseId",
-            "target": "=caseId",
+            "target": "=intakeCaseId",
             "elementId": "Stage_Aintk1-tINT1case",
         }
     ]
@@ -245,6 +242,27 @@ def test_case_entry_point_exposes_only_two_required_strings():
     )
 
 
+def test_case_identifier_is_created_once_and_available_to_the_first_case_manager():
+    caseplan = load_caseplan()
+    metadata = caseplan["metadata"]
+    identifier = metadata["caseIdentifier"]
+    case_manager = metadata["caseManagerData"]["data"]["tasks"][0][0]
+    manager_inputs = {
+        item["name"]: item["value"] for item in case_manager["data"]["inputs"]
+    }
+
+    assert metadata["caseIdentifierType"] == "external"
+    assert identifier.startswith("=js:`PI-${vars.caseType")
+    assert "StateMedicaidHospice" in identifier
+    assert "HSP" in identifier
+    assert "PCS" in identifier
+    assert manager_inputs["caseId"] == "=js:vars['CaseId']"
+    assert manager_inputs["currentStage"] == (
+        "=js:vars.CaseLocalLastPrimaryStageExited || 'Stage_Aintk1'"
+    )
+    assert "vars.caseId" not in CASEPLAN_PATH.read_text()
+
+
 def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
     caseplan = load_caseplan()
     stages = {stage["id"]: stage for stage in stage_nodes(caseplan)}
@@ -292,7 +310,7 @@ def test_caseplan_uses_flow_and_bpmn_process_tasks_for_orchestration():
         and "StateMedicaidHospice" in item["value"]
         for item in evidence_process["data"]["inputs"]
     )
-    assert "vars.caseId" in evidence_process["data"]["inputs"][0]["value"]
+    assert "vars['CaseId']" in evidence_process["data"]["inputs"][0]["value"]
     assert "vars.caseworkerEmail" in evidence_process["data"]["inputs"][0]["value"]
     assert [item["name"] for item in evidence_process["data"]["outputs"]] == [
         "caseId",

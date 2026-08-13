@@ -4,8 +4,8 @@
     "name": "PI360CaseManagement",
     "description": "State Medicaid program-integrity case lifecycle for MedicaidPCS and StateMedicaidHospice. Deterministic review indicators and agent recommendations route material findings to human review; the case never makes a fraud, intent, coverage, or repayment determination.",
     "metadata": {
-        "caseIdentifier": "PI-PCS",
-        "caseIdentifierType": "constant",
+        "caseIdentifier": "=js:`PI-${vars.caseType === 'StateMedicaidHospice' ? 'HSP' : 'PCS'}-${new Date().getUTCFullYear()}-${(`${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`).replace(/[^a-z0-9]/gi, '').toUpperCase().slice(-6).padStart(6, '0')}`",
+        "caseIdentifierType": "external",
         "caseAppEnabled": true,
         "allowAdhocOptionalStageTasks": true,
         "publishVersion": 2,
@@ -50,7 +50,7 @@
                                         "id": "vCmaCaseId",
                                         "var": "vCmaCaseId",
                                         "elementId": "case-manager-tCaseManagerAgent",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "currentStage",
@@ -58,7 +58,7 @@
                                         "id": "vCmaCurrentStage",
                                         "var": "vCmaCurrentStage",
                                         "elementId": "case-manager-tCaseManagerAgent",
-                                        "value": "Stage_Corr4a"
+                                        "value": "=js:vars.CaseLocalLastPrimaryStageExited || 'Stage_Aintk1'"
                                     },
                                     {
                                         "name": "groundingJson",
@@ -431,7 +431,7 @@
                                         "id": "vINT1case",
                                         "var": "vINT1case",
                                         "elementId": "Stage_Aintk1-tINT1case",
-                                        "value": "=js:`PI-${vars.caseType === 'StateMedicaidHospice' ? 'HSP' : 'PCS'}-${new Date().getUTCFullYear()}-${(`${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`).replace(/[^a-z0-9]/gi, '').toUpperCase().slice(-6).padStart(6, '0')}`"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "requesterEmail",
@@ -494,11 +494,11 @@
                                     {
                                         "name": "caseId",
                                         "type": "string",
-                                        "id": "caseId",
-                                        "var": "caseId",
-                                        "value": "caseId",
+                                        "id": "intakeCaseId",
+                                        "var": "intakeCaseId",
+                                        "value": "intakeCaseId",
                                         "source": "=caseId",
-                                        "target": "=caseId",
+                                        "target": "=intakeCaseId",
                                         "elementId": "Stage_Aintk1-tINT1case"
                                     }
                                 ]
@@ -540,7 +540,7 @@
                                         "id": "vTRI1case",
                                         "var": "vTRI1case",
                                         "elementId": "Stage_Aintk1-tTRI1agnt",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "groundingJson",
@@ -548,7 +548,7 @@
                                         "id": "vTRI1grnd",
                                         "var": "vTRI1grnd",
                                         "elementId": "Stage_Aintk1-tTRI1agnt",
-                                        "value": "=js:JSON.stringify({caseType: vars.caseType, caseId: vars.caseId, caseworkerEmail: vars.caseworkerEmail, claimProfile: vars.caseType === 'StateMedicaidHospice' ? {totalBilled: 3250, threshold: 2500} : {totalBilled: 1267.2, threshold: 0}, instruction: 'Explain deterministic triage only; do not determine fraud or repayment.'})"
+                                        "value": "=js:JSON.stringify({caseType: vars.caseType, caseId: vars['CaseId'], caseworkerEmail: vars.caseworkerEmail, claimProfile: vars.caseType === 'StateMedicaidHospice' ? {totalBilled: 3250, threshold: 2500} : {totalBilled: 1267.2, threshold: 0}, instruction: 'Explain deterministic triage only; do not determine fraud or repayment.'})"
                                     }
                                 ]
                             }
@@ -637,7 +637,7 @@
                                         "id": "vK7mQ2pRt",
                                         "var": "vK7mQ2pRt",
                                         "elementId": "Stage_Evcol2-tCLM2pull",
-                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({caseId: vars.caseId, caseType: vars.caseType, requesterEmail: vars.caseworkerEmail, currentStage: 'Stage_Evcol2', riskScore: 82, title: 'Harbor Home Support Services — hospice location conflict review', program: 'State Medicaid Hospice', triggerType: 'Manual case intake', triggerRef: 'ALERT-HSP-2026-0714'}) : ({caseId: vars.caseId, caseType: vars.caseType, requesterEmail: vars.caseworkerEmail, currentStage: 'Stage_Evcol2', riskScore: 78, title: 'Harbor Home Support Services — PCS billing integrity review', program: 'Medicaid PCS', triggerType: 'Manual case intake', triggerRef: 'ALERT-CA-2026-7781'})"
+                                        "value": "=js:vars.caseType === 'StateMedicaidHospice' ? ({caseId: vars['CaseId'], caseType: vars.caseType, requesterEmail: vars.caseworkerEmail, currentStage: 'Stage_Evcol2', riskScore: 82, title: 'Harbor Home Support Services — hospice location conflict review', program: 'State Medicaid Hospice', triggerType: 'Manual case intake', triggerRef: 'ALERT-HSP-2026-0714'}) : ({caseId: vars['CaseId'], caseType: vars.caseType, requesterEmail: vars.caseworkerEmail, currentStage: 'Stage_Evcol2', riskScore: 78, title: 'Harbor Home Support Services — PCS billing integrity review', program: 'Medicaid PCS', triggerType: 'Manual case intake', triggerRef: 'ALERT-CA-2026-7781'})"
                                     },
                                     {
                                         "name": "claimInput",
@@ -927,7 +927,7 @@
                                         "id": "vCOR4case",
                                         "var": "vCOR4case",
                                         "elementId": "Stage_Corr4a-tCOR4evid",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "groundingJson",
@@ -983,7 +983,7 @@
                                         "id": "vInvCase1",
                                         "var": "vInvCase1",
                                         "elementId": "Stage_Corr4a-tREV5task",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "routeReason",
@@ -1072,7 +1072,7 @@
                                         "id": "vCMR4case",
                                         "var": "vCMR4case",
                                         "elementId": "Stage_Corr4a-tCMR4route",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "currentStage",
@@ -1266,7 +1266,7 @@
                                         "id": "vREQ6case",
                                         "var": "vREQ6case",
                                         "elementId": "Stage_Prreq6-tREQ6send",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "CaseType",
@@ -1413,7 +1413,7 @@
                                     {
                                         "name": "in_CaseId",
                                         "displayName": "in_CaseId",
-                                        "value": "=vars.caseId",
+                                        "value": "=js:vars['CaseId']",
                                         "type": "string",
                                         "required": false,
                                         "var": "vU1rhakkc",
@@ -1639,7 +1639,7 @@
                                         "id": "vSupCase",
                                         "var": "vSupCase",
                                         "elementId": "Stage_Supv7a-tSUP7gate",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "routeReason",
@@ -1790,7 +1790,7 @@
                                         "id": "vCLS9id",
                                         "var": "vCLS9id",
                                         "elementId": "Stage_Clos9a-tCLS9case",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "supervisorApproved",
@@ -1869,7 +1869,7 @@
                                         "id": "vEmailCaseId",
                                         "var": "vEmailCaseId",
                                         "elementId": "Stage_Clos9a-tsxxZlma3",
-                                        "value": "=vars.caseId"
+                                        "value": "=js:vars['CaseId']"
                                     },
                                     {
                                         "name": "in_RecipientEmail",
